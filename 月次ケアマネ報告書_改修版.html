@@ -811,7 +811,7 @@ const FACILITY_KEY = 'minaharu';
 const RESIDENTS_KEY    = FACILITY_KEY + '_residents';
 const DISCHARGED_KEY   = FACILITY_KEY + '_discharged';
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxiGVXzpJqc-u4UyhfiMOW5RpdxcplEmlYcGgbOOYSicMt_XNT1k_5tnF28fDKXGooESA/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzu1_lAjpBfcEgcWSO0sv78iCrZHxdwdKI4tEUxnbIRZBXqx3XsVC8Nx0X0qrzi3dmG/exec';
 async function gasReq(payload){
   const params = new URLSearchParams({data: JSON.stringify(payload)});
   const res = await fetch(GAS_URL + '?' + params.toString());
