@@ -647,10 +647,21 @@ async function gasRequest(payload){
     showToast('GAS URLが未設定です','err');
     throw new Error('GAS_URL未設定');
   }
-  // GETパラメータでリクエスト（CORS回避）
-  const params = new URLSearchParams({data: JSON.stringify(payload)});
-  const res = await fetch(GAS_URL + '?' + params.toString());
-  return await res.json();
+  // JSONPスタイルでCORSを回避
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now();
+    const params = new URLSearchParams({data: JSON.stringify(payload), callback: cbName});
+    const script = document.createElement('script');
+    window[cbName] = (data) => {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+    script.onerror = () => reject(new Error('通信エラー'));
+    script.src = GAS_URL + '?' + params.toString();
+    document.body.appendChild(script);
+    setTimeout(() => { if(window[cbName]){ delete window[cbName]; reject(new Error('タイムアウト')); }}, 15000);
+  });
 }
 
 async function loadAll(){
