@@ -580,7 +580,7 @@ async function initData(){
 
 // ===== ユーティリティ =====
 // GAS URL
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxWqWwUzckJcWN4yt5udVsWhMB6Z8jphE112J_30rBT3sZnPkBj9LZ--Ng6rrYsgIF78w/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwRg2w0l_sGb_cKU-o0wP7PinMb0A3WQxM_50PBIoHzf6GKTFy2l3tYWCqssbqBYE03/exec';
 
 async function gasReq(payload){
   const res = await fetch(GAS_URL, {method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'}});
