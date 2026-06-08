@@ -571,7 +571,7 @@
 // ============================================================
 // ★ここにGoogle Apps ScriptのウェブアプリURLを貼り付けてください★
 // 設定手順はセットアップ手順書.txtを参照
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwRg2w0l_sGb_cKU-o0wP7PinMb0A3WQxM_50PBIoHzf6GKTFy2l3tYWCqssbqBYE03/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxL16TJaOSVqnckoVrsEODaRXAYwallkBB_LE2toAu1l6AN6oULQRyQOlA-_YRQdyk/exec';
 // ============================================================
 
 const YOUBI_LABELS = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
@@ -647,11 +647,9 @@ async function gasRequest(payload){
     showToast('GAS URLが未設定です','err');
     throw new Error('GAS_URL未設定');
   }
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: {'Content-Type':'text/plain'}
-  });
+  // GETパラメータでリクエスト（CORS回避）
+  const params = new URLSearchParams({data: JSON.stringify(payload)});
+  const res = await fetch(GAS_URL + '?' + params.toString());
   return await res.json();
 }
 
