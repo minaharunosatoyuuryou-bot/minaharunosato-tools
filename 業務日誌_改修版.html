@@ -650,15 +650,18 @@ async function gasRequest(payload){
   // JSONPスタイルでCORSを回避
   return new Promise((resolve, reject) => {
     const cbName = 'cb_' + Date.now();
-    const params = new URLSearchParams({data: JSON.stringify(payload), callback: cbName});
+    const dataStr = encodeURIComponent(JSON.stringify(payload));
     const script = document.createElement('script');
     window[cbName] = (data) => {
       delete window[cbName];
-      document.body.removeChild(script);
+      if(document.body.contains(script)) document.body.removeChild(script);
       resolve(data);
     };
-    script.onerror = () => reject(new Error('通信エラー'));
-    script.src = GAS_URL + '?' + params.toString();
+    script.onerror = () => {
+      if(document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error('通信エラー'));
+    };
+    script.src = GAS_URL + '?data=' + dataStr + '&callback=' + cbName;
     document.body.appendChild(script);
     setTimeout(() => { if(window[cbName]){ delete window[cbName]; reject(new Error('タイムアウト')); }}, 15000);
   });
