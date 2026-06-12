@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>業務日誌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: #d8d6ce;
+    --border-light: #e8e6de;
+    --text: #1a1917;
+    --text-sub: #6b6a65;
+    --text-hint: #9b9a95;
+    --accent: #1d6fa4;
+    --accent-bg: #e8f2fa;
+    --accent-border: #a8cce8;
+    --success: #1d9e75;
+    --success-bg: #e1f5ee;
+    --danger: #c94040;
+    --chip-sel-bg: #dceef8;
+    --chip-sel-border: #7ab8d8;
+    --chip-sel-text: #155c8a;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+  /* ---- TOP BAR ---- */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; letter-spacing: 0.04em; }
+  .tab-row { display: flex; gap: 0; }
+  .tab {
+    padding: 6px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-sub);
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .tab:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+  .tab:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-left: none; }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 500; }
+
+  /* ---- LAYOUT ---- */
+  .main { max-width: 720px; margin: 0 auto; padding: 1.25rem; }
+
+  /* ---- SECTION CARD ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-hint);
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  /* ---- FIELDS ---- */
+  .field { display: flex; flex-direction: column; gap: 3px; }
+  .field label { font-size: 11px; color: var(--text-sub); font-weight: 500; }
+  .field input, .field textarea, .field select {
+    font-size: 14px;
+    font-family: inherit;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: #fafaf8;
+    color: var(--text);
+    width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(29,111,164,0.12);
+    background: #fff;
+  }
+  .field textarea { resize: vertical; min-height: 44px; }
+  .field input[readonly] { background: var(--bg); color: var(--text-sub); cursor: default; }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row .field { flex: 1; min-width: 120px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ---- TRANSPORT TABLE ---- */
+  .tbl-wrap { overflow-x: auto; margin-bottom: 6px; }
+  table.transport { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+  table.transport th {
+    background: var(--bg);
+    color: var(--text-sub);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    text-align: left;
+    white-space: nowrap;
+  }
+  table.transport td { border: 1px solid var(--border-light); padding: 3px 4px; }
+  table.transport td input {
+    font-size: 13px;
+    font-family: inherit;
+    padding: 4px 7px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    color: var(--text);
+  }
+  table.transport td input:focus {
+    outline: none;
+    background: var(--accent-bg);
+    border-radius: 3px;
+  }
+  .add-row-btn {
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: 4px 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .add-row-btn:hover { text-decoration: underline; }
+
+  /* ---- STATUS ITEMS ---- */
+  .status-list { display: flex; flex-direction: column; gap: 8px; }
+  .status-item { display: grid; grid-template-columns: 72px 1fr; gap: 8px; align-items: center; }
+  .status-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-sub);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .status-item input {
+    font-size: 13px;
+    font-family: inherit;
+    padding: 5px 9px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: #fafaf8;
+    color: var(--text);
+    width: 100%;
+  }
+  .status-item input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(29,111,164,0.12);
+    background: #fff;
+  }
+
+  /* ---- ACTIVITY CHIPS ---- */
+  .chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .chip {
+    font-size: 12px;
+    font-family: inherit;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--text-sub);
+    user-select: none;
+    transition: all 0.12s;
+  }
+  .chip:hover { border-color: var(--accent-border); color: var(--accent); }
+  .chip.on { background: var(--chip-sel-bg); border-color: var(--chip-sel-border); color: var(--chip-sel-text); font-weight: 500; }
+
+  /* ---- BUTTONS ---- */
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
+  .btn {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.12s;
+  }
+  .btn:hover { background: var(--bg); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+  .btn.primary:hover { opacity: 0.88; }
+  .btn.danger { color: var(--danger); border-color: #e8b8b8; }
+  .btn.danger:hover { background: #fdf0f0; }
+
+  /* ---- HISTORY ---- */
+  .hist-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    cursor: pointer;
+    background: #fafaf8;
+    transition: all 0.12s;
+  }
+  .hist-item:hover { border-color: var(--accent-border); background: var(--accent-bg); }
+  .hist-date { font-weight: 700; font-size: 14px; }
+  .hist-meta { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+  .hist-del { font-size: 12px; color: var(--danger); cursor: pointer; background: none; border: none; font-family: inherit; padding: 4px 8px; border-radius: var(--radius-sm); }
+  .hist-del:hover { background: #fdf0f0; }
+  .empty-msg { font-size: 13px; color: var(--text-hint); text-align: center; padding: 2rem 0; }
+
+  /* ---- TOAST ---- */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: var(--text);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.ok { background: var(--success); }
+  .toast.err { background: var(--danger); }
+
+  /* ---- PRINT ---- */
+  /* ---- 確認欄 ---- */
+  .kakunin-wrap {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .hanko-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .hanko-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-sub);
+    letter-spacing: 0.05em;
+  }
+  .hanko-area {
+    width: 52px;
+    height: 52px;
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #fafaf8;
+    transition: border-color 0.15s;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .hanko-area:hover { border-color: var(--accent-border); }
+  .hanko-area.signed { border-color: #c94040; border-width: 2px; }
+  .hanko-inner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #c94040;
+    border: 1px solid #c94040;
+    opacity: 0;
+    transition: opacity 0.2s;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .hanko-area.signed .hanko-inner { opacity: 1; }
+  .hanko-placeholder {
+    font-size: 9px;
+    color: var(--text-hint);
+    text-align: center;
+    line-height: 1.4;
+  }
+  .hanko-area.signed .hanko-placeholder { display: none; }
+  .hanko-date {
+    font-size: 10px;
+    color: var(--text-hint);
+    min-height: 14px;
+  }
+  .hanko-clear {
+    font-size: 10px;
+    color: var(--danger);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: 1px 4px;
+    visibility: hidden;
+  }
+  .hanko-box.signed-box .hanko-clear { visibility: visible; }
+
+  @media print {
+    @page { size: A4; margin: 10mm 12mm; }
+    .topbar, .btn-row, .add-row-btn, #pane-history { display: none !important; }
+    body { background: #fff; font-size: 11px; }
+    .main { padding: 0; max-width: 100%; }
+    .card { border: 0.5px solid #bbb; border-radius: 4px; padding: 5px 8px; margin-bottom: 4px; break-inside: avoid; }
+    .card-title { font-size: 9px; margin-bottom: 4px; padding-bottom: 3px; }
+    .field label { font-size: 9px; }
+    .field input, .field textarea, .status-item input {
+      font-size: 11px; padding: 2px 4px; border: 0.5px solid #ccc; background: #fff;
+    }
+    .field textarea { min-height: 36px; }
+    .grid3 { gap: 6px; }
+    .grid2 { gap: 6px; }
+    .row { gap: 6px; }
+    .status-list { gap: 4px; }
+    .status-item { grid-template-columns: 64px 1fr; gap: 4px; }
+    .status-lbl { font-size: 10px; }
+    table.transport { font-size: 10px; min-width: unset; }
+    table.transport th { font-size: 9px; padding: 3px 4px; }
+    table.transport td { padding: 1px 2px; }
+    table.transport td input { font-size: 10px; padding: 2px 4px; }
+    .chip { font-size: 10px; padding: 2px 7px; border-radius: 12px; }
+    .chip.on { border: 0.5px solid #999; background: #eee; color: #000; }
+    .hanko-area { width: 42px; height: 42px; }
+    .hanko-inner { width: 33px; height: 33px; font-size: 10px; }
+    .hanko-placeholder { display: none; }
+    .hanko-clear { display: none; }
+    .tbl-wrap { overflow: visible; }
+  }
+
+  @media (max-width: 520px) {
+    .grid3 { grid-template-columns: 1fr 1fr; }
+    .main { padding: 0.75rem; }
+    .topbar { padding: 0 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">業務日誌</span>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn" onclick="window.print()" style="font-size:12px;padding:5px 12px"><i class="ti ti-printer"></i> 印刷</button>
+    <div class="tab-row">
+      <button class="tab active" id="tab-input" onclick="switchTab('input')">記入</button>
+      <button class="tab" id="tab-history" onclick="switchTab('history')">履歴</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ===== 入力ペイン ===== -->
+  <div id="pane-input">
+
+    <!-- 基本情報 -->
+    <div class="card">
+      <div class="card-title">基本情報</div>
+      <div class="row">
+        <div class="field" style="flex:1.2;min-width:150px">
+          <label>日付</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="field" style="flex:0.8;min-width:100px">
+          <label>曜日</label>
+          <input type="text" id="f-youbi" readonly>
+        </div>
+        <div class="field" style="flex:2;min-width:160px">
+          <label>記入者</label>
+          <input type="text" id="f-writer" placeholder="例：三ッ股 久美子">
+        </div>
+      </div>
+    </div>
+
+    <!-- 人員数 -->
+    <div class="card">
+      <div class="card-title">通所者人員数</div>
+      <div class="grid3">
+        <div class="field"><label>予定数（名）</label><input type="number" id="f-yotei" min="0" placeholder="0"></div>
+        <div class="field"><label>利用実数（名）</label><input type="number" id="f-jissuu" min="0" placeholder="0"></div>
+        <div class="field"><label>利用中止者（名）</label><input type="number" id="f-chushi" min="0" placeholder="0"></div>
+      </div>
+    </div>
+
+    <!-- 勤務者 -->
+    <div class="card">
+      <div class="card-title">勤務者人員数</div>
+      <div class="grid3">
+        <div class="field"><label>相談員</label><input type="text" id="f-sodan" placeholder="氏名"></div>
+        <div class="field"><label>看護師</label><input type="text" id="f-kango" placeholder="氏名"></div>
+        <div class="field"><label>介護職</label><input type="text" id="f-kaigo" placeholder="氏名（複数可）"></div>
+      </div>
+    </div>
+
+    <!-- 送迎・迎え -->
+    <div class="card">
+      <div class="card-title">送迎 — 迎え</div>
+      <div class="tbl-wrap">
+        <table class="transport">
+          <thead><tr><th style="width:16%">車種</th><th style="width:18%">運転者</th><th style="width:18%">介護者</th><th>利用者</th></tr></thead>
+          <tbody id="mukae-body">
+            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="add-row-btn" onclick="addRow('mukae-body')"><i class="ti ti-plus"></i> 行を追加</button>
+    </div>
+
+    <!-- 送迎・送り -->
+    <div class="card">
+      <div class="card-title">送迎 — 送り</div>
+      <div class="tbl-wrap">
+        <table class="transport">
+          <thead><tr><th style="width:16%">車種</th><th style="width:18%">運転者</th><th style="width:18%">介護者</th><th>利用者</th></tr></thead>
+          <tbody id="okuri-body">
+            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="add-row-btn" onclick="addRow('okuri-body')"><i class="ti ti-plus"></i> 行を追加</button>
+    </div>
+
+    <!-- 利用者状況 -->
+    <div class="card">
+      <div class="card-title">利用者状況</div>
+      <div class="status-list">
+        <div class="status-item"><span class="status-lbl">ショートステイ</span><input type="text" id="f-short" placeholder="氏名・理由など"></div>
+        <div class="status-item"><span class="status-lbl">体調不良</span><input type="text" id="f-taichou" placeholder="氏名・内容など"></div>
+        <div class="status-item"><span class="status-lbl">拒否</span><input type="text" id="f-kyohi" placeholder="氏名など"></div>
+        <div class="status-item"><span class="status-lbl">入院</span><input type="text" id="f-nyuin" placeholder="氏名など"></div>
+        <div class="status-item"><span class="status-lbl">私事</span><input type="text" id="f-shiji" placeholder="氏名・内容など"></div>
+        <div class="status-item"><span class="status-lbl">病院受診</span><input type="text" id="f-jushin" placeholder="氏名・受診先など"></div>
+      </div>
+    </div>
+
+    <!-- 活動内容 -->
+    <div class="card">
+      <div class="card-title">活動内容</div>
+      <div class="chip-wrap" id="chip-wrap">
+        <span class="chip" onclick="toggleChip(this)">機能訓練</span>
+        <span class="chip" onclick="toggleChip(this)">レクリエーション</span>
+        <span class="chip" onclick="toggleChip(this)">カラオケ</span>
+        <span class="chip" onclick="toggleChip(this)">パズル</span>
+        <span class="chip" onclick="toggleChip(this)">ジェンガ</span>
+        <span class="chip" onclick="toggleChip(this)">すごろく</span>
+        <span class="chip" onclick="toggleChip(this)">オセロゲーム</span>
+        <span class="chip" onclick="toggleChip(this)">トランプ</span>
+        <span class="chip" onclick="toggleChip(this)">人生ゲーム</span>
+        <span class="chip" onclick="toggleChip(this)">クロスワード</span>
+        <span class="chip" onclick="toggleChip(this)">水彩画</span>
+        <span class="chip" onclick="toggleChip(this)">ぬり絵</span>
+        <span class="chip" onclick="toggleChip(this)">計算</span>
+        <span class="chip" onclick="toggleChip(this)">漢字</span>
+        <span class="chip" onclick="toggleChip(this)">間違い探し</span>
+        <span class="chip" onclick="toggleChip(this)">点つなぎ</span>
+        <span class="chip" onclick="toggleChip(this)">手工芸</span>
+        <span class="chip" onclick="toggleChip(this)">脳トレ</span>
+        <span class="chip" onclick="toggleChip(this)">おやつ作り</span>
+      </div>
+      <div class="field">
+        <label>その他の活動</label>
+        <input type="text" id="f-act-other" placeholder="上記以外があれば入力">
+      </div>
+    </div>
+
+    <!-- 特記事項 -->
+    <div class="card">
+      <div class="card-title">特記事項</div>
+      <div class="grid2">
+        <div class="field"><label>計画時短</label><textarea id="f-keikaku" placeholder="例：屈松様 9:00〜16:00"></textarea></div>
+        <div class="field"><label>往診</label><textarea id="f-oushin" placeholder="内容を入力"></textarea></div>
+        <div class="field"><label>その他</label><textarea id="f-other" placeholder="例：谷木様 6/8(月) だいかく入院予定"></textarea></div>
+        <div class="field"><label>備考</label><textarea id="f-biko" placeholder="自由記入"></textarea></div>
+      </div>
+    </div>
+
+    <!-- 確認欄 -->
+    <div class="card">
+      <div class="card-title">確認</div>
+      <div class="kakunin-wrap">
+        <div class="hanko-box" id="box-kacho">
+          <span class="hanko-label">課長</span>
+          <div class="hanko-area" id="hanko-kacho" onclick="stampHanko('kacho')">
+            <div class="hanko-inner" id="hanko-kacho-inner"></div>
+            <div class="hanko-placeholder">タップで<br>押印</div>
+          </div>
+          <span class="hanko-date" id="hanko-kacho-date"></span>
+          <button class="hanko-clear" onclick="clearHanko('kacho')">取消</button>
+        </div>
+        <div class="hanko-box" id="box-kanrisha">
+          <span class="hanko-label">管理者</span>
+          <div class="hanko-area" id="hanko-kanrisha" onclick="stampHanko('kanrisha')">
+            <div class="hanko-inner" id="hanko-kanrisha-inner"></div>
+            <div class="hanko-placeholder">タップで<br>押印</div>
+          </div>
+          <span class="hanko-date" id="hanko-kanrisha-date"></span>
+          <button class="hanko-clear" onclick="clearHanko('kanrisha')">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn danger" onclick="clearForm()"><i class="ti ti-trash"></i> クリア</button>
+      <button class="btn primary" onclick="saveEntry()"><i class="ti ti-device-floppy"></i> 保存</button>
+    </div>
+
+  </div>
+
+  <!-- ===== 履歴ペイン ===== -->
+  <div id="pane-history" style="display:none">
+    <div class="card">
+      <div class="card-title">保存済み日誌</div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// ★ここにGoogle Apps ScriptのウェブアプリURLを貼り付けてください★
+// 設定手順はセットアップ手順書.txtを参照
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNmT9lG7mPfG7uMjKOmx1v2jo6XbL8rQc5py_S6-5jeWWiKXuT6aYtmeJhBy7Ua914/exec';
+// ============================================================
+
+const YOUBI_LABELS = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
+const YOUBI_COLORS = ['#c94040','#1a1917','#1a1917','#1a1917','#1a1917','#1a1917','#1d6fa4'];
+
+// 初期化
+(function init(){
+  const today = new Date();
+  const s = today.toISOString().split('T')[0];
+  document.getElementById('f-date').value = s;
+  updateYoubi(s);
+  document.getElementById('f-date').addEventListener('change', function(){ updateYoubi(this.value); });
+})();
+
+function updateYoubi(v){
+  if(!v) return;
+  const d = new Date(v + 'T00:00:00');
+  const el = document.getElementById('f-youbi');
+  el.value = YOUBI_LABELS[d.getDay()];
+  el.style.color = YOUBI_COLORS[d.getDay()];
+}
+
+function addRow(tbodyId){
+  const tb = document.getElementById(tbodyId);
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>';
+  tb.appendChild(tr);
+}
+
+function toggleChip(el){ el.classList.toggle('on'); }
+
+function gv(id){ return document.getElementById(id).value; }
+function sv(id, v){ const el = document.getElementById(id); if(el) el.value = v || ''; }
+
+function getTableData(tbodyId){
+  const rows = [];
+  document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{
+    const cells = [];
+    tr.querySelectorAll('input').forEach(inp => cells.push(inp.value));
+    rows.push(cells);
+  });
+  return rows;
+}
+
+function setTableData(tbodyId, rows){
+  const tb = document.getElementById(tbodyId);
+  tb.innerHTML = '';
+  (rows||[]).forEach(cells=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>';
+    const inputs = tr.querySelectorAll('input');
+    (cells||[]).forEach((v,i)=>{ if(inputs[i]) inputs[i].value = v; });
+    tb.appendChild(tr);
+  });
+  if(!rows || rows.length === 0){
+    addRow(tbodyId); addRow(tbodyId);
+  }
+}
+
+function getSelectedChips(){
+  return Array.from(document.querySelectorAll('.chip.on')).map(el=>el.textContent);
+}
+
+function setSelectedChips(arr){
+  document.querySelectorAll('.chip').forEach(el=>{
+    el.classList.toggle('on', (arr||[]).includes(el.textContent));
+  });
+}
+
+// ---- GAS通信 ----
+async function gasRequest(payload){
+  const dataStr = encodeURIComponent(JSON.stringify(payload));
+  const url = GAS_URL + '?data=' + dataStr;
+  const res = await fetch(url);
+  const text = await res.text();
+  return JSON.parse(text);
+}
+
+async function loadAll(){
+  try{
+    showToast('読み込み中…');
+    const result = await gasRequest({ action: 'getAll' });
+    return result.data || [];
+  } catch(e){
+    showToast('読み込みに失敗しました','err');
+    return [];
+  }
+}
+
+// 押印状態（メモリ上）
+const hankoState = { kacho: null, kanrisha: null };
+
+function stampHanko(role){
+  if(hankoState[role]){ return; }
+  const name = role === 'kacho' ? '牧' : '三ツ股';
+  const now = new Date();
+  const dateStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  hankoState[role] = { name, date: dateStr };
+  applyHanko(role);
+}
+
+function applyHanko(role){
+  const s = hankoState[role];
+  const area = document.getElementById('hanko-'+role);
+  const inner = document.getElementById('hanko-'+role+'-inner');
+  const dateEl = document.getElementById('hanko-'+role+'-date');
+  const box = document.getElementById('box-'+role);
+  if(s){
+    const chars = s.name.replace(/\s/g,'');
+    inner.textContent = chars.length <= 2 ? chars : chars.slice(0,2)+'\n'+chars.slice(2,4);
+    inner.style.whiteSpace = 'pre';
+    area.classList.add('signed');
+    dateEl.textContent = s.date;
+    box.classList.add('signed-box');
+  } else {
+    inner.textContent = '';
+    area.classList.remove('signed');
+    dateEl.textContent = '';
+    box.classList.remove('signed-box');
+  }
+}
+
+function clearHanko(role){
+  hankoState[role] = null;
+  applyHanko(role);
+}
+
+async function saveEntry(){
+  const date = gv('f-date');
+  if(!date){ showToast('日付を入力してください','err'); return; }
+  const data = {
+    date, writer: gv('f-writer'), youbi: gv('f-youbi'),
+    yotei: gv('f-yotei'), jissuu: gv('f-jissuu'), chushi: gv('f-chushi'),
+    sodan: gv('f-sodan'), kango: gv('f-kango'), kaigo: gv('f-kaigo'),
+    mukae: getTableData('mukae-body'), okuri: getTableData('okuri-body'),
+    short: gv('f-short'), taichou: gv('f-taichou'), kyohi: gv('f-kyohi'),
+    nyuin: gv('f-nyuin'), shiji: gv('f-shiji'), jushin: gv('f-jushin'),
+    activities: getSelectedChips(), actOther: gv('f-act-other'),
+    keikaku: gv('f-keikaku'), oushin: gv('f-oushin'), other: gv('f-other'), biko: gv('f-biko'),
+    hanko: { kacho: hankoState.kacho, kanrisha: hankoState.kanrisha },
+    savedAt: new Date().toISOString()
+  };
+  try{
+    showToast('保存中…');
+    await gasRequest({ action: 'save', data });
+    showToast('保存しました','ok');
+  } catch(e){
+    showToast('保存に失敗しました','err');
+  }
+}
+
+async function loadEntry(date){
+  try{
+    showToast('読み込み中…');
+    const result = await gasRequest({ action: 'getOne', date });
+    const e = result.data;
+    if(!e){ showToast('データが見つかりません','err'); return; }
+    sv('f-date', e.date); sv('f-writer', e.writer);
+    updateYoubi(e.date);
+    sv('f-yotei', e.yotei); sv('f-jissuu', e.jissuu); sv('f-chushi', e.chushi);
+    sv('f-sodan', e.sodan); sv('f-kango', e.kango); sv('f-kaigo', e.kaigo);
+    setTableData('mukae-body', e.mukae); setTableData('okuri-body', e.okuri);
+    sv('f-short', e.short); sv('f-taichou', e.taichou); sv('f-kyohi', e.kyohi);
+    sv('f-nyuin', e.nyuin); sv('f-shiji', e.shiji); sv('f-jushin', e.jushin);
+    setSelectedChips(e.activities); sv('f-act-other', e.actOther);
+    sv('f-keikaku', e.keikaku); sv('f-oushin', e.oushin); sv('f-other', e.other); sv('f-biko', e.biko);
+    hankoState.kacho = e.hanko ? e.hanko.kacho : null;
+    hankoState.kanrisha = e.hanko ? e.hanko.kanrisha : null;
+    applyHanko('kacho'); applyHanko('kanrisha');
+    switchTab('input');
+    showToast(e.date + ' の日誌を読み込みました','ok');
+  } catch(e){
+    showToast('読み込みに失敗しました','err');
+  }
+}
+
+async function deleteEntry(date){
+  if(!confirm('この日誌を削除しますか？')) return;
+  try{
+    await gasRequest({ action: 'delete', date });
+    showToast('削除しました');
+    document.getElementById('pane-history').style.display = 'block';
+    document.getElementById('pane-input').style.display = 'none';
+    document.getElementById('tab-history').className = 'tab active';
+    document.getElementById('tab-input').className = 'tab';
+    await renderHistory();
+  } catch(e){
+    showToast('削除に失敗しました','err');
+  }
+}
+
+function clearForm(){
+  if(!confirm('入力内容をクリアしますか？')) return;
+  ['f-writer','f-yotei','f-jissuu','f-chushi','f-sodan','f-kango','f-kaigo',
+   'f-short','f-taichou','f-kyohi','f-nyuin','f-shiji','f-jushin','f-act-other',
+   'f-keikaku','f-oushin','f-other','f-biko'].forEach(id=>sv(id,''));
+  setTableData('mukae-body', null); setTableData('okuri-body', null);
+  document.querySelectorAll('.chip').forEach(el=>el.classList.remove('on'));
+  hankoState.kacho = null; hankoState.kanrisha = null;
+  applyHanko('kacho'); applyHanko('kanrisha');
+  const today = new Date().toISOString().split('T')[0];
+  sv('f-date', today); updateYoubi(today);
+}
+
+async function renderHistory(){
+  const all = await loadAll();
+  const el = document.getElementById('history-list');
+  if(!all.length){
+    el.innerHTML = '<div class="empty-msg">保存された日誌はありません</div>';
+    return;
+  }
+  el.innerHTML = all.map(e=>`
+    <div class="hist-item" onclick="loadEntry('${e.date}')">
+      <div>
+        <div class="hist-date">${e.date}（${e.youbi||''}）</div>
+        <div class="hist-meta">記入者：${e.writer||'—'} ／ 実数：${e.jissuu||'—'}名 ／ 予定：${e.yotei||'—'}名</div>
+      </div>
+      <button class="hist-del" onclick="event.stopPropagation();deleteEntry('${e.date}')"><i class="ti ti-trash"></i> 削除</button>
+    </div>
+  `).join('');
+}
+
+function switchTab(t){
+  document.getElementById('pane-input').style.display = t==='input' ? 'block' : 'none';
+  document.getElementById('pane-history').style.display = t==='history' ? 'block' : 'none';
+  document.getElementById('tab-input').className = 'tab' + (t==='input' ? ' active' : '');
+  document.getElementById('tab-history').className = 'tab' + (t==='history' ? ' active' : '');
+  if(t==='history') renderHistory();
+}
+
+function showToast(msg, type=''){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.className='toast', 2600);
+}
+</script>
+</body>
+</html>
