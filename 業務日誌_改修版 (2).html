@@ -571,7 +571,7 @@
 // ============================================================
 // ★ここにGoogle Apps ScriptのウェブアプリURLを貼り付けてください★
 // 設定手順はセットアップ手順書.txtを参照
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzu1_lAjpBfcEgcWSO0sv78iCrZHxdwdKI4tEUxnbIRZBXqx3XsVC8Nx0X0qrzi3dmG/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNmT9lG7mPfG7uMjKOmx1v2jo6XbL8rQc5py_S6-5jeWWiKXuT6aYtmeJhBy7Ua914/exec';
 // ============================================================
 
 const YOUBI_LABELS = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
@@ -643,18 +643,9 @@ function setSelectedChips(arr){
 
 // ---- GAS通信 ----
 async function gasRequest(payload){
-  if(!GAS_URL){
-    showToast('GAS URLが未設定です','err');
-    throw new Error('GAS_URL未設定');
-  }
   const dataStr = encodeURIComponent(JSON.stringify(payload));
   const url = GAS_URL + '?data=' + dataStr;
-  const res = await fetch(url, {
-    method: 'GET',
-    mode: 'cors',
-    credentials: 'omit',
-    redirect: 'follow'
-  });
+  const res = await fetch(url);
   const text = await res.text();
   return JSON.parse(text);
 }
@@ -761,7 +752,7 @@ async function deleteEntry(date){
   if(!confirm('この日誌を削除しますか？')) return;
   try{
     await gasRequest({ action: 'delete', date });
-    renderHistory();
+    await renderHistory();
     showToast('削除しました');
   } catch(e){
     showToast('削除に失敗しました','err');
