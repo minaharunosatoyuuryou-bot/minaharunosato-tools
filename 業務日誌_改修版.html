@@ -642,28 +642,19 @@ function setSelectedChips(arr){
 }
 
 // ---- GAS通信 ----
-async function gasRequest(payload){
-  if(!GAS_URL){
-    showToast('GAS URLが未設定です','err');
-    throw new Error('GAS_URL未設定');
-  }
-  // JSONPスタイルでCORSを回避
+function gasRequest(payload){
   return new Promise((resolve, reject) => {
-    const cbName = 'cb_' + Date.now();
+    const xhr = new XMLHttpRequest();
     const dataStr = encodeURIComponent(JSON.stringify(payload));
-    const script = document.createElement('script');
-    window[cbName] = (data) => {
-      delete window[cbName];
-      if(document.body.contains(script)) document.body.removeChild(script);
-      resolve(data);
+    xhr.open('GET', GAS_URL + '?data=' + dataStr, true);
+    xhr.onload = function() {
+      try { resolve(JSON.parse(xhr.responseText)); }
+      catch(e) { reject(new Error('レスポンス解析エラー')); }
     };
-    script.onerror = () => {
-      if(document.body.contains(script)) document.body.removeChild(script);
-      reject(new Error('通信エラー'));
-    };
-    script.src = GAS_URL + '?data=' + dataStr + '&callback=' + cbName;
-    document.body.appendChild(script);
-    setTimeout(() => { if(window[cbName]){ delete window[cbName]; reject(new Error('タイムアウト')); }}, 15000);
+    xhr.onerror = function() { reject(new Error('通信エラー')); };
+    xhr.ontimeout = function() { reject(new Error('タイムアウト')); };
+    xhr.timeout = 15000;
+    xhr.send();
   });
 }
 
