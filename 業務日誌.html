@@ -643,15 +643,15 @@ function setSelectedChips(arr){
 
 // ---- GAS通信 ----
 async function gasRequest(payload){
-  if(!GAS_URL || GAS_URL === 'https://script.google.com/macros/s/AKfycbw1zHlVcBn96IB9_YLsmCr3r6jpPpD9DJTNVDsp-dTi3IoNtE4SRawnXZ-ODukFQVhl/exec'){
+  if(!GAS_URL){
     showToast('GAS URLが未設定です','err');
     throw new Error('GAS_URL未設定');
   }
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: {'Content-Type':'text/plain'}
-  });
+  const params = new URLSearchParams();
+  for(const key in payload){
+    params.append(key, typeof payload[key] === 'object' ? JSON.stringify(payload[key]) : payload[key]);
+  }
+  const res = await fetch(GAS_URL + '?' + params.toString());
   return await res.json();
 }
 
