@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月次ケアマネ状態報告書 - みなはるの里</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap');
+:root{
+  --navy:#1a3050;--blue:#2c5f8a;--lblue:#dbeaf5;--accent:#3a7cb8;
+  --green:#2d6a4f;--lgreen:#e8f5ee;--orange:#b85c2c;--lorange:#fdeee6;
+  --gray:#f4f6f8;--mgray:#d0d8e0;--text:#1a2535;--muted:#5a6a7a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:#e8ecf0;color:var(--text);font-size:13px;line-height:1.6;}
+
+/* ===== LAYOUT ===== */
+.layout{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:230px;min-width:230px;background:var(--navy);color:white;display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-top{padding:12px 12px 8px;border-bottom:1px solid rgba(255,255,255,0.12);}
+.sidebar-top h2{font-size:12px;font-weight:700;opacity:0.8;margin-bottom:2px;}
+.sidebar-top .fname{font-size:14px;font-weight:700;font-family:'Noto Serif JP',serif;}
+.sidebar-search{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.sidebar-search input{width:100%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:5px;padding:5px 8px;font-size:12px;font-family:'Noto Sans JP',sans-serif;outline:none;}
+.sidebar-search input::placeholder{color:rgba(255,255,255,0.4);}
+.sidebar-search input:focus{background:rgba(255,255,255,0.18);}
+.sidebar-actions{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.btn-add-resident{width:100%;background:var(--accent);color:white;border:none;border-radius:5px;padding:7px 10px;font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity 0.15s;}
+.btn-add-resident:hover{opacity:0.85;}
+.resident-list{flex:1;overflow-y:auto;padding:4px 0;}
+.resident-list::-webkit-scrollbar{width:4px;}
+.resident-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:2px;}
+.resident-item{display:flex;align-items:center;padding:8px 10px;cursor:pointer;border-left:3px solid transparent;transition:all 0.12s;font-size:12px;gap:8px;}
+.resident-item:hover{background:rgba(255,255,255,0.07);}
+.resident-item.active{background:rgba(255,255,255,0.15);border-left-color:var(--accent);}
+.ri-info{flex:1;min-width:0;}
+.ri-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ri-sub{font-size:10px;opacity:0.6;margin-top:1px;}
+.ri-dot{width:7px;height:7px;border-radius:50%;background:#4caf50;flex-shrink:0;display:none;}
+.resident-item.saved .ri-dot{display:block;}
+.ri-edit{background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:3px;flex-shrink:0;transition:color 0.1s;}
+.ri-edit:hover{color:white;background:rgba(255,255,255,0.15);}
+.sidebar-footer{padding:8px 12px;border-top:1px solid rgba(255,255,255,0.1);font-size:10px;opacity:0.45;text-align:center;}
+.empty-list{padding:20px 12px;text-align:center;opacity:0.45;font-size:12px;}
+.tab-bar{display:flex;border-bottom:1px solid rgba(255,255,255,0.12);flex-shrink:0;}
+.tab-btn{flex:1;padding:7px 4px;background:none;border:none;color:rgba(255,255,255,0.55);font-family:'Noto Sans JP',sans-serif;font-size:11px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;letter-spacing:0.03em;}
+.tab-btn.active{color:white;border-bottom-color:var(--accent);}
+.tab-btn:hover{color:rgba(255,255,255,0.85);}
+.discharged-item{display:flex;align-items:center;padding:8px 10px;border-left:3px solid #e67e22;font-size:12px;gap:8px;opacity:0.8;}
+.discharged-item .ri-info .ri-sub{color:rgba(255,200,100,0.7);}
+.discharged-item .ri-edit{color:rgba(255,255,255,0.35);}
+.discharged-item .ri-edit:hover{color:white;}
+.di-date{font-size:10px;color:rgba(255,200,100,0.8);margin-top:1px;}
+.expire-warn{font-size:9px;color:#e74c3c;font-weight:700;}
+
+/* ===== MAIN ===== */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.app-header{background:var(--navy);color:white;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.25);flex-shrink:0;}
+.app-header-title{font-family:'Noto Serif JP',serif;font-size:15px;font-weight:700;}
+.app-header-sub{font-size:10px;opacity:0.6;margin-top:2px;}
+.header-btns{display:flex;gap:7px;}
+.btn{border:none;padding:7px 14px;border-radius:5px;font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.15s;}
+.btn svg{width:13px;height:13px;}
+.btn-save{background:#2d6a4f;color:white;}
+.btn-save:hover{background:#235540;}
+.btn-print{background:var(--accent);color:white;}
+.btn-print:hover{opacity:0.85;}
+.btn-sec{background:rgba(255,255,255,0.14);color:white;border:1px solid rgba(255,255,255,0.22);}
+.btn-sec:hover{background:rgba(255,255,255,0.22);}
+
+.main-body{flex:1;overflow-y:auto;padding:16px;}
+.main-body::-webkit-scrollbar{width:6px;}
+.main-body::-webkit-scrollbar-thumb{background:var(--mgray);border-radius:3px;}
+
+/* 未選択 */
+.no-select{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--muted);}
+.no-select svg{width:44px;height:44px;opacity:0.25;}
+.no-select p{font-size:13px;}
+
+/* 現在利用者バナー */
+.banner{background:white;border-radius:8px;padding:11px 14px;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+.banner-name{font-size:17px;font-weight:700;color:var(--navy);}
+.banner-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.banner-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.month-row{display:flex;align-items:center;gap:6px;font-size:12px;}
+.month-row label{font-weight:700;color:var(--navy);white-space:nowrap;}
+.month-row input{border:1px solid var(--mgray);border-radius:4px;padding:4px 7px;font-family:'Noto Sans JP',sans-serif;font-size:12px;outline:none;}
+.month-row input:focus{border-color:var(--accent);}
+
+/* フォームセクション */
+.sec{background:white;border-radius:8px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+.sh{color:white;padding:7px 13px;font-weight:700;font-size:12px;letter-spacing:0.04em;}
+.sh-n{background:var(--navy);}
+.sh-b{background:var(--blue);}
+.sh-g{background:var(--green);}
+.sh-o{background:var(--orange);}
+.sh-s{background:#4a5a6a;}
+.row{display:grid;gap:0;border-bottom:1px solid var(--mgray);}
+.row:last-child{border-bottom:none;}
+.r2{grid-template-columns:120px 1fr;}
+.r4{grid-template-columns:120px 1fr 120px 1fr;}
+.lbl{background:var(--lblue);padding:6px 9px;font-weight:700;font-size:11px;color:var(--navy);display:flex;align-items:center;border-right:1px solid var(--mgray);}
+.lbl.gl{background:var(--lgreen);color:var(--green);}
+.lbl.ol{background:var(--lorange);color:var(--orange);}
+.val{padding:5px 9px;display:flex;align-items:center;border-right:1px solid var(--mgray);}
+.val:last-child{border-right:none;}
+input[type=text],input[type=date],input[type=month],textarea,select{width:100%;border:1px solid var(--mgray);border-radius:4px;padding:4px 7px;font-family:'Noto Sans JP',sans-serif;font-size:12px;color:var(--text);background:white;outline:none;transition:border-color 0.12s;}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(58,124,184,0.12);}
+textarea{resize:vertical;min-height:52px;line-height:1.7;}
+.cg{display:flex;flex-wrap:wrap;gap:4px 11px;padding:4px 0;align-items:center;}
+.ci{display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;}
+.ci input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--accent);}
+
+/* ADL */
+.adl-table{width:100%;border-collapse:collapse;font-size:11px;}
+.adl-table th{background:var(--navy);color:white;padding:5px 7px;text-align:center;font-weight:700;border:1px solid #3a5070;}
+.adl-table td{border:1px solid var(--mgray);padding:4px 6px;vertical-align:middle;}
+.adl-table tr:nth-child(even) td{background:var(--gray);}
+.adl-table .ilbl{background:var(--lblue);font-weight:700;color:var(--navy);text-align:center;width:78px;}
+.adl-table select{padding:2px 4px;font-size:11px;}
+.adl-table textarea{min-height:26px;font-size:11px;}
+
+/* 写真 */
+.photo-wrap{padding:10px 12px;}
+.photo-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.photo-thumb{position:relative;width:110px;height:90px;border-radius:6px;overflow:hidden;border:2px solid var(--mgray);background:var(--gray);flex-shrink:0;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.del-photo{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.photo-cap{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);color:white;font-size:9px;padding:2px 4px;}
+.photo-add{width:110px;height:90px;border:2px dashed var(--mgray);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:11px;gap:5px;background:white;transition:all 0.12s;}
+.photo-add:hover{border-color:var(--accent);color:var(--accent);}
+.photo-add svg{width:22px;height:22px;}
+#photo-input{display:none;}
+
+/* ===== モーダル ===== */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:16px 0;}
+.modal-bg.hidden{display:none;}
+.modal{background:white;border-radius:10px;padding:20px 24px;width:380px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);}
+.modal h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px;}
+.mrow{margin-bottom:12px;}
+.mrow label{display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.mrow input,.mrow select{width:100%;border:1px solid var(--mgray);border-radius:4px;padding:7px 9px;font-family:'Noto Sans JP',sans-serif;font-size:13px;outline:none;}
+.mrow input:focus,.mrow select:focus{border-color:var(--accent);}
+.modal-btns{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;position:sticky;bottom:-20px;background:white;padding:10px 0 0;border-top:1px solid #eee;}
+.mbtn{border:none;padding:8px 18px;border-radius:5px;font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.mbtn-primary{background:var(--accent);color:white;}
+.mbtn-primary:hover{opacity:0.85;}
+.mbtn-danger{background:#c0392b;color:white;}
+.mbtn-danger:hover{background:#a93226;}
+.mbtn-cancel{background:var(--gray);color:var(--text);}
+.mbtn-cancel:hover{background:var(--mgray);}
+/* サービスバッジ */
+.svc-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;margin-right:3px;}
+.badge-stay{background:#dbeaf5;color:#1a3050;}
+.badge-day{background:#ede8f5;color:#5a4a8a;}
+.badge-teiki{background:#e0f0ec;color:#2a6a5a;}
+.modal-sep{height:1px;background:var(--mgray);margin:14px 0;}
+
+/* toast */
+.toast{position:fixed;bottom:22px;right:22px;background:#2d6a4f;color:white;padding:9px 16px;border-radius:7px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.22);opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* ===== PRINT ===== */
+@media print{
+  /* A4両面で収まるよう余白を極限まで詰める */
+  @page{size:A4 portrait;margin:6mm 7mm 6mm 7mm;}
+  @page:first{margin-top:6mm;}
+
+  body{background:white;font-size:7.5pt;line-height:1.35;}
+  .layout{display:block;height:auto;}
+  .sidebar,.app-header,.banner .banner-right,.modal-bg,.photo-add,
+  .del-photo,#photo-input,.toast,.tab-bar,.sidebar-actions{display:none!important;}
+  .main{display:block;overflow:visible;width:100%;}
+  .main-body{overflow:visible;padding:0;width:100%;}
+  .print-hdr{display:block!important;}
+
+  /* タイトルヘッダー */
+  .print-hdr{margin-bottom:3pt;padding-bottom:3pt;}
+  .print-hdr h1{font-size:11pt;}
+  .print-hdr p{font-size:7pt;}
+
+  /* バナー（利用者名） */
+  .banner{box-shadow:none;border:1pt solid #888;border-radius:0;padding:3pt 6pt;margin-bottom:3pt;display:block;}
+  .banner-name{font-size:11pt;font-weight:bold;}
+  .banner-meta{font-size:7pt;margin-top:1pt;}
+
+  /* セクション共通 */
+  .sec{
+    box-shadow:none;border:0.5pt solid #aaa;border-radius:0;
+    margin-bottom:2.5pt;break-inside:avoid;page-break-inside:avoid;
+  }
+  .sh{padding:2pt 5pt;font-size:7.5pt;font-weight:bold;}
+
+  /* グリッド行 */
+  .row{border-bottom:0.4pt solid #ccc;}
+  .row:last-child{border-bottom:none;}
+  .r2{grid-template-columns:80pt 1fr;}
+  .r4{grid-template-columns:80pt 1fr 80pt 1fr;}
+
+  .lbl{font-size:7pt;padding:2pt 4pt;background:#ddeeff;}
+  .val{font-size:7.5pt;padding:2pt 4pt;}
+
+  /* 入力要素 */
+  input,textarea,select{
+    border:none;padding:0;margin:0;
+    font-size:7.5pt;background:transparent;
+    box-shadow:none;line-height:1.35;
+  }
+  textarea{min-height:unset;overflow:visible;height:auto;}
+
+  /* チェックグループ */
+  .cg{padding:1pt 0;gap:2pt 8pt;font-size:7.5pt;}
+  .ci{font-size:7.5pt;}
+
+  /* ADLテーブル */
+  .adl-table{font-size:7pt;}
+  .adl-table th{padding:2pt 3pt;font-size:7pt;}
+  .adl-table td{padding:2pt 3pt;}
+  .adl-table .ilbl{width:52pt;font-size:7pt;}
+  .adl-table select{font-size:7pt;border:none;background:transparent;}
+  .adl-table textarea{min-height:12pt;font-size:7pt;line-height:1.3;}
+
+  /* 写真 */
+  .photo-wrap{padding:3pt 5pt;}
+  .photo-grid{gap:4pt;margin-top:4pt;}
+  .photo-thumb{width:70px;height:58px;}
+  .photo-cap{font-size:7pt;}
+
+  /* セクション単位でページ分割を制御 */
+  .sec:nth-child(1),.sec:nth-child(2){break-inside:avoid;}
+  .sec.adl-sec{break-before:auto;}
+
+  /* 印刷モード別の表示制御 */
+  body.print-stay   #sec-day,
+  body.print-stay   #sec-teiki   { display:none !important; }
+  body.print-day    #sec-teiki   { display:none !important; }
+  body.print-day    .stay-only   { display:none !important; }
+  body.print-teiki  #sec-day     { display:none !important; }
+  body.print-teiki  .stay-only   { display:none !important; }
+
+  /* 印刷ヘッダーのサービス種別タグ */
+  .print-svc-tag{display:inline-block;padding:1pt 6pt;border-radius:3pt;font-size:8pt;font-weight:700;margin-left:6pt;}
+  .tag-stay  {background:#dbeaf5;color:#1a3050;}
+  .tag-day   {background:#ede8f5;color:#5a4a8a;}
+  .tag-teiki {background:#e0f0ec;color:#2a6a5a;}
+}
+.print-hdr{display:none;text-align:center;margin-bottom:5pt;border-bottom:2pt solid var(--navy);padding-bottom:4pt;}
+.print-hdr h1{font-size:14pt;font-weight:bold;}
+.print-hdr p{font-size:8pt;color:#555;margin-top:2pt;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-top">
+    <div class="fname">みなはるの里</div>
+    <div style="font-size:10px;opacity:0.55;margin-top:2px;">月次ケアマネ報告書</div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-active" onclick="switchTab('active')">入所中</button>
+    <button class="tab-btn" id="tab-discharged" onclick="switchTab('discharged')">退所者</button>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search-input" placeholder="氏名で検索…" oninput="filterList()">
+  </div>
+  <div class="sidebar-actions">
+    <button class="btn-add-resident" onclick="openAddModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      利用者を追加
+    </button>
+  </div>
+  <div class="resident-list" id="resident-list">
+    <div class="empty-list" id="empty-msg" style="display:none;">利用者が登録されていません</div>
+  </div>
+  <div class="sidebar-footer">社会福祉法人 悠久福祉会</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="app-header">
+    <div>
+      <div class="app-header-title">月次ケアマネ状態報告書</div>
+      <div class="app-header-sub">みなはるの里（有料老人ホーム）</div>
+    </div>
+    <div class="header-btns">
+      <button class="btn btn-sec" onclick="openAddModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+        利用者管理
+      </button>
+      <button class="btn btn-save" onclick="saveData()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        保存
+      </button>
+      <div style="position:relative;" id="print-menu-wrap">
+        <button class="btn btn-print" onclick="togglePrintMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          印刷・PDF ▾
+        </button>
+        <div id="print-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:white;border-radius:7px;box-shadow:0 4px 18px rgba(0,0,0,0.18);min-width:200px;z-index:300;overflow:hidden;">
+          <div style="padding:8px 12px;font-size:11px;font-weight:700;color:#888;border-bottom:1px solid #eee;">印刷する帳票を選択</div>
+          <button onclick="doPrint('all')"  style="width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background='none'">
+            <span style="font-size:16px;">📄</span> すべて印刷
+          </button>
+          <button onclick="doPrint('stay')" style="width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background='none'" id="pmenu-stay">
+            <span style="font-size:16px;">🏠</span> 入所のみ印刷
+          </button>
+          <button onclick="doPrint('day')"  style="width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background='none'" id="pmenu-day">
+            <span style="font-size:16px;">🚌</span> デイサービスのみ印刷
+          </button>
+          <button onclick="doPrint('teiki')" style="width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;" onmouseover="this.style.background='#f5f7fa'" onmouseout="this.style.background='none'" id="pmenu-teiki">
+            <span style="font-size:16px;">🚗</span> 定期巡回のみ印刷
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-body" id="main-body">
+    <div class="no-select" id="no-select">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <p>左の「利用者を追加」で登録して選択してください</p>
+    </div>
+
+    <div id="form-area" style="display:none;">
+      <div class="print-hdr">
+        <h1>月次ケアマネ状態報告書<span id="print-svc-tag"></span></h1>
+        <p>みなはるの里（有料老人ホーム）　社会福祉法人 悠久福祉会</p>
+      </div>
+
+      <!-- バナー -->
+      <div class="banner">
+        <div>
+          <div class="banner-name" id="banner-name"></div>
+          <div class="banner-meta" id="banner-meta"></div>
+        </div>
+        <div class="banner-right">
+          <div class="month-row">
+            <label>報告月：</label>
+            <input type="month" id="report_month">
+          </div>
+          <div class="month-row">
+            <label>報告日：</label>
+            <input type="date" id="report_date" style="width:145px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- 基本情報 -->
+      <div class="sec">
+        <div class="sh sh-n">■ 基本情報</div>
+        <div class="row r4">
+          <div class="lbl">ケアマネジャー</div>
+          <div class="val"><input type="text" id="cm_name"></div>
+          <div class="lbl">報告者</div>
+          <div class="val"><input type="text" id="reporter" placeholder="氏名・職種"></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">住所</div>
+          <div class="val"><input type="text" id="res_address" placeholder="住所"></div>
+          <div class="lbl">主治医</div>
+          <div class="val"><input type="text" id="res_doctor" placeholder="主治医・病院名"></div>
+        </div>
+      </div>
+
+      <!-- 全体状態 -->
+      <div class="sec">
+        <div class="sh sh-b">■ 今月の全体的な状態</div>
+        <div class="row r4">
+          <div class="lbl">全体状態</div>
+          <div class="val"><select id="overall_status"><option>安定</option><option>やや改善</option><option>変化なし</option><option>やや悪化</option><option>要注意</option></select></div>
+          <div class="lbl">前月比</div>
+          <div class="val"><select id="overall_change"><option>改善</option><option selected>変化なし</option><option>悪化</option></select></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">状態概要</div>
+          <div class="val"><textarea id="overall_summary" placeholder="今月の全体的な様子・変化"></textarea></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">前月からの変化</div>
+          <div class="val"><textarea id="changes" placeholder="前月と比較した変化点"></textarea></div>
+        </div>
+      </div>
+
+      <!-- バイタル -->
+      <div class="sec">
+        <div class="sh sh-b">■ バイタル・健康状態</div>
+        <div class="row r4">
+          <div class="lbl">体温（平均）</div>
+          <div class="val"><input type="text" id="temp" placeholder="例：36.5℃"></div>
+          <div class="lbl">血圧（平均）</div>
+          <div class="val"><input type="text" id="bp" placeholder="例：130/80 mmHg"></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">脈拍（平均）</div>
+          <div class="val"><input type="text" id="pulse" placeholder="例：72 回/分"></div>
+          <div class="lbl">SpO2（平均）</div>
+          <div class="val"><input type="text" id="spo2" placeholder="例：97%"></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">体重</div>
+          <div class="val"><input type="text" id="weight" placeholder="例：36.7 kg"></div>
+          <div class="lbl">発熱エピソード</div>
+          <div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="fever_yes"> あり</label><label class="ci"><input type="checkbox" id="fever_no"> なし</label></div></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">健康特記事項</div>
+          <div class="val"><textarea id="vital_note" placeholder="発熱・感染症・受診・救急対応など"></textarea></div>
+        </div>
+      </div>
+
+      <!-- ADL -->
+      <div class="sec">
+        <div class="sh sh-b">■ ADL状況</div>
+        <div style="padding:8px 10px;">
+          <table class="adl-table">
+            <thead><tr><th>項目</th><th>介助区分</th><th>前月比</th><th>備考・特記事項</th></tr></thead>
+            <tbody id="adl-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 食事 -->
+      <div class="sec">
+        <div class="sh sh-b">■ 食事・栄養</div>
+        <div class="row r4">
+          <div class="lbl">食事形態</div>
+          <div class="val"><input type="text" id="food_type" placeholder="例：全がゆ・刻みとろみ食"></div>
+          <div class="lbl">摂取量（平均）</div>
+          <div class="val"><select id="food_amount"><option>全量</option><option>8割以上</option><option>5〜7割</option><option>3〜5割</option><option>3割未満</option><option>ほぼ摂取困難</option></select></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">嚥下状態</div>
+          <div class="val"><select id="swallow"><option>問題なし</option><option>要観察</option><option>むせあり</option><option>誤嚥疑い</option></select></div>
+          <div class="lbl">体重変化</div>
+          <div class="val"><select id="weight_change"><option>変化なし</option><option>増加</option><option>減少（要注意）</option></select></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">食事特記事項</div>
+          <div class="val"><textarea id="food_note" placeholder="食欲変化・拒否・好みの変化など"></textarea></div>
+        </div>
+      </div>
+
+      <!-- 排泄 -->
+      <div class="sec">
+        <div class="sh sh-b">■ 排泄状況</div>
+        <div class="row r4">
+          <div class="lbl">排泄形態</div>
+          <div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="toilet_self"> 自立</label><label class="ci"><input type="checkbox" id="toilet_pt"> ポータブルトイレ</label><label class="ci"><input type="checkbox" id="toilet_diaper"> オムツ</label><label class="ci"><input type="checkbox" id="toilet_pad"> パッド</label></div></div>
+          <div class="lbl">尿失禁</div>
+          <div class="val"><select id="urine_incon"><option>なし</option><option>あり（日常的）</option><option>時々あり</option></select></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">排便回数（月間）</div>
+          <div class="val"><input type="text" id="defecation_count" placeholder="例：15回"></div>
+          <div class="lbl">排便コントロール</div>
+          <div class="val"><input type="text" id="defecation_ctrl" placeholder="例：テレミンソフト坐薬"></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">排泄特記事項</div>
+          <div class="val"><textarea id="toilet_note" placeholder="便秘・下痢・オムツ触りなど"></textarea></div>
+        </div>
+      </div>
+
+      <!-- 服薬 -->
+      <div class="sec">
+        <div class="sh sh-b">■ 服薬状況</div>
+        <div class="row r4">
+          <div class="lbl">服薬管理</div>
+          <div class="val"><select id="med_mgmt"><option>施設管理（全介助）</option><option>一部自己管理</option><option>自己管理</option></select></div>
+          <div class="lbl">服薬状況</div>
+          <div class="val"><select id="med_status"><option>問題なし</option><option>拒否あり</option><option>飲み忘れあり</option><option>吐き出しあり</option></select></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">処方変更</div>
+          <div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="rx_changed"> あり</label><label class="ci"><input type="checkbox" id="rx_none"> なし</label></div></div>
+          <div class="lbl">受診状況</div>
+          <div class="val"><input type="text" id="hospital_visit" placeholder="例：整形外科 月1回定期受診"></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">服薬特記事項</div>
+          <div class="val"><textarea id="med_note" placeholder="副作用・拒薬・処方変更内容など"></textarea></div>
+        </div>
+      </div>
+
+      <!-- 認知・精神 -->
+      <div class="sec">
+        <div class="sh sh-b">■ 認知・精神状態</div>
+        <div class="row r4">
+          <div class="lbl">認知機能</div>
+          <div class="val"><select id="cognition"><option>安定</option><option>変化なし（低下あり）</option><option>やや悪化</option><option>著明な悪化</option><option>改善傾向</option></select></div>
+          <div class="lbl">気分・意欲</div>
+          <div class="val"><select id="mood"><option>良好・安定</option><option>波あり</option><option>落ち込みあり</option><option>興奮・混乱あり</option></select></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">BPSD</div>
+          <div class="val"><div class="cg">
+            <label class="ci"><input type="checkbox" id="bpsd_wandering"> 徘徊</label>
+            <label class="ci"><input type="checkbox" id="bpsd_night"> 夜間不穏</label>
+            <label class="ci"><input type="checkbox" id="bpsd_mood"> 気分のムラ</label>
+            <label class="ci"><input type="checkbox" id="bpsd_violence"> 暴言・暴力</label>
+            <label class="ci"><input type="checkbox" id="bpsd_theft"> 物盗られ妄想</label>
+            <label class="ci"><input type="checkbox" id="bpsd_refuse"> 介護拒否</label>
+            <label class="ci"><input type="checkbox" id="bpsd_diaper"> オムツ触り</label>
+            <label class="ci"><input type="checkbox" id="bpsd_other"> その他</label>
+          </div></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">精神状態特記事項</div>
+          <div class="val"><textarea id="mental_note" placeholder="詳細・対応内容・改善策など"></textarea></div>
+        </div>
+      </div>
+
+      <!-- リスク -->
+      <div class="sec">
+        <div class="sh sh-o">■ リスク・事故・ヒヤリハット</div>
+        <div class="row r4">
+          <div class="lbl ol">転倒・転落</div>
+          <div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="fall_yes"> あり</label><label class="ci"><input type="checkbox" id="fall_no"> なし</label></div></div>
+          <div class="lbl ol">ヒヤリハット</div>
+          <div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="near_yes"> あり</label><label class="ci"><input type="checkbox" id="near_no"> なし</label></div></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl ol">事故・ヒヤリ詳細</div>
+          <div class="val"><textarea id="incident_note" placeholder="発生日時・状況・対応・再発防止策など"></textarea></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl ol">褥瘡</div>
+          <div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="sore_yes"> あり</label><label class="ci"><input type="checkbox" id="sore_no"> なし</label></div></div>
+          <div class="lbl ol">感染症</div>
+          <div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="infect_yes"> あり</label><label class="ci"><input type="checkbox" id="infect_no"> なし</label></div></div>
+        </div>
+      </div>
+
+      <!-- 家族連絡 -->
+      <div class="sec">
+        <div class="sh sh-g">■ ご家族への連絡・対応</div>
+        <div class="row r4">
+          <div class="lbl gl">家族連絡回数</div>
+          <div class="val"><input type="text" id="family_contact" placeholder="例：3回（電話2回・面会1回）"></div>
+          <div class="lbl gl">面会状況</div>
+          <div class="val"><select id="family_visit"><option>複数回あり</option><option>1回あり</option><option>なし</option><option>面会制限中</option></select></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl gl">家族連絡内容・要望</div>
+          <div class="val"><textarea id="family_note" placeholder="連絡内容・家族からの要望・確認事項など"></textarea></div>
+        </div>
+      </div>
+
+      <!-- ケアマネへ -->
+      <div class="sec">
+        <div class="sh sh-s">■ ケアマネジャーへの連絡・相談事項</div>
+        <div class="row r2">
+          <div class="lbl">サービス変更の必要性</div>
+          <div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="svc_change"> あり（要検討）</label><label class="ci"><input type="checkbox" id="svc_keep"> 現状維持</label></div></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">相談・報告事項</div>
+          <div class="val"><textarea id="cm_note" placeholder="プラン変更の要否・新たなニーズ・連携依頼事項など" style="min-height:68px;"></textarea></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">次回連絡予定日</div>
+          <div class="val"><input type="date" id="next_contact" style="width:150px;"></div>
+          <div class="lbl">作成者</div>
+          <div class="val"><input type="text" id="author" placeholder="氏名"></div>
+        </div>
+      </div>
+
+      <!-- デイサービス -->
+      <div class="sec" id="sec-day">
+        <div class="sh" style="background:#5a4a8a;">■ デイサービス利用状況（みなはるの里 デイサービス）</div>
+        <div class="row r4">
+          <div class="lbl">利用回数（月間）</div>
+          <div class="val"><input type="text" id="day_count" placeholder="例：12回"></div>
+          <div class="lbl">欠席・キャンセル</div>
+          <div class="val"><input type="text" id="day_absent" placeholder="例：2回（体調不良）"></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">送迎状況</div>
+          <div class="val">
+            <select id="day_transport">
+              <option>問題なし</option><option>一部対応変更あり</option><option>要検討</option>
+            </select>
+          </div>
+          <div class="lbl">入浴サービス</div>
+          <div class="val">
+            <div class="cg">
+              <label class="ci"><input type="checkbox" id="day_bath_yes"> 利用あり</label>
+              <label class="ci"><input type="checkbox" id="day_bath_no"> 利用なし</label>
+            </div>
+          </div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">プログラム参加</div>
+          <div class="val">
+            <select id="day_program">
+              <option>積極的に参加</option><option>概ね参加</option>
+              <option>一部参加</option><option>参加困難</option><option>拒否あり</option>
+            </select>
+          </div>
+          <div class="lbl">他利用者との関係</div>
+          <div class="val">
+            <select id="day_relation">
+              <option>良好</option><option>概ね良好</option>
+              <option>トラブルあり</option><option>交流少ない</option>
+            </select>
+          </div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">食事摂取量（デイ）</div>
+          <div class="val">
+            <select id="day_food">
+              <option>全量</option><option>8割以上</option><option>5〜7割</option>
+              <option>3〜5割</option><option>3割未満</option>
+            </select>
+          </div>
+          <div class="lbl">水分摂取（デイ）</div>
+          <div class="val">
+            <select id="day_water">
+              <option>良好</option><option>普通</option><option>少なめ・要注意</option>
+            </select>
+          </div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">バイタル<br>（デイ時）</div>
+          <div class="val"><input type="text" id="day_vital" placeholder="例：血圧 128/76、体温 36.4℃（平均）"></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">デイでの<br>特記事項</div>
+          <div class="val"><textarea id="day_note" placeholder="活動の様子・変化・気になる点・スタッフの対応など"></textarea></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">ご家族への<br>連絡事項（デイ）</div>
+          <div class="val"><textarea id="day_family" placeholder="デイからご家族への連絡・要望・確認事項"></textarea></div>
+        </div>
+      </div>
+
+      <!-- 定期巡回・随時対応型訪問介護看護（悠巡） -->
+      <div class="sec" id="sec-teiki">
+        <div class="sh" style="background:#2a6a5a;">■ 定期巡回・随時対応型訪問介護看護（悠巡）</div>
+        <div class="row r4">
+          <div class="lbl">訪問回数（月間）</div>
+          <div class="val"><input type="text" id="teiki_count" placeholder="例：定期30回・随時2回"></div>
+          <div class="lbl">随時対応件数</div>
+          <div class="val"><input type="text" id="teiki_zuiji" placeholder="例：2件（夜間コール）"></div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">訪問看護<br>連携状況</div>
+          <div class="val">
+            <select id="teiki_nurse">
+              <option>連携良好</option><option>概ね良好</option>
+              <option>要調整</option><option>訪問看護なし</option>
+            </select>
+          </div>
+          <div class="lbl">サービス提供<br>上の問題</div>
+          <div class="val">
+            <div class="cg">
+              <label class="ci"><input type="checkbox" id="teiki_issue_yes"> あり</label>
+              <label class="ci"><input type="checkbox" id="teiki_issue_no"> なし</label>
+            </div>
+          </div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">定期訪問<br>主な内容</div>
+          <div class="val">
+            <div class="cg">
+              <label class="ci"><input type="checkbox" id="teiki_care_hygiene"> 身体介護</label>
+              <label class="ci"><input type="checkbox" id="teiki_care_toilet"> 排泄介助</label>
+              <label class="ci"><input type="checkbox" id="teiki_care_meal"> 食事介助</label>
+              <label class="ci"><input type="checkbox" id="teiki_care_med"> 服薬確認</label>
+              <label class="ci"><input type="checkbox" id="teiki_care_vital"> バイタル測定</label>
+              <label class="ci"><input type="checkbox" id="teiki_care_other"> その他</label>
+            </div>
+          </div>
+          <div class="lbl">随時対応<br>主な理由</div>
+          <div class="val">
+            <div class="cg">
+              <label class="ci"><input type="checkbox" id="teiki_call_fall"> 転倒・転落</label>
+              <label class="ci"><input type="checkbox" id="teiki_call_pain"> 体調不良</label>
+              <label class="ci"><input type="checkbox" id="teiki_call_toilet"> 排泄対応</label>
+              <label class="ci"><input type="checkbox" id="teiki_call_anxiety"> 不安・混乱</label>
+              <label class="ci"><input type="checkbox" id="teiki_call_other"> その他</label>
+            </div>
+          </div>
+        </div>
+        <div class="row r4">
+          <div class="lbl">夜間対応状況</div>
+          <div class="val">
+            <select id="teiki_night">
+              <option>問題なし</option><option>コールあり（対応済）</option>
+              <option>夜間不穏あり</option><option>要注意</option>
+            </select>
+          </div>
+          <div class="lbl">医療連携</div>
+          <div class="val">
+            <select id="teiki_medical">
+              <option>連携良好</option><option>主治医報告あり</option>
+              <option>救急対応あり</option><option>連携不要</option>
+            </select>
+          </div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">定期巡回<br>特記事項</div>
+          <div class="val"><textarea id="teiki_note" placeholder="随時対応の詳細・医療連携内容・ヒヤリハット・申し送り事項など"></textarea></div>
+        </div>
+        <div class="row r2">
+          <div class="lbl">ケアマネへの<br>連絡事項（悠巡）</div>
+          <div class="val"><textarea id="teiki_cm" placeholder="サービス量変更の必要性・新たなニーズ・連携依頼など"></textarea></div>
+        </div>
+      </div>
+
+      <!-- 写真 -->
+      <div class="sec">
+        <div class="sh sh-s">■ 写真・画像添付</div>
+        <div class="photo-wrap">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">写真を追加できます（褥瘡・状態確認・環境など）。印刷時も出力されます。</div>
+          <div class="photo-grid" id="photo-grid">
+            <div class="photo-add" onclick="document.getElementById('photo-input').click()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              写真を追加
+            </div>
+          </div>
+          <input type="file" id="photo-input" accept="image/*" multiple onchange="addPhotos(event)">
+        </div>
+      </div>
+    </div><!-- /form-area -->
+  </div><!-- /main-body -->
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ===== 利用者追加・編集モーダル ===== -->
+<div class="modal-bg hidden" id="modal-bg">
+  <div class="modal">
+    <h3 id="modal-title">利用者を追加</h3>
+    <div class="mrow">
+      <label>氏名 <span style="color:#c0392b;">*</span></label>
+      <input type="text" id="m-name" placeholder="例：山田　花子">
+    </div>
+    <div class="mrow">
+      <label>フリガナ</label>
+      <input type="text" id="m-kana" placeholder="例：ヤマダ　ハナコ">
+    </div>
+    <div class="mrow">
+      <label>要介護度</label>
+      <select id="m-care">
+        <option>要支援１</option><option>要支援２</option>
+        <option>要介護１</option><option>要介護２</option><option>要介護３</option>
+        <option selected>要介護４</option><option>要介護５</option>
+      </select>
+    </div>
+    <div class="mrow">
+      <label>部屋番号</label>
+      <input type="text" id="m-room" placeholder="例：101">
+    </div>
+    <div class="mrow">
+      <label>ケアマネジャー</label>
+      <input type="text" id="m-cm" placeholder="例：菊川 哲也CM（みんなの家）">
+    </div>
+    <div class="mrow">
+      <label>利用サービス <span style="font-weight:400;color:#888;">（複数選択可）</span></label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;">
+          <input type="checkbox" id="m-svc-stay" style="width:14px;height:14px;accent-color:var(--accent);"> 入所（有料老人ホーム）
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;">
+          <input type="checkbox" id="m-svc-day" style="width:14px;height:14px;accent-color:#5a4a8a;"> デイサービス
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;">
+          <input type="checkbox" id="m-svc-teiki" style="width:14px;height:14px;accent-color:#2a6a5a;"> 定期巡回（悠巡）
+        </label>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="mrow" style="margin-bottom:0;">
+        <label>生年月日</label>
+        <input type="date" id="m-dob">
+      </div>
+      <div class="mrow" style="margin-bottom:0;">
+        <label>性別</label>
+        <select id="m-gender"><option value="">-</option><option>男</option><option>女</option></select>
+      </div>
+    </div>
+    <div class="mrow">
+      <label>住所</label>
+      <input type="text" id="m-address" placeholder="例：大分県大分市○○町1-1">
+    </div>
+    <div class="mrow">
+      <label>主治医</label>
+      <input type="text" id="m-doctor" placeholder="例：大分健生病院　山田Dr.">
+    </div>
+    <div class="modal-sep" id="modal-sep-del" style="display:none;"></div>
+    <div class="modal-btns" id="modal-btns-active">
+      <button class="mbtn mbtn-danger" id="btn-delete" style="display:none;margin-right:auto;" onclick="deleteResident()">完全削除</button>
+      <button class="mbtn" id="btn-discharge" style="display:none;margin-right:auto;background:#e67e22;color:white;" onclick="openDischargeConfirm()">退所処理</button>
+      <button class="mbtn mbtn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="mbtn mbtn-primary" onclick="saveResident()">保存</button>
+    </div>
+    <div class="modal-btns" id="modal-btns-discharged" style="display:none;">
+      <button class="mbtn mbtn-danger" style="margin-right:auto;" onclick="deleteResident()">完全削除</button>
+      <button class="mbtn" style="background:#2d6a4f;color:white;" onclick="reinstateResident()">入所中に戻す</button>
+      <button class="mbtn mbtn-cancel" onclick="closeModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const FACILITY_KEY = 'minaharu';
+const RESIDENTS_KEY    = FACILITY_KEY + '_residents';
+const DISCHARGED_KEY   = FACILITY_KEY + '_discharged';
+
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1zHlVcBn96IB9_YLsmCr3r6jpPpD9DJTNVDsp-dTi3IoNtE4SRawnXZ-ODukFQVhl/exec';
+async function gasReq(payload){
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    const dataStr = encodeURIComponent(JSON.stringify(payload));
+    const script = document.createElement('script');
+    window[cbName] = (data) => {
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      resolve(data);
+    };
+    script.onerror = () => {
+      delete window[cbName];
+      if(document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error('通信エラー'));
+    };
+    script.src = GAS_URL + '?data=' + dataStr + '&callback=' + cbName;
+    document.body.appendChild(script);
+    setTimeout(() => { if(window[cbName]){ delete window[cbName]; reject(new Error('タイムアウト')); }}, 15000);
+  });
+}
+let currentTab = 'active';  // 'active' | 'discharged'
+
+const ADL_ITEMS = ['寝返り','起き上がり','立ち上がり','移乗','歩行・移動','食事','服薬','排泄','整容','更衣','入浴','意思疎通'];
+const ADL_ASSIST = ['自立','見守り','一部介助','全介助','実施なし'];
+const ADL_CHANGE = ['改善','変化なし','悪化','未確認'];
+const TEXT_IDS = ['report_month','report_date','cm_name','reporter','overall_status','overall_change',
+  'overall_summary','changes','temp','bp','pulse','spo2','weight','vital_note',
+  'food_type','food_amount','swallow','weight_change','food_note',
+  'urine_incon','defecation_count','defecation_ctrl','toilet_note',
+  'med_mgmt','med_status','hospital_visit','med_note','cognition','mood','mental_note',
+  'incident_note','family_contact','family_visit','family_note','cm_note','next_contact','author','res_address','res_doctor',
+  'day_count','day_absent','day_transport','day_program','day_relation','day_food','day_water','day_vital','day_note','day_family',
+  'teiki_count','teiki_zuiji','teiki_nurse','teiki_night','teiki_medical','teiki_note','teiki_cm'];
+const CHECK_IDS = ['fever_yes','fever_no','toilet_self','toilet_pt','toilet_diaper','toilet_pad',
+  'rx_changed','rx_none','bpsd_wandering','bpsd_night','bpsd_mood','bpsd_violence',
+  'bpsd_theft','bpsd_refuse','bpsd_diaper','bpsd_other',
+  'fall_yes','fall_no','near_yes','near_no','sore_yes','sore_no','infect_yes','infect_no',
+  'svc_change','svc_keep',
+  'day_bath_yes','day_bath_no',
+  'teiki_issue_yes','teiki_issue_no',
+  'teiki_care_hygiene','teiki_care_toilet','teiki_care_meal','teiki_care_med','teiki_care_vital','teiki_care_other',
+  'teiki_call_fall','teiki_call_pain','teiki_call_toilet','teiki_call_anxiety','teiki_call_other'];
+
+let residents = [];
+let currentId = null;
+let editingId = null;
+
+// ===== 利用者CRUD =====
+let discharged = [];  // 退所者リスト
+
+async function loadResidents(){
+  try{
+    const r1 = await gasReq({action:'getResidents', sheet:'月次ケアマネ_利用者'});
+    residents = r1.data || [];
+    const r2 = await gasReq({action:'getResidents', sheet:'月次ケアマネ_退所者'});
+    discharged = r2.data || [];
+  }catch(e){ residents=[]; discharged=[]; }
+  // 5年経過した退所者を自動削除
+  const cutoff = Date.now() - 5*365*24*60*60*1000;
+  discharged = discharged.filter(r => new Date(r.dischargedAt).getTime() > cutoff);
+  saveDischarged();
+}
+async function saveResidents(){
+  await gasReq({action:'saveResidents', sheet:'月次ケアマネ_利用者', data:residents});
+}
+async function saveDischarged(){
+  await gasReq({action:'saveResidents', sheet:'月次ケアマネ_退所者', data:discharged});
+}
+function nextId(){
+  return residents.length ? Math.max(...residents.map(r=>r.id))+1 : 1;
+}
+
+function openAddModal(){
+  editingId = null;
+  document.getElementById('modal-title').textContent = '利用者を追加';
+  document.getElementById('m-name').value='';
+  document.getElementById('m-kana').value='';
+  document.getElementById('m-care').value='要介護４';
+  document.getElementById('m-room').value='';
+  document.getElementById('m-cm').value='';
+  document.getElementById('m-dob').value='';
+  document.getElementById('m-gender').value='';
+  document.getElementById('m-address').value='';
+  document.getElementById('m-doctor').value='';
+  document.getElementById('m-svc-stay').checked=true;
+  document.getElementById('m-svc-day').checked=false;
+  document.getElementById('m-svc-teiki').checked=false;
+  document.getElementById('btn-delete').style.display='none';
+  document.getElementById('btn-discharge').style.display='none';
+  document.getElementById('modal-sep-del').style.display='none';
+  document.getElementById('modal-btns-active').style.display='flex';
+  document.getElementById('modal-btns-discharged').style.display='none';
+  document.getElementById('modal-bg').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('m-name').focus(),50);
+}
+
+function openEditModal(id){
+  const r = residents.find(x=>x.id===id);
+  if(!r) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = '利用者情報を編集';
+  document.getElementById('m-name').value = r.name||'';
+  document.getElementById('m-kana').value = r.kana||'';
+  document.getElementById('m-care').value = r.care||'要介護４';
+  document.getElementById('m-room').value = r.room||'';
+  document.getElementById('m-cm').value      = r.cm||'';
+  document.getElementById('m-dob').value     = r.dob||'';
+  document.getElementById('m-gender').value  = r.gender||'';
+  document.getElementById('m-address').value = r.address||'';
+  document.getElementById('m-doctor').value  = r.doctor||'';
+  document.getElementById('m-svc-stay').checked  = r.svcStay  !== false;
+  document.getElementById('m-svc-day').checked   = !!r.svcDay;
+  document.getElementById('m-svc-teiki').checked = !!r.svcTeiki;
+  document.getElementById('btn-delete').style.display='inline-flex';
+  document.getElementById('btn-discharge').style.display='inline-flex';
+  document.getElementById('modal-sep-del').style.display='block';
+  document.getElementById('modal-btns-active').style.display='flex';
+  document.getElementById('modal-btns-discharged').style.display='none';
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+
+function closeModal(){
+  document.getElementById('modal-bg').classList.add('hidden');
+}
+
+async function saveResident(){
+  const name = document.getElementById('m-name').value.trim();
+  if(!name){ alert('氏名を入力してください'); return; }
+  const r = {
+    id: editingId || nextId(),
+    name, kana:    document.getElementById('m-kana').value.trim(),
+    care:          document.getElementById('m-care').value,
+    room:          document.getElementById('m-room').value.trim(),
+    cm:            document.getElementById('m-cm').value.trim(),
+    dob:           document.getElementById('m-dob').value,
+    gender:        document.getElementById('m-gender').value,
+    address:       document.getElementById('m-address').value.trim(),
+    doctor:        document.getElementById('m-doctor').value.trim(),
+    svcStay:       document.getElementById('m-svc-stay').checked,
+    svcDay:        document.getElementById('m-svc-day').checked,
+    svcTeiki:      document.getElementById('m-svc-teiki').checked,
+  };
+  if(editingId){
+    const idx = residents.findIndex(x=>x.id===editingId);
+    if(idx>=0) residents[idx]=r;
+    // バナー更新
+    if(currentId===editingId){
+      document.getElementById('banner-name').textContent = r.name + (r.kana ? '　'+r.kana : '');
+      const dobStr2 = r.dob ? '　生年月日：'+r.dob.replace(/-/g,'/') : '';
+      const gStr2 = r.gender ? '　'+r.gender : '';
+      const drStr2 = r.doctor ? '　主治医：'+r.doctor : '';
+      document.getElementById('banner-meta').textContent = r.care + (r.room?'　'+r.room+'号室':'') + gStr2 + dobStr2 + drStr2;
+      document.getElementById('cm_name').value = r.cm||'';
+      document.getElementById('res_address').value = r.address||'';
+      document.getElementById('res_doctor').value = r.doctor||'';
+    }
+  } else {
+    residents.push(r);
+  }
+  saveResidents();
+  closeModal();
+  renderList();
+  showToast(editingId ? '✓ 利用者情報を更新しました' : '✓ 利用者を追加しました');
+}
+
+async function deleteResident(){
+  if(!editingId) return;
+  const rA = residents.find(x=>x.id===editingId);
+  const rD = discharged.find(x=>x.id===editingId);
+  const r  = rA || rD;
+  if(!confirm(`「${r?.name}」を完全削除しますか？\n報告データもすべて削除されます。\nこの操作は元に戻せません。`)) return;
+  await gasReq({action:'deleteRecord', sheet:'月次ケアマネ_報告書', id:String(editingId)+'_ALL'});
+  residents  = residents.filter(x=>x.id!==editingId);
+  discharged = discharged.filter(x=>x.id!==editingId);
+  saveResidents(); saveDischarged();
+  closeModal();
+  if(currentId===editingId){
+    currentId=null;
+    document.getElementById('no-select').style.display='flex';
+    document.getElementById('form-area').style.display='none';
+  }
+  renderList();
+  showToast('✓ 利用者データを完全削除しました');
+}
+
+function openDischargeConfirm(){
+  if(!editingId) return;
+  const r = residents.find(x=>x.id===editingId);
+  const dateStr = prompt(`「${r?.name}」の退所日を入力してください（例：2026-06-01）`, new Date().toISOString().slice(0,10));
+  if(!dateStr) return;
+  if(!confirm(`「${r?.name}」を退所処理しますか？\n退所日：${dateStr}\n報告データは5年間保管されます。`)) return;
+  // 退所者リストへ移動
+  const dischR = {...r, dischargedAt: dateStr, dischargedNote: ''};
+  discharged.push(dischR);
+  residents = residents.filter(x=>x.id!==editingId);
+  saveResidents(); saveDischarged();
+  closeModal();
+  if(currentId===editingId){
+    currentId=null;
+    document.getElementById('no-select').style.display='flex';
+    document.getElementById('form-area').style.display='none';
+  }
+  renderList();
+  showToast('✓ 退所処理しました（報告データは5年間保管）');
+}
+
+async function reinstateResident(){
+  if(!editingId) return;
+  const r = discharged.find(x=>x.id===editingId);
+  if(!confirm(`「${r?.name}」を入所中に戻しますか？`)) return;
+  const {dischargedAt, dischargedNote, ...resR} = r;
+  residents.push(resR);
+  discharged = discharged.filter(x=>x.id!==editingId);
+  saveResidents(); saveDischarged();
+  closeModal();
+  renderList();
+  showToast('✓ 入所中に戻しました');
+}
+
+// ===== タブ切替 =====
+function switchTab(tab){
+  currentTab = tab;
+  document.getElementById('tab-active').classList.toggle('active', tab==='active');
+  document.getElementById('tab-discharged').classList.toggle('active', tab==='discharged');
+  // 退所者タブでは追加ボタン無効化
+  document.querySelector('.btn-add-resident').style.opacity = tab==='active'?'1':'0.35';
+  document.querySelector('.btn-add-resident').style.pointerEvents = tab==='active'?'auto':'none';
+  renderList(document.getElementById('search-input').value);
+  // フォームを閉じる
+  currentId=null;
+  document.getElementById('no-select').style.display='flex';
+  document.getElementById('form-area').style.display='none';
+}
+
+// モーダル外クリックで閉じる
+document.getElementById('modal-bg').addEventListener('click', function(e){
+  if(e.target===this) closeModal();
+});
+
+// ===== リスト描画 =====
+function renderList(filter=''){
+  const ul=document.getElementById('resident-list');
+  [...ul.querySelectorAll('.resident-item,.discharged-item')].forEach(el=>el.remove());
+  const emptyMsg=document.getElementById('empty-msg');
+
+  if(currentTab==='active'){
+    const filtered=residents.filter(r=>!filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter)));
+    if(emptyMsg) emptyMsg.style.display=residents.length===0?'block':'none';
+    filtered.forEach(r=>{
+      const div=document.createElement('div');
+      const hasSaved=false;
+      div.className='resident-item'+(r.id===currentId?' active':'')+(hasSaved?' saved':'');
+      const badges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')+(r.svcDay?'<span class="svc-badge badge-day">デイ</span>':'')+(r.svcTeiki?'<span class="svc-badge badge-teiki">定巡</span>':'');
+      div.innerHTML=`
+        <div class="ri-info">
+          <div class="ri-name">${r.name}</div>
+          <div class="ri-sub">${r.care}${r.room?'　'+r.room+'号室':''}</div>
+          <div style="margin-top:2px;">${badges}</div>
+        </div>
+        <div class="ri-dot" title="保存済"></div>
+        <button class="ri-edit" onclick="event.stopPropagation();openEditModal(${r.id})" title="編集">✎</button>
+      `;
+      div.onclick=()=>selectResident(r.id);
+      ul.appendChild(div);
+    });
+  } else {
+    const filtered=discharged.filter(r=>!filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter)));
+    if(emptyMsg) emptyMsg.style.display=discharged.length===0?'block':'none';
+    filtered.forEach(r=>{
+      const div=document.createElement('div');
+      div.className='discharged-item'+(r.id===currentId?' active':'');
+      const expireDate=new Date(new Date(r.dischargedAt).getTime()+5*365*24*60*60*1000);
+      const daysLeft=Math.ceil((expireDate-Date.now())/(24*60*60*1000));
+      const expireStr=daysLeft<180?`<span class="expire-warn">⚠ 残${daysLeft}日</span>`:`削除まで${Math.floor(daysLeft/30)}ヶ月`;
+      div.innerHTML=`
+        <div class="ri-info">
+          <div class="ri-name">${r.name}</div>
+          <div class="ri-sub">${r.care}　退所：${r.dischargedAt}</div>
+          <div class="di-date">${expireStr}</div>
+        </div>
+        <button class="ri-edit" onclick="event.stopPropagation();openDischargedModal(${r.id})" title="詳細">✎</button>
+      `;
+      div.onclick=()=>selectDischargedResident(r.id);
+      ul.appendChild(div);
+    });
+  }
+}
+
+function filterList(){
+  renderList(document.getElementById('search-input').value);
+}
+
+function selectDischargedResident(id){
+  if(currentId && currentId!==id) saveData(true);
+  currentId=id;
+  const r=discharged.find(x=>x.id===id);
+  document.getElementById('no-select').style.display='none';
+  document.getElementById('form-area').style.display='block';
+  document.getElementById('banner-name').textContent=r.name+(r.kana?'　'+r.kana:'');
+  const dobStr = r.dob ? '　生年月日：'+r.dob.replace(/-/g,'/') : '';
+  const gStr   = r.gender ? '　'+r.gender : '';
+  const drStr  = r.doctor ? '　主治医：'+r.doctor : '';
+  document.getElementById('banner-meta').textContent='【退所】退所日：'+r.dischargedAt+' ／ '+r.care+(r.room?'　'+r.room+'号室':'')+gStr+dobStr+drStr;
+  document.getElementById('banner-meta').style.color='#e67e22';
+  buildADL();
+  loadData(id);
+  renderList(document.getElementById('search-input').value);
+  document.getElementById('main-body').scrollTop=0;
+}
+
+function openDischargedModal(id){
+  editingId=id;
+  const r=discharged.find(x=>x.id===id);
+  document.getElementById('modal-title').textContent='退所者情報';
+  document.getElementById('m-name').value=r.name||'';
+  document.getElementById('m-kana').value=r.kana||'';
+  document.getElementById('m-care').value=r.care||'要介護４';
+  document.getElementById('m-room').value=r.room||'';
+  document.getElementById('m-cm').value=r.cm||'';
+  document.getElementById('m-dob').value=r.dob||'';
+  document.getElementById('m-gender').value=r.gender||'';
+  document.getElementById('m-address').value=r.address||'';
+  document.getElementById('m-doctor').value=r.doctor||'';
+  document.getElementById('btn-delete').style.display='none';
+  document.getElementById('btn-discharge').style.display='none';
+  document.getElementById('modal-sep-del').style.display='block';
+  document.getElementById('modal-btns-active').style.display='none';
+  document.getElementById('modal-btns-discharged').style.display='flex';
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+
+// ===== ストレージキー =====
+function dataKey(id, month){ return FACILITY_KEY+'_'+id+'_'+(month||getCurrentMonth()); }
+function photoKey(id, month){ return FACILITY_KEY+'_photo_'+id+'_'+(month||getCurrentMonth()); }
+function getCurrentMonth(){
+  return document.getElementById('report_month')?.value || todayMonth();
+}
+function todayMonth(){
+  const t=new Date();
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+}
+
+// ===== ADL =====
+// ===== 印刷メニュー =====
+function togglePrintMenu(){
+  const m=document.getElementById('print-menu');
+  m.style.display = m.style.display==='none' ? 'block' : 'none';
+  // 現在の利用者のサービスに応じてメニュー項目をグレーアウト
+  if(currentId){
+    const r=residents.find(x=>x.id===currentId)||discharged.find(x=>x.id===currentId)||{};
+    document.getElementById('pmenu-stay').style.opacity  = r.svcStay!==false ?'1':'0.35';
+    document.getElementById('pmenu-day').style.opacity   = r.svcDay  ?'1':'0.35';
+    document.getElementById('pmenu-teiki').style.opacity = r.svcTeiki?'1':'0.35';
+  }
+}
+// メニュー外クリックで閉じる
+document.addEventListener('click', function(e){
+  const wrap=document.getElementById('print-menu-wrap');
+  if(wrap && !wrap.contains(e.target)){
+    document.getElementById('print-menu').style.display='none';
+  }
+});
+
+function doPrint(mode){
+  document.getElementById('print-menu').style.display='none';
+  const tagEl=document.getElementById('print-svc-tag');
+  // bodyのクラスをリセット
+  document.body.classList.remove('print-all','print-stay','print-day','print-teiki');
+
+  if(mode==='all'){
+    document.body.classList.add('print-all');
+    if(tagEl) tagEl.innerHTML='';
+  } else if(mode==='stay'){
+    document.body.classList.add('print-stay');
+    if(tagEl) tagEl.innerHTML='<span class="print-svc-tag tag-stay">入所</span>';
+  } else if(mode==='day'){
+    document.body.classList.add('print-day');
+    if(tagEl) tagEl.innerHTML='<span class="print-svc-tag tag-day">デイサービス</span>';
+  } else if(mode==='teiki'){
+    document.body.classList.add('print-teiki');
+    if(tagEl) tagEl.innerHTML='<span class="print-svc-tag tag-teiki">定期巡回（悠巡）</span>';
+  }
+
+  // 基本情報・ADL・バイタル等の共通セクションは常に印刷
+  // デイ・定期巡回固有セクションはCSSで制御済み
+  setTimeout(()=>{
+    window.print();
+    // 印刷後にクラスをリセット
+    setTimeout(()=>{
+      document.body.classList.remove('print-all','print-stay','print-day','print-teiki');
+      if(tagEl) tagEl.innerHTML='';
+    }, 500);
+  }, 100);
+}
+
+function updateServiceSections(r){
+  // デイサービスセクション
+  const secDay = document.getElementById('sec-day');
+  if(secDay) secDay.style.display = r.svcDay ? 'block' : 'none';
+  // 定期巡回セクション
+  const secTeiki = document.getElementById('sec-teiki');
+  if(secTeiki) secTeiki.style.display = r.svcTeiki ? 'block' : 'none';
+}
+
+function buildADL(){
+  const tbody=document.getElementById('adl-tbody');
+  tbody.innerHTML='';
+  ADL_ITEMS.forEach((label,i)=>{
+    const tr=document.createElement('tr');
+    const sa=document.createElement('select');
+    ADL_ASSIST.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;sa.appendChild(op);});
+    sa.className='adl-assist';sa.dataset.idx=i;
+    const sc=document.createElement('select');
+    ADL_CHANGE.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;if(o==='変化なし')op.selected=true;sc.appendChild(op);});
+    sc.className='adl-change';sc.dataset.idx=i;
+    const ta=document.createElement('textarea');
+    ta.placeholder='特記事項';ta.className='adl-note';ta.dataset.idx=i;
+    tr.innerHTML=`<td class="ilbl">${label}</td>`;
+    [sa,sc,ta].forEach(el=>{const td=document.createElement('td');td.appendChild(el);tr.appendChild(td);});
+    tbody.appendChild(tr);
+  });
+}
+
+// ===== 利用者選択 =====
+function selectResident(id){
+  if(currentId && currentId!==id) saveData(true);
+  currentId=id;
+  const r=residents.find(x=>x.id===id);
+  document.getElementById('no-select').style.display='none';
+  document.getElementById('form-area').style.display='block';
+  document.getElementById('banner-name').textContent=r.name+(r.kana?'　'+r.kana:'');
+  const metaEl=document.getElementById('banner-meta');
+  const bMeta=r.care+(r.room?'　'+r.room+'号室':'');
+  const bBadges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')+(r.svcDay?'<span class="svc-badge badge-day">デイサービス</span>':'')+(r.svcTeiki?'<span class="svc-badge badge-teiki">定期巡回</span>':'');
+  metaEl.innerHTML=bMeta+'　'+bBadges;
+  const t=new Date();
+  const ymd=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  document.getElementById('report_month').value=todayMonth();
+  document.getElementById('report_date').value=ymd;
+  document.getElementById('cm_name').value=r.cm||'';
+  document.getElementById('res_address').value=r.address||'';
+  document.getElementById('res_doctor').value=r.doctor||'';
+  updateServiceSections(r);
+  buildADL();
+  loadData(id);
+  renderList(document.getElementById('search-input').value);
+  document.getElementById('main-body').scrollTop=0;
+}
+
+// ===== データ収集・適用 =====
+function collectData(){
+  const d={};
+  TEXT_IDS.forEach(id=>{const el=document.getElementById(id);if(el)d[id]=el.value;});
+  CHECK_IDS.forEach(id=>{const el=document.getElementById(id);if(el)d[id]=el.checked;});
+  d.adl=ADL_ITEMS.map((_,i)=>({
+    assist:document.querySelector(`.adl-assist[data-idx="${i}"]`)?.value||'',
+    change:document.querySelector(`.adl-change[data-idx="${i}"]`)?.value||'',
+    note:  document.querySelector(`.adl-note[data-idx="${i}"]`)?.value||'',
+  }));
+  return d;
+}
+function applyData(d){
+  TEXT_IDS.forEach(id=>{const el=document.getElementById(id);if(el&&d[id]!==undefined)el.value=d[id];});
+  CHECK_IDS.forEach(id=>{const el=document.getElementById(id);if(el&&d[id]!==undefined)el.checked=d[id];});
+  if(d.adl) d.adl.forEach((a,i)=>{
+    const sa=document.querySelector(`.adl-assist[data-idx="${i}"]`);
+    const sc=document.querySelector(`.adl-change[data-idx="${i}"]`);
+    const ta=document.querySelector(`.adl-note[data-idx="${i}"]`);
+    if(sa)sa.value=a.assist; if(sc)sc.value=a.change; if(ta)ta.value=a.note;
+  });
+}
+
+async function saveData(silent=false){
+  if(!currentId) return;
+  const d=collectData();
+  await gasReq({action:'saveRecord', sheet:'月次ケアマネ_報告書', id:currentId+'_'+d.report_month, data:d});
+  // 写真
+  const imgs=[...document.querySelectorAll('#photo-grid img')].map(img=>({src:img.src,cap:img.nextElementSibling?.textContent||''}));
+  // 写真データは省略（容量大のため）
+  if(!silent) showToast('✓ 保存しました');
+  renderList(document.getElementById('search-input').value);
+}
+
+async function loadData(id){
+  const month=getCurrentMonth();
+  let raw=null; try{ const r=await gasReq({action:'getRecord', sheet:'月次ケアマネ_報告書', id:id+'_'+month}); raw=r.data?JSON.stringify(r.data):null; }catch(e){}
+  const _raw=raw;
+  if(raw){try{applyData(JSON.parse(raw));}catch(e){}}
+  loadPhotos(id,month);
+}
+
+function loadPhotos(id,month){
+  const grid=document.getElementById('photo-grid');
+  [...grid.querySelectorAll('.photo-thumb')].forEach(el=>el.remove());
+  const raw=null;
+  if(!raw) return;
+  try{JSON.parse(raw).forEach(p=>addPhotoThumb(p.src,p.cap));}catch(e){}
+}
+
+document.getElementById('report_month')?.addEventListener('change',function(){
+  if(currentId) loadData(currentId);
+});
+
+// ===== 写真 =====
+function addPhotos(e){
+  [...e.target.files].forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>addPhotoThumb(ev.target.result,'');
+    r.readAsDataURL(f);
+  });
+  e.target.value='';
+}
+function addPhotoThumb(src,cap){
+  const grid=document.getElementById('photo-grid');
+  const addBtn=grid.querySelector('.photo-add');
+  const div=document.createElement('div');div.className='photo-thumb';
+  const img=document.createElement('img');img.src=src;
+  const capEl=document.createElement('div');capEl.className='photo-cap';
+  capEl.contentEditable=true;capEl.textContent=cap||'コメントを入力';capEl.style.cursor='text';
+  const del=document.createElement('button');del.className='del-photo';del.textContent='×';del.onclick=()=>div.remove();
+  div.appendChild(img);div.appendChild(del);div.appendChild(capEl);
+  grid.insertBefore(div,addBtn);
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ===== 初期化 =====
+loadResidents();
+renderList();
+</script>
+</body>
+</html>
