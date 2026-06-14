@@ -815,24 +815,13 @@ const DISCHARGED_KEY   = FACILITY_KEY + '_discharged';
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1zHlVcBn96IB9_YLsmCr3r6jpPpD9DJTNVDsp-dTi3IoNtE4SRawnXZ-ODukFQVhl/exec';
 async function gasReq(payload){
-  return new Promise((resolve, reject) => {
-    const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
-    const dataStr = encodeURIComponent(JSON.stringify(payload));
-    const script = document.createElement('script');
-    window[cbName] = (data) => {
-      delete window[cbName];
-      if(document.body.contains(script)) document.body.removeChild(script);
-      resolve(data);
-    };
-    script.onerror = () => {
-      delete window[cbName];
-      if(document.body.contains(script)) document.body.removeChild(script);
-      reject(new Error('通信エラー'));
-    };
-    script.src = GAS_URL + '?data=' + dataStr + '&callback=' + cbName;
-    document.body.appendChild(script);
-    setTimeout(() => { if(window[cbName]){ delete window[cbName]; reject(new Error('タイムアウト')); }}, 15000);
-  });
+  const url = GAS_URL + '?' + new URLSearchParams(
+    Object.fromEntries(
+      Object.entries(payload).map(([k,v]) => [k, typeof v === 'object' ? JSON.stringify(v) : v])
+    )
+  ).toString();
+  const res = await fetch(url);
+  return res.json();
 }
 let currentTab = 'active';  // 'active' | 'discharged'
 
