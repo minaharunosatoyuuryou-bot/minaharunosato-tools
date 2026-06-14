@@ -571,9 +571,9 @@ let topicCount = 0;
 async function initData(){
   try{
     const r1 = await gasReq({action:'getResidents', sheet:'サービス担当者会議録_利用者'});
-    residents = r1.data || [];
+    residents = (r1.data || []).map(r => typeof r === 'string' ? JSON.parse(r) : r);
     const r2 = await gasReq({action:'getResidents', sheet:'サービス担当者会議録_退所者'});
-    discharged = r2.data || [];
+    discharged = (r2.data || []).map(r => typeof r === 'string' ? JSON.parse(r) : r);
     const cutoff = Date.now() - 5*365*24*60*60*1000;
     discharged = discharged.filter(r => new Date(r.dischargedAt||0).getTime() > cutoff);
   }catch(e){ residents=[]; discharged=[]; }

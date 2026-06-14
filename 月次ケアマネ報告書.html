@@ -856,14 +856,15 @@ let discharged = [];  // 退所者リスト
 async function loadResidents(){
   try{
     const r1 = await gasReq({action:'getResidents', sheet:'月次ケアマネ_利用者'});
-    residents = r1.data || [];
+    residents = (r1.data || []).map(r => typeof r === 'string' ? JSON.parse(r) : r);
     const r2 = await gasReq({action:'getResidents', sheet:'月次ケアマネ_退所者'});
-    discharged = r2.data || [];
+    discharged = (r2.data || []).map(r => typeof r === 'string' ? JSON.parse(r) : r);
   }catch(e){ residents=[]; discharged=[]; }
   // 5年経過した退所者を自動削除
   const cutoff = Date.now() - 5*365*24*60*60*1000;
   discharged = discharged.filter(r => new Date(r.dischargedAt).getTime() > cutoff);
   saveDischarged();
+  renderList();
 }
 async function saveResidents(){
   await gasReq({action:'saveResidents', sheet:'月次ケアマネ_利用者', data:residents});
