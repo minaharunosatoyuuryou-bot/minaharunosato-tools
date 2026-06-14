@@ -73,6 +73,13 @@ header h1 { font-size: 16px; font-weight: 700; }
 .vital-table .name-td { text-align: left; font-weight: 700; cursor: pointer; color: #1e4a6e; text-decoration: underline; }
 .vital-table .yousu-td { text-align: left; white-space: normal; font-size: 11px; color: #444; min-width: 180px; max-width: 260px; line-height: 1.4; }
 .ok { color: #27ae60; font-weight: 700; }
+  .chip-wrap { display: flex; flex-wrap: wrap; gap: 5px; padding: 4px 0; }
+  .chip { font-size: 12px; padding: 4px 10px; border: 1px solid #ccc; border-radius: 14px; cursor: pointer; background: #fff; color: #555; transition: all 0.15s; user-select: none; }
+  .chip.on { background: #2c5f8a; color: #fff; border-color: #2c5f8a; font-weight: 700; }
+  .shokuji-wrap { display: flex; gap: 10px; flex: 1; flex-wrap: wrap; align-items: center; }
+  .shokuji-block { display: flex; align-items: center; gap: 5px; }
+  .shokuji-block label { font-size: 11px; color: #888; white-space: nowrap; }
+  .shokuji-block select { width: 80px; padding: 6px 4px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #fafafa; }
 .alert { color: #e74c3c; font-weight: 700; }
 
 /* ===== 利用者管理タブ ===== */
@@ -215,7 +222,28 @@ header h1 { font-size: 16px; font-weight: 700; }
       </div>
       <div class="row">
         <label>食事</label>
-        <input type="text" id="shokuji" placeholder="全量・7割など">
+        <div class="shokuji-wrap">
+          <div class="shokuji-block">
+            <label>主食</label>
+            <select id="shokuji_main">
+              <option value="">―</option>
+              <option>10割</option><option>9割</option><option>8割</option>
+              <option>7割</option><option>6割</option><option>5割</option>
+              <option>4割</option><option>3割</option><option>2割</option>
+              <option>1割</option><option>0割</option>
+            </select>
+          </div>
+          <div class="shokuji-block">
+            <label>副食</label>
+            <select id="shokuji_sub">
+              <option value="">―</option>
+              <option>10割</option><option>9割</option><option>8割</option>
+              <option>7割</option><option>6割</option><option>5割</option>
+              <option>4割</option><option>3割</option><option>2割</option>
+              <option>1割</option><option>0割</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div class="row">
         <label>内服薬</label>
@@ -237,9 +265,33 @@ header h1 { font-size: 16px; font-weight: 700; }
         <label>様子</label>
         <textarea id="yousu" placeholder="一日の利用者様の様子を入力"></textarea>
       </div>
-      <div class="row">
-        <label>アクティビティ</label>
-        <input type="text" id="activity" placeholder="塗り絵・脳トレなど">
+      <div class="row" style="flex-direction:column;align-items:flex-start;">
+        <label style="margin-bottom:6px;">アクティビティ</label>
+        <div class="chip-wrap" id="activity-chips">
+          <span class="chip" onclick="toggleChip(this)">機能訓練</span>
+          <span class="chip" onclick="toggleChip(this)">レクリエーション</span>
+          <span class="chip" onclick="toggleChip(this)">カラオケ</span>
+          <span class="chip" onclick="toggleChip(this)">パズル</span>
+          <span class="chip" onclick="toggleChip(this)">ジェンガ</span>
+          <span class="chip" onclick="toggleChip(this)">すごろく</span>
+          <span class="chip" onclick="toggleChip(this)">オセロゲーム</span>
+          <span class="chip" onclick="toggleChip(this)">トランプ</span>
+          <span class="chip" onclick="toggleChip(this)">人生ゲーム</span>
+          <span class="chip" onclick="toggleChip(this)">クロスワード</span>
+          <span class="chip" onclick="toggleChip(this)">水彩画</span>
+          <span class="chip" onclick="toggleChip(this)">ぬり絵</span>
+          <span class="chip" onclick="toggleChip(this)">計算</span>
+          <span class="chip" onclick="toggleChip(this)">漢字</span>
+          <span class="chip" onclick="toggleChip(this)">間違い探し</span>
+          <span class="chip" onclick="toggleChip(this)">点つなぎ</span>
+          <span class="chip" onclick="toggleChip(this)">手工芸</span>
+          <span class="chip" onclick="toggleChip(this)">脳トレ</span>
+          <span class="chip" onclick="toggleChip(this)">おやつ作り</span>
+          <span class="chip" onclick="toggleChip(this)">体操</span>
+          <span class="chip" onclick="toggleChip(this)">散歩</span>
+          <span class="chip" onclick="toggleChip(this)">音楽鑑賞</span>
+        </div>
+        <input type="text" id="activity_other" placeholder="その他（自由入力）" style="margin-top:6px;width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;background:#fafafa;font-family:inherit;">
       </div>
       <div class="row">
         <label>記入者</label>
@@ -454,21 +506,24 @@ function fillForm(r) {
   document.getElementById('nyuyoku').checked = r.nyuyoku === true || r.nyuyoku === 'TRUE';
   document.getElementById('taiso_am').checked = r.taiso_am === true || r.taiso_am === 'TRUE';
   document.getElementById('taiso_pm').checked = r.taiso_pm === true || r.taiso_pm === 'TRUE';
-  document.getElementById('shokuji').value = r.shokuji || '';
+  const shokujiParts = (r.shokuji || '').split('／副');
+  document.getElementById('shokuji_main').value = shokujiParts[0] || '';
+  document.getElementById('shokuji_sub').value = shokujiParts[1] || '';
   document.getElementById('naifuku').value = r.naifuku || '';
   document.getElementById('gaiyou').value = r.gaiyou || '';
   document.getElementById('haiben').value = r.haiben || '';
   document.getElementById('yousu').value = r.yousu || '';
-  document.getElementById('activity').value = r.activity || '';
+  setChips(r.activity || '');
   document.getElementById('writer').value = r.writer || '';
 }
 
 function clearForm() {
   ['jikan_s','jikan_e','oushin','taion','ketsuatsu','myaku','r_taion','r_ketsu','r_myaku',
-   'shokuji','naifuku','gaiyou','haiben','yousu','activity','writer'].forEach(id => {
+   'shokuji_main','shokuji_sub','naifuku','gaiyou','haiben','yousu','writer'].forEach(id => {
     document.getElementById(id).value = '';
   });
   ['nyuyoku','taiso_am','taiso_pm'].forEach(id => document.getElementById(id).checked = false);
+  clearChips();
 }
 
 async function saveVital() {
@@ -492,12 +547,12 @@ async function saveVital() {
       nyuyoku: document.getElementById('nyuyoku').checked,
       taiso_am: document.getElementById('taiso_am').checked,
       taiso_pm: document.getElementById('taiso_pm').checked,
-      shokuji: document.getElementById('shokuji').value,
+      shokuji: (document.getElementById('shokuji_main').value||'') + (document.getElementById('shokuji_sub').value ? '／副'+document.getElementById('shokuji_sub').value : ''),
       naifuku: document.getElementById('naifuku').value,
       gaiyou: document.getElementById('gaiyou').value,
       haiben: document.getElementById('haiben').value,
       yousu: document.getElementById('yousu').value,
-      activity: document.getElementById('activity').value,
+      activity: getChips(),
       writer: document.getElementById('writer').value
     };
     await gas({ action: 'saveVital', data: JSON.stringify(data) });
@@ -569,6 +624,32 @@ function jumpToEdit(name) {
     if (sel.options[i].text === name) { sel.selectedIndex = i; break; }
   }
   loadResidentVital();
+}
+
+// ===== チップ =====
+function toggleChip(el) { el.classList.toggle('on'); }
+
+function getChips() {
+  const chips = Array.from(document.querySelectorAll('#activity-chips .chip.on'))
+    .map(el => el.textContent);
+  const other = document.getElementById('activity_other').value.trim();
+  if (other) chips.push(other);
+  return chips.join('・');
+}
+
+function setChips(val) {
+  const parts = val ? val.split('・') : [];
+  const knownChips = Array.from(document.querySelectorAll('#activity-chips .chip')).map(el => el.textContent);
+  document.querySelectorAll('#activity-chips .chip').forEach(el => {
+    el.classList.toggle('on', parts.includes(el.textContent));
+  });
+  const others = parts.filter(p => !knownChips.includes(p));
+  document.getElementById('activity_other').value = others.join('・');
+}
+
+function clearChips() {
+  document.querySelectorAll('#activity-chips .chip').forEach(el => el.classList.remove('on'));
+  document.getElementById('activity_other').value = '';
 }
 
 // ===== Toast =====
