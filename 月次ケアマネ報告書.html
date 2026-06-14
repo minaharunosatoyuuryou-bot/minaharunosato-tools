@@ -1349,9 +1349,10 @@ async function saveData(silent=false){
 
 async function loadData(id){
   const month=getCurrentMonth();
-  let raw=null; try{ const r=await gasReq({action:'getRecord', sheet:'月次ケアマネ_報告書', id:id+'_'+month}); raw=r.data?JSON.stringify(r.data):null; }catch(e){}
-  const _raw=raw;
-  if(raw){try{applyData(JSON.parse(raw));}catch(e){}}
+  try{
+    const r=await gasReq({action:'getRecord', sheet:'月次ケアマネ_報告書', id:id+'_'+month});
+    if(r.data){ applyData(r.data); }
+  }catch(e){}
   loadPhotos(id,month);
 }
 

@@ -805,15 +805,18 @@ async function saveData(silent=false){
   const d=collectData();
   try{
     if(!silent) toast('保存中…');
-    await gasReq({action:'saveRecord', sheet:'サービス担当者会議録', id:String(currentId), data:d});
+    const saveId = String(currentId) + '_' + (d['f-date'] || new Date().toISOString().slice(0,10));
+    await gasReq({action:'saveRecord', sheet:'サービス担当者会議録', id:saveId, data:d});
     if(!silent) toast('✓ 保存しました');
   }catch(e){ if(!silent) toast('保存失敗'); }
   renderList();
 }
 async function loadData(id){
+  // 最新の記録を履歴から取得
   try{
-    const r = await gasReq({action:'getRecord', sheet:'サービス担当者会議録', id:String(id)});
-    if(r.data) applyData(r.data);
+    const res = await gasReq({action:'getHistory', sheet:'サービス担当者会議録', residentId:String(id)});
+    const items = res.data || [];
+    if(items.length > 0) applyData(items[0].data);
   }catch(e){}
 }
 
@@ -888,7 +891,7 @@ async function deleteResident(){
   if(!confirm('完全削除しますか？（会議録データも削除されます）')) return;
   residents=residents.filter(x=>x.id!==editingId);
   discharged=discharged.filter(x=>x.id!==editingId);
-  await gasReq({action:'deleteRecord', sheet:'サービス担当者会議録', id:String(editingId)});
+  await gasReq({action:'deleteRecord', sheet:'サービス担当者会議録', id:String(editingId)+'_ALL'});
   await gasReq({action:'saveResidents', sheet:'サービス担当者会議録_利用者', data:residents});
   await gasReq({action:'saveResidents', sheet:'サービス担当者会議録_退所者', data:discharged});
   if(currentId===editingId){ currentId=null; document.getElementById('no-select').style.display=''; document.getElementById('form-area').style.display='none'; }
