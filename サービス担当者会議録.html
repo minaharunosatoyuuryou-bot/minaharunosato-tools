@@ -236,6 +236,7 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-active" onclick="switchTab('active')">在籍中</button>
     <button class="tab-btn" id="tab-discharged" onclick="switchTab('discharged')">退所者</button>
+    <button class="tab-btn" id="tab-history" onclick="switchTab('history')">履歴</button>
   </div>
   <div class="sidebar-search">
     <input type="text" id="search-input" placeholder="氏名で検索…" oninput="renderList()">
@@ -248,6 +249,7 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
   </div>
   <div class="resident-list" id="resident-list">
     <div class="empty-list" id="empty-msg">利用者が登録されていません</div>
+    <div id="history-list" style="display:none;padding:8px 0;"></div>
   </div>
   <div class="sidebar-footer">社会福祉法人 悠久福祉会</div>
 </div>
@@ -615,7 +617,54 @@ function switchTab(tab){
   currentTab=tab;
   document.getElementById('tab-active').classList.toggle('active',tab==='active');
   document.getElementById('tab-discharged').classList.toggle('active',tab==='discharged');
-  renderList();
+  document.getElementById('tab-history').classList.toggle('active',tab==='history');
+  document.getElementById('history-list').style.display = tab==='history' ? 'block' : 'none';
+  document.getElementById('resident-list').style.display = tab!=='history' ? 'block' : 'none';
+  if(tab==='history') renderHistoryList();
+  else renderList();
+}
+
+async function renderHistoryList(){
+  if(!currentId){ 
+    document.getElementById('history-list').innerHTML='<div class="empty-list">利用者を選択してください</div>';
+    return;
+  }
+  document.getElementById('history-list').innerHTML='<div class="empty-list">読み込み中...</div>';
+  try{
+    const res = await gasReq({action:'getHistory', sheet:'サービス担当者会議録', residentId:String(currentId)});
+    const items = res.data || [];
+    if(!items.length){
+      document.getElementById('history-list').innerHTML='<div class="empty-list">記録がありません</div>';
+      return;
+    }
+    const r=[...residents,...discharged].find(x=>x.id===currentId)||{};
+    document.getElementById('history-list').innerHTML = items.map(item=>{
+      const d = item.data||{};
+      const dateStr = d['f-date']||item.id;
+      const reason = d['f-reason']||'';
+      const place = d['f-place']||'';
+      return `<div class="ri" onclick="loadHistoryItem('${item.id}')" style="flex-direction:column;align-items:flex-start;gap:2px;padding:8px 10px;border-left:3px solid #3a7cb8;">
+        <div class="ri-name" style="font-size:12px;">${dateStr}</div>
+        <div class="ri-sub">${reason}${place?' / '+place:''}</div>
+        <div class="ri-sub" style="font-size:9px;opacity:0.5;">${item.updatedAt}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('history-list').innerHTML='<div class="empty-list">読込エラー</div>';
+  }
+}
+
+async function loadHistoryItem(id){
+  try{
+    const res = await gasReq({action:'getRecord', sheet:'サービス担当者会議録', id:id});
+    if(res.data){
+      // フォームエリアを表示
+      document.getElementById('no-select').style.display='none';
+      document.getElementById('form-area').style.display='block';
+      applyData(res.data);
+      toast('✓ 履歴を読み込みました');
+    }
+  }catch(e){ toast('読込エラー'); }
 }
 
 // ===== 利用者リスト =====

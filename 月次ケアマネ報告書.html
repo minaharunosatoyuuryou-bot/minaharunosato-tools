@@ -261,6 +261,7 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-active" onclick="switchTab('active')">入所中</button>
     <button class="tab-btn" id="tab-discharged" onclick="switchTab('discharged')">退所者</button>
+    <button class="tab-btn" id="tab-history" onclick="switchTab('history')">履歴</button>
   </div>
   <div class="sidebar-search">
     <input type="text" id="search-input" placeholder="氏名で検索…" oninput="filterList()">
@@ -273,6 +274,7 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
   </div>
   <div class="resident-list" id="resident-list">
     <div class="empty-list" id="empty-msg" style="display:none;">利用者が登録されていません</div>
+    <div id="history-list" style="display:none;padding:8px 0;"></div>
   </div>
   <div class="sidebar-footer">社会福祉法人 悠久福祉会</div>
 </div>
@@ -1036,14 +1038,64 @@ function switchTab(tab){
   currentTab = tab;
   document.getElementById('tab-active').classList.toggle('active', tab==='active');
   document.getElementById('tab-discharged').classList.toggle('active', tab==='discharged');
-  // 退所者タブでは追加ボタン無効化
+  document.getElementById('tab-history').classList.toggle('active', tab==='history');
   document.querySelector('.btn-add-resident').style.opacity = tab==='active'?'1':'0.35';
   document.querySelector('.btn-add-resident').style.pointerEvents = tab==='active'?'auto':'none';
-  renderList(document.getElementById('search-input').value);
-  // フォームを閉じる
-  currentId=null;
-  document.getElementById('no-select').style.display='flex';
-  document.getElementById('form-area').style.display='none';
+  document.getElementById('history-list').style.display = tab==='history' ? 'block' : 'none';
+  document.getElementById('resident-list').style.display = tab!=='history' ? 'block' : 'none';
+  if(tab==='history') renderHistoryList();
+  else {
+    renderList(document.getElementById('search-input').value);
+    currentId=null;
+    document.getElementById('no-select').style.display='flex';
+    document.getElementById('form-area').style.display='none';
+  }
+}
+
+async function renderHistoryList(){
+  if(!currentId){
+    document.getElementById('history-list').innerHTML='<div class="empty-list">先に利用者を選択してください</div>';
+    return;
+  }
+  document.getElementById('history-list').innerHTML='<div class="empty-list">読み込み中...</div>';
+  try{
+    const res = await gasReq({action:'getHistory', sheet:'月次ケアマネ_報告書', residentId:String(currentId)});
+    const items = res.data || [];
+    if(!items.length){
+      document.getElementById('history-list').innerHTML='<div class="empty-list">報告書がありません</div>';
+      return;
+    }
+    const r=[...residents,...discharged].find(x=>x.id===currentId)||{};
+    document.getElementById('history-list').innerHTML = 
+      `<div style="padding:6px 10px;font-size:11px;color:rgba(255,255,255,0.6);border-bottom:1px solid rgba(255,255,255,0.1);">${r.name||''}　${items.length}件</div>` +
+      items.map(item=>{
+        const d = item.data||{};
+        const month = d['report_month'] || item.id.split('_').slice(1).join('_');
+        const overall = d['overall_status']||'';
+        return `<div class="ri" onclick="loadHistoryItem('${item.id}')" style="flex-direction:column;align-items:flex-start;gap:2px;padding:8px 10px;border-left:3px solid #3a7cb8;">
+          <div class="ri-name" style="font-size:13px;">${month}</div>
+          <div class="ri-sub">${overall}</div>
+          <div class="ri-sub" style="font-size:9px;opacity:0.5;">${item.updatedAt}</div>
+        </div>`;
+      }).join('');
+  }catch(e){
+    document.getElementById('history-list').innerHTML='<div class="empty-list">読込エラー</div>';
+  }
+}
+
+async function loadHistoryItem(id){
+  try{
+    const res = await gasReq({action:'getRecord', sheet:'月次ケアマネ_報告書', id:id});
+    if(res.data){
+      document.getElementById('no-select').style.display='none';
+      document.getElementById('form-area').style.display='block';
+      buildADL();
+      applyData(res.data);
+      const r=[...residents,...discharged].find(x=>x.id===currentId)||{};
+      updateServiceSections(r);
+      showToast('✓ 履歴を読み込みました');
+    }
+  }catch(e){ showToast('読込エラー'); }
 }
 
 // モーダル外クリックで閉じる
