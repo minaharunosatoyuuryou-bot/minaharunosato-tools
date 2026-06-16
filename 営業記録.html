@@ -318,7 +318,7 @@ async function cycleStatus(id) {
 
 function openModal(id=null) {
   editId = id;
-  const m = id ? records.find(r=>r.id===id) : null;
+  const m = id ? records.find(r=>String(r.id)===String(id)) : null;
   document.getElementById('modal-title').textContent = id ? '案件を編集' : '新規案件を追加';
   document.getElementById('f-consult').value = m?.consult || new Date().toISOString().slice(0,10);
   document.getElementById('f-close').value = m?.closeDate || '';
