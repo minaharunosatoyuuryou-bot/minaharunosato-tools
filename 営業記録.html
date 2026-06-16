@@ -307,7 +307,7 @@ function render() {
 
 async function cycleStatus(id) {
   const order = ['商談中','成約','失注','保留'];
-  const r = records.find(x=>x.id===id);
+  const r = records.find(x=>String(x.id)===String(id));
   if (!r) return;
   r.status = order[(order.indexOf(r.status)+1) % order.length];
   render();
@@ -353,7 +353,7 @@ async function saveRecord() {
   btn.textContent = '保存中...'; btn.disabled = true;
   try {
     await gasCall({action:'save', ...data});
-    if (editId) { const i = records.findIndex(r=>r.id===editId); records[i] = data; }
+    if (editId) { const i = records.findIndex(r=>String(r.id)===String(editId)); records[i] = data; }
     else { records.unshift(data); activeMonth = data.consult.slice(0,7); }
     setSyncStatus('✓ 保存しました');
     closeModal(); buildMonthTabs(); render();
@@ -366,9 +366,9 @@ async function saveRecord() {
 function editRecord(id) { openModal(id); }
 
 async function deleteRecord(id) {
-  const r = records.find(x=>x.id===id);
+  const r = records.find(x=>String(x.id)===String(id));
   if (!r || !confirm(`「${r.name}」を削除しますか？`)) return;
-  records = records.filter(x=>x.id!==id);
+  records = records.filter(x=>String(x.id)!==String(id));
   buildMonthTabs(); render();
   setSyncStatus('削除中...');
   try { await gasCall({action:'delete', id}); setSyncStatus('✓ 削除しました'); }
