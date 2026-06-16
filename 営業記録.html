@@ -294,12 +294,12 @@ function render() {
       <td>${r.gender||'—'}</td>
       <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.facility||'—'}</td>
       <td>${closeFmt}</td>
-      <td><span class="status ${statusClass(r.status)}" onclick="cycleStatus('${r.id}')">${r.status}</span></td>
+      <td><span class="status ${statusClass(r.status)}" onclick="cycleStatus(this.dataset.id)" data-id="${r.id}">${r.status}</span></td>
       <td>${r.staff||'—'}</td>
       <td>${memo}</td>
       <td><div class="action-btns">
-        <button class="btn-icon" title="編集" onclick="editRecord('${r.id}')">✏️</button>
-        <button class="btn-icon" title="削除" onclick="deleteRecord('${r.id}')">🗑️</button>
+        <button class="btn-icon" title="編集" onclick="editRecord(this.dataset.id)" data-id="${r.id}">✏️</button>
+        <button class="btn-icon" title="削除" onclick="deleteRecord(this.dataset.id)" data-id="${r.id}">🗑️</button>
       </div></td>
     </tr>`;
   }).join('');
