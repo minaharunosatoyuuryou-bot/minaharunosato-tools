@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>営業記録 | 大分高齢者紹介センター</title>
+<style>
+  :root {
+    --bg: #f0f4f8; --surface: #ffffff; --surface2: #f7f9fc; --border: #dde3ec;
+    --text: #1a2433; --text-sub: #5a6a7e; --accent: #2563c4; --accent-light: #dbeafe;
+    --green: #16a34a; --green-light: #dcfce7; --red: #dc2626; --red-light: #fee2e2;
+    --yellow: #d97706; --yellow-light: #fef3c7; --gray-light: #e5e7eb;
+    --shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Hiragino Kaku Gothic ProN','Meiryo',sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+  header { background: var(--accent); color: #fff; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(37,99,196,0.3); }
+  header h1 { font-size: 16px; font-weight: 700; }
+  header .header-right { display: flex; align-items: center; gap: 12px; font-size: 12px; opacity: 0.9; }
+  .sync-status { font-size: 11px; padding: 3px 8px; border-radius: 10px; background: rgba(255,255,255,0.2); }
+  main { padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
+
+  .summary { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .card { background: var(--surface); border-radius: 8px; padding: 12px 16px; box-shadow: var(--shadow); flex: 1; min-width: 120px; text-align: center; }
+  .card .num { font-size: 24px; font-weight: 700; }
+  .card .label { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+  .card.alert .num { color: var(--red); }
+  .card.success .num { color: var(--green); }
+  .card.warn .num { color: var(--yellow); }
+
+  .month-tabs-wrap { background: var(--surface); border-radius: 8px; box-shadow: var(--shadow); margin-bottom: 12px; padding: 10px 16px 0; overflow-x: auto; }
+  .month-tabs { display: flex; gap: 4px; min-width: max-content; border-bottom: 2px solid var(--border); }
+  .month-tab { padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: none; color: var(--text-sub); border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+  .month-tab:hover { color: var(--accent); }
+  .month-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .month-tab .tab-cnt { display: inline-block; background: var(--gray-light); color: var(--text-sub); font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 8px; margin-left: 4px; }
+  .month-tab.active .tab-cnt { background: var(--accent-light); color: var(--accent); }
+
+  .toolbar { background: var(--surface); border-radius: 8px; padding: 12px 16px; box-shadow: var(--shadow); margin-bottom: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .toolbar input, .toolbar select { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 12px; background: var(--surface2); color: var(--text); height: 32px; }
+  .toolbar input { flex: 1; min-width: 160px; }
+  .btn { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; height: 32px; white-space: nowrap; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1d4faf; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: #15803d; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-sub); }
+  .btn-outline:hover { background: var(--surface2); }
+
+  .table-wrap { background: var(--surface); border-radius: 8px; box-shadow: var(--shadow); overflow: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: #2563c4; color: #fff; padding: 9px 10px; font-size: 11px; font-weight: 600; text-align: left; white-space: nowrap; position: sticky; top: 0; }
+  thead th:first-child { border-radius: 8px 0 0 0; }
+  thead th:last-child { border-radius: 0 8px 0 0; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f0f6ff; }
+  td { padding: 8px 10px; vertical-align: middle; white-space: nowrap; }
+  tr.alert-row { background: #fff5f5 !important; }
+  tr.alert-row:hover { background: #ffe4e4 !important; }
+  .alert-badge { display: inline-block; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: 4px; }
+  .status { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .s-active { background: var(--accent-light); color: var(--accent); }
+  .s-success { background: var(--green-light); color: var(--green); }
+  .s-lost { background: var(--gray-light); color: var(--text-sub); }
+  .s-hold { background: var(--yellow-light); color: var(--yellow); }
+  .care { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #e0e7ff; color: #3730a3; }
+  .date-overdue { color: var(--red); font-weight: 700; }
+  .action-btns { display: flex; gap: 4px; }
+  .btn-icon { border: none; background: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 13px; line-height: 1; }
+  .btn-icon:hover { background: var(--surface2); }
+
+  .modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 12px; padding: 24px; width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  .modal h2 { font-size: 15px; margin-bottom: 16px; color: var(--accent); }
+  .form-row { margin-bottom: 12px; }
+  .form-row label { display: block; font-size: 11px; font-weight: 600; color: var(--text-sub); margin-bottom: 4px; }
+  .form-row input, .form-row select, .form-row textarea { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; background: var(--surface2); color: var(--text); font-family: inherit; }
+  .form-row textarea { resize: vertical; min-height: 60px; }
+  .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  .legend { display: flex; gap: 16px; font-size: 11px; color: var(--text-sub); align-items: center; margin-left: auto; }
+  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+  .empty { text-align: center; padding: 40px; color: var(--text-sub); }
+
+  /* ローディング */
+  .loading { text-align: center; padding: 40px; color: var(--text-sub); }
+  .loading::after { content: ''; display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 768px) {
+    main { padding: 10px; }
+    .summary { gap: 8px; }
+    .card { min-width: 80px; padding: 10px; }
+    .card .num { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📋 営業記録</h1>
+  <div class="header-right">
+    <span id="sync-status" class="sync-status">読み込み中...</span>
+    <span id="today-label"></span>
+  </div>
+</header>
+
+<main>
+  <div class="summary">
+    <div class="card"><div class="num" id="cnt-all">—</div><div class="label">総件数</div></div>
+    <div class="card warn"><div class="num" id="cnt-active">—</div><div class="label">商談中</div></div>
+    <div class="card alert"><div class="num" id="cnt-alert">—</div><div class="label">⚠ 未対応7日超</div></div>
+    <div class="card success"><div class="num" id="cnt-success">—</div><div class="label">成約</div></div>
+    <div class="card"><div class="num" id="cnt-lost">—</div><div class="label">失注</div></div>
+  </div>
+
+  <div class="month-tabs-wrap">
+    <div class="month-tabs" id="month-tabs"></div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="🔍 氏名・施設・担当者で検索">
+    <select id="filter-status">
+      <option value="">ステータス 全て</option>
+      <option value="商談中">商談中</option><option value="成約">成約</option>
+      <option value="失注">失注</option><option value="保留">保留</option>
+    </select>
+    <select id="filter-care">
+      <option value="">介護度 全て</option>
+      <option value="要支援1">要支援1</option><option value="要支援2">要支援2</option>
+      <option value="要介護1">要介護1</option><option value="要介護2">要介護2</option>
+      <option value="要介護3">要介護3</option><option value="要介護4">要介護4</option><option value="要介護5">要介護5</option>
+    </select>
+    <select id="filter-gender">
+      <option value="">性別 全て</option>
+      <option value="男性">男性</option><option value="女性">女性</option>
+    </select>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#fee2e2;border:1px solid #dc2626;"></span>7日超未対応</span>
+    </div>
+    <button class="btn btn-success" onclick="openModal()">＋ 新規追加</button>
+    <button class="btn btn-outline" onclick="exportCSV()">⬇ CSV出力</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>相談日</th><th>利用者氏名</th><th>介護度</th><th>性別</th>
+          <th>希望施設</th><th>クロージング日</th><th>ステータス</th><th>担当者</th><th>メモ</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr><td colspan="11" class="loading">データを読み込んでいます</td></tr>
+      </tbody>
+    </table>
+    <div class="empty" id="empty-msg" style="display:none">該当するデータがありません</div>
+  </div>
+</main>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">新規案件を追加</h2>
+    <div class="form-2col">
+      <div class="form-row"><label>相談日 *</label><input type="date" id="f-consult"></div>
+      <div class="form-row"><label>クロージング日</label><input type="date" id="f-close"></div>
+    </div>
+    <div class="form-row"><label>利用者氏名 *</label><input type="text" id="f-name" placeholder="例：山田 花子"></div>
+    <div class="form-2col">
+      <div class="form-row"><label>介護度</label>
+        <select id="f-care">
+          <option value="">未定</option>
+          <option>要支援1</option><option>要支援2</option>
+          <option>要介護1</option><option>要介護2</option>
+          <option>要介護3</option><option>要介護4</option><option>要介護5</option>
+        </select>
+      </div>
+      <div class="form-row"><label>性別</label>
+        <select id="f-gender"><option value="">未記入</option><option>男性</option><option>女性</option></select>
+      </div>
+    </div>
+    <div class="form-row"><label>希望施設</label><input type="text" id="f-facility" placeholder="例：みなはるの里、悠久の里"></div>
+    <div class="form-2col">
+      <div class="form-row"><label>ステータス</label>
+        <select id="f-status"><option>商談中</option><option>成約</option><option>失注</option><option>保留</option></select>
+      </div>
+      <div class="form-row"><label>担当者名</label><input type="text" id="f-staff" placeholder="例：牧 良子"></div>
+    </div>
+    <div class="form-row"><label>メモ</label><textarea id="f-memo" placeholder="家族の状況、本人の希望など"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveRecord()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzvfCyfMX-xd862m77B1jNhJMQkDc6nv0iBd8UVGvyblooyL8UwtNR5yF2U87ZhZRzd/exec';
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+document.getElementById('today-label').textContent = `${TODAY.getFullYear()}年${TODAY.getMonth()+1}月${TODAY.getDate()}日`;
+
+let records = [];
+let editId = null;
+let activeMonth = 'all';
+
+function setSyncStatus(msg, ok=true) {
+  const el = document.getElementById('sync-status');
+  el.textContent = msg;
+  el.style.background = ok ? 'rgba(255,255,255,0.2)' : 'rgba(220,38,38,0.4)';
+}
+
+async function gasGet(params) {
+  const url = GAS_URL + '?' + new URLSearchParams(params);
+  const res = await fetch(url);
+  return res.json();
+}
+
+async function loadAll() {
+  try {
+    setSyncStatus('読み込み中...');
+    const data = await gasGet({action:'getAll'});
+    records = Array.isArray(data) ? data : [];
+    setSyncStatus(`✓ 同期済み ${records.length}件`);
+    buildMonthTabs();
+    render();
+  } catch(e) {
+    setSyncStatus('⚠ 読み込みエラー', false);
+    document.getElementById('table-body').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#dc2626">データの読み込みに失敗しました。再読み込みしてください。</td></tr>';
+  }
+}
+
+async function saveToGas(data) {
+  await gasGet({action:'save', ...data});
+}
+
+async function deleteFromGas(id) {
+  await gasGet({action:'delete', id});
+}
+
+function getMonth(r) { return r.consult ? r.consult.slice(0,7) : ''; }
+
+function buildMonthTabs() {
+  const monthSet = new Set();
+  records.forEach(r => { if (r.consult) monthSet.add(r.consult.slice(0,7)); });
+  const months = Array.from(monthSet).sort().reverse();
+  const tabs = document.getElementById('month-tabs');
+  tabs.innerHTML = `<button class="month-tab ${activeMonth==='all'?'active':''}" onclick="setMonth('all')">すべて<span class="tab-cnt">${records.length}</span></button>`;
+  months.forEach(m => {
+    const cnt = records.filter(r => getMonth(r) === m).length;
+    const [y, mo] = m.split('-');
+    tabs.innerHTML += `<button class="month-tab ${activeMonth===m?'active':''}" onclick="setMonth('${m}')">${y}年${parseInt(mo)}月<span class="tab-cnt">${cnt}</span></button>`;
+  });
+}
+
+function setMonth(m) { activeMonth = m; buildMonthTabs(); render(); }
+
+function isOverdue(rec) {
+  if (rec.status === '成約' || rec.status === '失注') return false;
+  const ref = rec.closeDate || rec.consult;
+  if (!ref) return false;
+  const d = new Date(ref); d.setHours(0,0,0,0);
+  return (TODAY - d) > 7 * 86400000;
+}
+
+function statusClass(s) {
+  return {商談中:'s-active',成約:'s-success',失注:'s-lost',保留:'s-hold'}[s] || 's-active';
+}
+
+function fmt(d) {
+  if (!d) return '—';
+  const [y,m,dd] = d.split('-');
+  return `${parseInt(m)}/${parseInt(dd)}`;
+}
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const fs = document.getElementById('filter-status').value;
+  const fc = document.getElementById('filter-care').value;
+  const fg = document.getElementById('filter-gender').value;
+
+  let filtered = records.filter(r => {
+    if (activeMonth !== 'all' && getMonth(r) !== activeMonth) return false;
+    if (fs && r.status !== fs) return false;
+    if (fc && r.care !== fc) return false;
+    if (fg && r.gender !== fg) return false;
+    if (q && !`${r.name}${r.facility}${r.staff}${r.memo}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  document.getElementById('cnt-all').textContent = records.length;
+  document.getElementById('cnt-active').textContent = records.filter(r=>r.status==='商談中').length;
+  document.getElementById('cnt-alert').textContent = records.filter(isOverdue).length;
+  document.getElementById('cnt-success').textContent = records.filter(r=>r.status==='成約').length;
+  document.getElementById('cnt-lost').textContent = records.filter(r=>r.status==='失注').length;
+
+  const tbody = document.getElementById('table-body');
+  document.getElementById('empty-msg').style.display = filtered.length ? 'none' : 'block';
+
+  if (filtered.length === 0) { tbody.innerHTML = ''; return; }
+
+  tbody.innerHTML = filtered.map((r, i) => {
+    const over = isOverdue(r);
+    const closeDiff = r.closeDate ? Math.floor((TODAY - new Date(r.closeDate)) / 86400000) : null;
+    const closeFmt = r.closeDate
+      ? `<span class="${closeDiff > 7 && r.status==='商談中' ? 'date-overdue' : ''}">${fmt(r.closeDate)}</span>${over ? '<span class="alert-badge">未対応</span>' : ''}`
+      : '—';
+    const memo = r.memo ? `<span title="${String(r.memo).replace(/"/g,'&quot;')}" style="cursor:default">📝</span>` : '—';
+    return `<tr class="${over ? 'alert-row' : ''}">
+      <td style="color:var(--text-sub);font-size:11px">${i+1}</td>
+      <td>${fmt(r.consult)}</td>
+      <td style="font-weight:600">${r.name}</td>
+      <td><span class="care">${r.care||'—'}</span></td>
+      <td>${r.gender||'—'}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${r.facility||'—'}</td>
+      <td>${closeFmt}</td>
+      <td><span class="status ${statusClass(r.status)}" onclick="cycleStatus('${r.id}')">${r.status}</span></td>
+      <td>${r.staff||'—'}</td>
+      <td>${memo}</td>
+      <td><div class="action-btns">
+        <button class="btn-icon" title="編集" onclick="editRecord('${r.id}')">✏️</button>
+        <button class="btn-icon" title="削除" onclick="deleteRecord('${r.id}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function cycleStatus(id) {
+  const order = ['商談中','成約','失注','保留'];
+  const r = records.find(x=>x.id===id);
+  if (!r) return;
+  r.status = order[(order.indexOf(r.status)+1) % order.length];
+  render();
+  setSyncStatus('保存中...');
+  try {
+    await saveToGas(r);
+    setSyncStatus('✓ 保存しました');
+  } catch { setSyncStatus('⚠ 保存エラー', false); }
+}
+
+function openModal(id=null) {
+  editId = id;
+  const m = id ? records.find(r=>r.id===id) : null;
+  document.getElementById('modal-title').textContent = id ? '案件を編集' : '新規案件を追加';
+  document.getElementById('f-consult').value = m?.consult || new Date().toISOString().slice(0,10);
+  document.getElementById('f-close').value = m?.closeDate || '';
+  document.getElementById('f-name').value = m?.name || '';
+  document.getElementById('f-care').value = m?.care || '';
+  document.getElementById('f-gender').value = m?.gender || '';
+  document.getElementById('f-facility').value = m?.facility || '';
+  document.getElementById('f-status').value = m?.status || '商談中';
+  document.getElementById('f-staff').value = m?.staff || '';
+  document.getElementById('f-memo').value = m?.memo || '';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); editId = null; }
+
+async function saveRecord() {
+  const name = document.getElementById('f-name').value.trim();
+  const consult = document.getElementById('f-consult').value;
+  if (!name || !consult) { alert('相談日と利用者氏名は必須です'); return; }
+
+  const data = {
+    id: editId || String(Date.now()),
+    consult, name,
+    care: document.getElementById('f-care').value,
+    gender: document.getElementById('f-gender').value,
+    facility: document.getElementById('f-facility').value.trim(),
+    closeDate: document.getElementById('f-close').value,
+    status: document.getElementById('f-status').value,
+    staff: document.getElementById('f-staff').value.trim(),
+    memo: document.getElementById('f-memo').value.trim()
+  };
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '保存中...'; btn.disabled = true;
+
+  try {
+    await saveToGas(data);
+    if (editId) {
+      const i = records.findIndex(r=>r.id===editId);
+      records[i] = data;
+    } else {
+      records.unshift(data);
+      activeMonth = data.consult.slice(0,7);
+    }
+    setSyncStatus(`✓ 保存しました`);
+    closeModal();
+    buildMonthTabs();
+    render();
+  } catch {
+    setSyncStatus('⚠ 保存エラー', false);
+    alert('保存に失敗しました。再度お試しください。');
+  } finally {
+    btn.textContent = '保存'; btn.disabled = false;
+  }
+}
+
+function editRecord(id) { openModal(id); }
+
+async function deleteRecord(id) {
+  const r = records.find(x=>x.id===id);
+  if (!r || !confirm(`「${r.name}」を削除しますか？`)) return;
+  records = records.filter(x=>x.id!==id);
+  buildMonthTabs(); render();
+  setSyncStatus('削除中...');
+  try {
+    await deleteFromGas(id);
+    setSyncStatus('✓ 削除しました');
+  } catch { setSyncStatus('⚠ 削除エラー', false); }
+}
+
+function exportCSV() {
+  const header = ['id','相談日','利用者氏名','介護度','性別','希望施設','クロージング日','ステータス','担当者','メモ'];
+  const target = activeMonth === 'all' ? records : records.filter(r => getMonth(r) === activeMonth);
+  const rows = target.map(r => [r.id,r.consult,r.name,r.care,r.gender,r.facility,r.closeDate,r.status,r.staff,r.memo].map(v=>`"${(v||'').replace(/"/g,'""')}"`));
+  const csv = '\uFEFF' + [header, ...rows].map(r=>r.join(',')).join('\n');
+  const suffix = activeMonth === 'all' ? '全件' : activeMonth;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `営業記録_${suffix}.csv`;
+  a.click();
+}
+
+['search','filter-status','filter-care','filter-gender'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+loadAll();
+</script>
+</body>
+</html>
