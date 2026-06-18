@@ -897,10 +897,6 @@ async function loadResidents(){
     saveDischarged();
   }catch(e){residents=[];discharged=[];}
   renderList(document.getElementById('search-input').value);
-    currentId=null;
-    document.getElementById('no-select').style.display='flex';
-    document.getElementById('form-area').style.display='none';
-  }
 }
 
 async function renderHistoryList(){
@@ -915,14 +911,15 @@ async function renderHistoryList(){
     var r=[...residents,...discharged].find(function(x){return x.id===currentId;})||{};
     hl.innerHTML=items.map(function(item){
       var d=item.data||{};
-      var month=d['report_month']||item.id.split('_').slice(1).join('_');
-      var overall=d['overall_status']||'';
-      return '<div class="ri" onclick="loadHistoryItem(''+item.id+'')" style="flex-direction:column;align-items:flex-start;gap:2px;padding:8px 10px;border-left:3px solid #3a7cb8;">'
-        +'<div class="ri-name" style="font-size:13px;">'+month+'</div>'
-        +'<div class="ri-sub">'+overall+'</div>'
-        +'<div class="ri-sub" style="font-size:9px;opacity:0.5;">'+item.updatedAt+'</div>'
-        +'</div>';
-    }).join('');
+      var month=d["report_month"]||item.id.split("_").slice(1).join("_");
+      var overall=d["overall_status"]||"";
+      var id=item.id;
+      return "<div class=\"ri\" onclick=\"loadHistoryItem("+JSON.stringify(id)+")\" style=\"flex-direction:column;align-items:flex-start;gap:2px;padding:8px 10px;border-left:3px solid #3a7cb8;\">"
+        +"<div class=\"ri-name\" style=\"font-size:13px;\">"+month+"</div>"
+        +"<div class=\"ri-sub\">"+overall+"</div>"
+        +"<div class=\"ri-sub\" style=\"font-size:9px;opacity:0.5;\">"+item.updatedAt+"</div>"
+        +"</div>";
+    }).join("");
   }catch(e){hl.innerHTML='<div class="empty-list">読込エラー</div>';}
 }
 
@@ -947,50 +944,47 @@ document.getElementById('modal-bg').addEventListener('click', function(e){
 });
 
 // ===== リスト描画 =====
-function renderList(filter=''){
-  const ul=document.getElementById('resident-list');
-  [...ul.querySelectorAll('.resident-item,.discharged-item')].forEach(el=>el.remove());
-  const emptyMsg=document.getElementById('empty-msg');
+function renderList(filter){
+  filter = filter || '';
+  if(currentTab==='history') return;
+  var ul=document.getElementById('resident-list');
+  if(!ul) return;
+  var em=document.getElementById('empty-msg');
+  var hl=document.getElementById('history-list');
+  ul.querySelectorAll('.resident-item,.discharged-item').forEach(function(el){el.remove();});
 
   if(currentTab==='active'){
-    const filtered=residents.filter(r=>!filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter)));
-    if(emptyMsg) emptyMsg.style.display=residents.length===0?'block':'none';
-    filtered.forEach(r=>{
-      const div=document.createElement('div');
-      const hasSaved=false;
-      div.className='resident-item'+(r.id===currentId?' active':'')+(hasSaved?' saved':'');
-      const badges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')+(r.svcDay?'<span class="svc-badge badge-day">デイ</span>':'')+(r.svcTeiki?'<span class="svc-badge badge-teiki">定巡</span>':'');
-      div.innerHTML=`
-        <div class="ri-info">
-          <div class="ri-name">${r.name}</div>
-          <div class="ri-sub">${r.care}${r.room?'　'+r.room+'号室':''}</div>
-          <div style="margin-top:2px;">${badges}</div>
-        </div>
-        <div class="ri-dot" title="保存済"></div>
-        <button class="ri-edit" onclick="event.stopPropagation();openEditModal(${r.id})" title="編集">✎</button>
-      `;
-      div.onclick=()=>selectResident(r.id);
-      ul.appendChild(div);
+    var filtered=residents.filter(function(r){return !filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter));});
+    if(em) em.style.display=residents.length===0?'block':'none';
+    filtered.forEach(function(r){
+      var div=document.createElement('div');
+      div.className='resident-item'+(r.id===currentId?' active':'');
+      var badges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')
+        +(r.svcDay?'<span class="svc-badge badge-day">デイ</span>':'')
+        +(r.svcTeiki?'<span class="svc-badge badge-teiki">定巡</span>':'');
+      div.innerHTML='<div class="ri-info"><div class="ri-name">'+r.name+'</div>'
+        +'<div class="ri-sub">'+r.care+(r.room?'　'+r.room+'号室':'')+'</div>'
+        +'<div style="margin-top:2px;">'+badges+'</div></div>'
+        +'<div class="ri-dot" title="保存済"></div>'
+        +'<button class="ri-edit" onclick="event.stopPropagation();openEditModal('+r.id+')" title="編集">✎</button>';
+      div.onclick=function(){selectResident(r.id);};
+      ul.insertBefore(div, hl||null);
     });
   } else {
-    const filtered=discharged.filter(r=>!filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter)));
-    if(emptyMsg) emptyMsg.style.display=discharged.length===0?'block':'none';
-    filtered.forEach(r=>{
-      const div=document.createElement('div');
+    var filtered2=discharged.filter(function(r){return !filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter));});
+    if(em) em.style.display=discharged.length===0?'block':'none';
+    filtered2.forEach(function(r){
+      var div=document.createElement('div');
       div.className='discharged-item'+(r.id===currentId?' active':'');
-      const expireDate=new Date(new Date(r.dischargedAt).getTime()+5*365*24*60*60*1000);
-      const daysLeft=Math.ceil((expireDate-Date.now())/(24*60*60*1000));
-      const expireStr=daysLeft<180?`<span class="expire-warn">⚠ 残${daysLeft}日</span>`:`削除まで${Math.floor(daysLeft/30)}ヶ月`;
-      div.innerHTML=`
-        <div class="ri-info">
-          <div class="ri-name">${r.name}</div>
-          <div class="ri-sub">${r.care}　退所：${r.dischargedAt}</div>
-          <div class="di-date">${expireStr}</div>
-        </div>
-        <button class="ri-edit" onclick="event.stopPropagation();openDischargedModal(${r.id})" title="詳細">✎</button>
-      `;
-      div.onclick=()=>selectDischargedResident(r.id);
-      ul.appendChild(div);
+      var expireDate=new Date(new Date(r.dischargedAt).getTime()+5*365*24*60*60*1000);
+      var daysLeft=Math.ceil((expireDate-Date.now())/(24*60*60*1000));
+      var expireStr=daysLeft<180?'<span class="expire-warn">⚠ 残'+daysLeft+'日</span>':'削除まで'+Math.floor(daysLeft/30)+'ヶ月';
+      div.innerHTML='<div class="ri-info"><div class="ri-name">'+r.name+'</div>'
+        +'<div class="ri-sub">'+r.care+'　退所：'+r.dischargedAt+'</div>'
+        +'<div class="di-date">'+expireStr+'</div></div>'
+        +'<button class="ri-edit" onclick="event.stopPropagation();openDischargedModal('+r.id+')" title="詳細">✎</button>';
+      div.onclick=function(){selectDischargedResident(r.id);};
+      ul.insertBefore(div, hl||null);
     });
   }
 }
