@@ -963,7 +963,7 @@ function renderList(filter){
         +(r.svcDay?'<span class="svc-badge badge-day">デイ</span>':'')
         +(r.svcTeiki?'<span class="svc-badge badge-teiki">定巡</span>':'');
       div.innerHTML='<div class="ri-info"><div class="ri-name">'+r.name+'</div>'
-        +'<div class="ri-sub">'+r.care+(r.room?'　'+r.room+'号室':'')+'</div>'
+        +'<div class="ri-sub">'+(r.care||'')+(r.room?'　'+r.room+'号室':'')+'</div>'
         +'<div style="margin-top:2px;">'+badges+'</div></div>'
         +'<div class="ri-dot" title="保存済"></div>'
         +'<button class="ri-edit" onclick="event.stopPropagation();openEditModal('+r.id+')" title="編集">✎</button>';
