@@ -1227,6 +1227,13 @@ function addPhotoThumb(src,cap){
 }
 
 
+async function saveResidents(){
+  await gasReq({action:'saveResidents', sheet:'月次ケアマネ_利用者', data:residents});
+}
+async function saveDischarged(){
+  await gasReq({action:'saveResidents', sheet:'月次ケアマネ_退所者', data:discharged});
+}
+
 function nextId(){
   return residents.length ? Math.max(...residents.map(r=>r.id))+1 : 1;
 }
