@@ -261,17 +261,29 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
 </div></div>
 <script>
 (function(){
-var k="minaharu_auth";
-if(sessionStorage.getItem(k)==="ok"){document.getElementById("pw-screen").style.display="none";return;}
-setTimeout(function(){
-var el=document.getElementById("pw-input");
-if(el){el.focus();el.addEventListener("keydown",function(e){if(e.key==="Enter")checkPW();});}
-},100);
+  var k="minaharu_auth";
+  if(sessionStorage.getItem(k)==="ok"){
+    document.getElementById("pw-screen").style.display="none";
+    return;
+  }
+  setTimeout(function(){
+    var el=document.getElementById("pw-input");
+    if(el){
+      el.focus();
+      el.onkeydown=function(e){if(e.key==="Enter")checkPW();};
+    }
+  },100);
 })();
 function checkPW(){
-var v=document.getElementById("pw-input").value;
-if(v==="2408"){sessionStorage.setItem("minaharu_auth","ok");document.getElementById("pw-screen").style.display="none";}
-else{document.getElementById("pw-error").textContent="パスワードが違います";document.getElementById("pw-input").value="";setTimeout(function(){document.getElementById("pw-error").textContent="";},2000);}
+  var v=document.getElementById("pw-input").value;
+  if(v==="2408"){
+    sessionStorage.setItem("minaharu_auth","ok");
+    document.getElementById("pw-screen").style.display="none";
+  } else {
+    document.getElementById("pw-error").textContent="パスワードが違います";
+    document.getElementById("pw-input").value="";
+    setTimeout(function(){document.getElementById("pw-error").textContent="";},2000);
+  }
 }
 </script>
 
@@ -884,7 +896,6 @@ async function loadResidents(){
     if(!r) return null;
     if(typeof r==='string'){try{return JSON.parse(r);}catch(e){return null;}}
     if(r.name) return r;
-    if(Array.isArray(r)&&r[1]){try{return JSON.parse(r[1]);}catch(e){return null;}}
     return null;
   }
   try{
