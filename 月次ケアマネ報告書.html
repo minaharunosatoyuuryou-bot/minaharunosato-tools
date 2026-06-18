@@ -890,198 +890,29 @@ let editingId = null;
 let discharged = [];  // 退所者リスト
 
 async function loadResidents(){
+  function parseResident(r){
+    if(!r) return null;
+    // 文字列の場合はJSONパース
+    if(typeof r === 'string'){ try{ return JSON.parse(r); }catch(e){ return null; } }
+    // 配列の場合は2列目がJSONデータ
+    if(Array.isArray(r)){ try{ return JSON.parse(r[1]); }catch(e){ return null; } }
+    // オブジェクトでnameがある場合はそのまま
+    if(r.name) return r;
+    // オブジェクトで1番目のキーがJSONの場合
+    const vals = Object.values(r);
+    for(const v of vals){ if(typeof v === 'string' && v.startsWith('{')){ try{ return JSON.parse(v); }catch(e){} } }
+    return null;
+  }
   try{
     const r1 = await gasReq({action:'getResidents', sheet:'月次ケアマネ_利用者'});
-    const raw1 = r1.data || [];
-    residents = raw1.map(r => {
-      if(typeof r === 'string'){ try{ return JSON.parse(r); }catch(e){ return r; } }
-      if(r && typeof r === 'object' && r[1]){ try{ return JSON.parse(r[1]); }catch(e){ return r; } }
-      return r;
-    }).filter(r => r && r.name);
+    residents = (r1.data || []).map(parseResident).filter(r => r && r.name);
     const r2 = await gasReq({action:'getResidents', sheet:'月次ケアマネ_退所者'});
-    const raw2 = r2.data || [];
-    discharged = raw2.map(r => {
-      if(typeof r === 'string'){ try{ return JSON.parse(r); }catch(e){ return r; } }
-      if(r && typeof r === 'object' && r[1]){ try{ return JSON.parse(r[1]); }catch(e){ return r; } }
-      return r;
-    }).filter(r => r && r.name);
+    discharged = (r2.data || []).map(parseResident).filter(r => r && r.name);
+    const cutoff = Date.now() - 5*365*24*60*60*1000;
+    discharged = discharged.filter(r => new Date(r.dischargedAt).getTime() > cutoff);
+    saveDischarged();
   }catch(e){ residents=[]; discharged=[]; }
-  // 5年経過した退所者を自動削除
-  const cutoff = Date.now() - 5*365*24*60*60*1000;
-  discharged = discharged.filter(r => new Date(r.dischargedAt).getTime() > cutoff);
-  saveDischarged();
-  renderList();
-}
-async function saveResidents(){
-  await gasReq({action:'saveResidents', sheet:'月次ケアマネ_利用者', data:residents});
-}
-async function saveDischarged(){
-  await gasReq({action:'saveResidents', sheet:'月次ケアマネ_退所者', data:discharged});
-}
-function nextId(){
-  return residents.length ? Math.max(...residents.map(r=>r.id))+1 : 1;
-}
-
-function openAddModal(){
-  editingId = null;
-  document.getElementById('modal-title').textContent = '利用者を追加';
-  document.getElementById('m-name').value='';
-  document.getElementById('m-kana').value='';
-  document.getElementById('m-care').value='要介護４';
-  document.getElementById('m-room').value='';
-  document.getElementById('m-cm').value='';
-  document.getElementById('m-dob').value='';
-  document.getElementById('m-gender').value='';
-  document.getElementById('m-address').value='';
-  document.getElementById('m-doctor').value='';
-  document.getElementById('m-svc-stay').checked=true;
-  document.getElementById('m-svc-day').checked=false;
-  document.getElementById('m-svc-teiki').checked=false;
-  document.getElementById('btn-delete').style.display='none';
-  document.getElementById('btn-discharge').style.display='none';
-  document.getElementById('modal-sep-del').style.display='none';
-  document.getElementById('modal-btns-active').style.display='flex';
-  document.getElementById('modal-btns-discharged').style.display='none';
-  document.getElementById('modal-bg').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('m-name').focus(),50);
-}
-
-function openEditModal(id){
-  const r = residents.find(x=>x.id===id);
-  if(!r) return;
-  editingId = id;
-  document.getElementById('modal-title').textContent = '利用者情報を編集';
-  document.getElementById('m-name').value = r.name||'';
-  document.getElementById('m-kana').value = r.kana||'';
-  document.getElementById('m-care').value = r.care||'要介護４';
-  document.getElementById('m-room').value = r.room||'';
-  document.getElementById('m-cm').value      = r.cm||'';
-  document.getElementById('m-dob').value     = r.dob||'';
-  document.getElementById('m-gender').value  = r.gender||'';
-  document.getElementById('m-address').value = r.address||'';
-  document.getElementById('m-doctor').value  = r.doctor||'';
-  document.getElementById('m-svc-stay').checked  = r.svcStay  !== false;
-  document.getElementById('m-svc-day').checked   = !!r.svcDay;
-  document.getElementById('m-svc-teiki').checked = !!r.svcTeiki;
-  document.getElementById('btn-delete').style.display='inline-flex';
-  document.getElementById('btn-discharge').style.display='inline-flex';
-  document.getElementById('modal-sep-del').style.display='block';
-  document.getElementById('modal-btns-active').style.display='flex';
-  document.getElementById('modal-btns-discharged').style.display='none';
-  document.getElementById('modal-bg').classList.remove('hidden');
-}
-
-function closeModal(){
-  document.getElementById('modal-bg').classList.add('hidden');
-}
-
-async function saveResident(){
-  const name = document.getElementById('m-name').value.trim();
-  if(!name){ alert('氏名を入力してください'); return; }
-  const r = {
-    id: editingId || nextId(),
-    name, kana:    document.getElementById('m-kana').value.trim(),
-    care:          document.getElementById('m-care').value,
-    room:          document.getElementById('m-room').value.trim(),
-    cm:            document.getElementById('m-cm').value.trim(),
-    dob:           document.getElementById('m-dob').value,
-    gender:        document.getElementById('m-gender').value,
-    address:       document.getElementById('m-address').value.trim(),
-    doctor:        document.getElementById('m-doctor').value.trim(),
-    svcStay:       document.getElementById('m-svc-stay').checked,
-    svcDay:        document.getElementById('m-svc-day').checked,
-    svcTeiki:      document.getElementById('m-svc-teiki').checked,
-  };
-  if(editingId){
-    const idx = residents.findIndex(x=>x.id===editingId);
-    if(idx>=0) residents[idx]=r;
-    // バナー更新
-    if(currentId===editingId){
-      document.getElementById('banner-name').textContent = r.name + (r.kana ? '　'+r.kana : '');
-      const dobStr2 = r.dob ? '　生年月日：'+r.dob.replace(/-/g,'/') : '';
-      const gStr2 = r.gender ? '　'+r.gender : '';
-      const drStr2 = r.doctor ? '　主治医：'+r.doctor : '';
-      document.getElementById('banner-meta').textContent = r.care + (r.room?'　'+r.room+'号室':'') + gStr2 + dobStr2 + drStr2;
-      document.getElementById('cm_name').value = r.cm||'';
-      document.getElementById('res_address').value = r.address||'';
-      document.getElementById('res_doctor').value = r.doctor||'';
-    }
-  } else {
-    residents.push(r);
-  }
-  saveResidents();
-  closeModal();
-  renderList();
-  showToast(editingId ? '✓ 利用者情報を更新しました' : '✓ 利用者を追加しました');
-}
-
-async function deleteResident(){
-  if(!editingId) return;
-  const rA = residents.find(x=>x.id===editingId);
-  const rD = discharged.find(x=>x.id===editingId);
-  const r  = rA || rD;
-  if(!confirm(`「${r?.name}」を完全削除しますか？\n報告データもすべて削除されます。\nこの操作は元に戻せません。`)) return;
-  await gasReq({action:'deleteRecord', sheet:'月次ケアマネ_報告書', id:String(editingId)+'_ALL'});
-  residents  = residents.filter(x=>x.id!==editingId);
-  discharged = discharged.filter(x=>x.id!==editingId);
-  saveResidents(); saveDischarged();
-  closeModal();
-  if(currentId===editingId){
-    currentId=null;
-    document.getElementById('no-select').style.display='flex';
-    document.getElementById('form-area').style.display='none';
-  }
-  renderList();
-  showToast('✓ 利用者データを完全削除しました');
-}
-
-function openDischargeConfirm(){
-  if(!editingId) return;
-  const r = residents.find(x=>x.id===editingId);
-  const dateStr = prompt(`「${r?.name}」の退所日を入力してください（例：2026-06-01）`, new Date().toISOString().slice(0,10));
-  if(!dateStr) return;
-  if(!confirm(`「${r?.name}」を退所処理しますか？\n退所日：${dateStr}\n報告データは5年間保管されます。`)) return;
-  // 退所者リストへ移動
-  const dischR = {...r, dischargedAt: dateStr, dischargedNote: ''};
-  discharged.push(dischR);
-  residents = residents.filter(x=>x.id!==editingId);
-  saveResidents(); saveDischarged();
-  closeModal();
-  if(currentId===editingId){
-    currentId=null;
-    document.getElementById('no-select').style.display='flex';
-    document.getElementById('form-area').style.display='none';
-  }
-  renderList();
-  showToast('✓ 退所処理しました（報告データは5年間保管）');
-}
-
-async function reinstateResident(){
-  if(!editingId) return;
-  const r = discharged.find(x=>x.id===editingId);
-  if(!confirm(`「${r?.name}」を入所中に戻しますか？`)) return;
-  const {dischargedAt, dischargedNote, ...resR} = r;
-  residents.push(resR);
-  discharged = discharged.filter(x=>x.id!==editingId);
-  saveResidents(); saveDischarged();
-  closeModal();
-  renderList();
-  showToast('✓ 入所中に戻しました');
-}
-
-// ===== タブ切替 =====
-function switchTab(tab){
-  currentTab = tab;
-  document.getElementById('tab-active').classList.toggle('active', tab==='active');
-  document.getElementById('tab-discharged').classList.toggle('active', tab==='discharged');
-  document.getElementById('tab-history').classList.toggle('active', tab==='history');
-  document.querySelector('.btn-add-resident').style.opacity = tab==='active'?'1':'0.35';
-  document.querySelector('.btn-add-resident').style.pointerEvents = tab==='active'?'auto':'none';
-  document.getElementById('history-list').style.display = tab==='history' ? 'block' : 'none';
-  document.getElementById('resident-list').style.display = tab!=='history' ? 'block' : 'none';
-  if(tab==='history') renderHistoryList();
-  else {
-    renderList(document.getElementById('search-input').value);
+  renderList(document.getElementById('search-input').value);
     currentId=null;
     document.getElementById('no-select').style.display='flex';
     document.getElementById('form-area').style.display='none';
