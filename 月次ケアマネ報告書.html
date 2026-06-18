@@ -892,9 +892,19 @@ let discharged = [];  // 退所者リスト
 async function loadResidents(){
   try{
     const r1 = await gasReq({action:'getResidents', sheet:'月次ケアマネ_利用者'});
-    residents = (r1.data || []).map(r => typeof r === 'string' ? JSON.parse(r) : r);
+    const raw1 = r1.data || [];
+    residents = raw1.map(r => {
+      if(typeof r === 'string'){ try{ return JSON.parse(r); }catch(e){ return r; } }
+      if(r && typeof r === 'object' && r[1]){ try{ return JSON.parse(r[1]); }catch(e){ return r; } }
+      return r;
+    }).filter(r => r && r.name);
     const r2 = await gasReq({action:'getResidents', sheet:'月次ケアマネ_退所者'});
-    discharged = (r2.data || []).map(r => typeof r === 'string' ? JSON.parse(r) : r);
+    const raw2 = r2.data || [];
+    discharged = raw2.map(r => {
+      if(typeof r === 'string'){ try{ return JSON.parse(r); }catch(e){ return r; } }
+      if(r && typeof r === 'object' && r[1]){ try{ return JSON.parse(r[1]); }catch(e){ return r; } }
+      return r;
+    }).filter(r => r && r.name);
   }catch(e){ residents=[]; discharged=[]; }
   // 5年経過した退所者を自動削除
   const cutoff = Date.now() - 5*365*24*60*60*1000;
