@@ -1227,6 +1227,10 @@ function addPhotoThumb(src,cap){
 }
 
 
+function nextId(){
+  return residents.length ? Math.max(...residents.map(r=>r.id))+1 : 1;
+}
+
 function openAddModal(){
   editingId = null;
   document.getElementById('modal-title').textContent = '利用者を追加';
