@@ -275,6 +275,8 @@ function checkPW(){
 }
 </script>
 
+
+
 <div class="layout">
 
 <!-- SIDEBAR -->
@@ -895,10 +897,56 @@ async function loadResidents(){
     saveDischarged();
   }catch(e){residents=[];discharged=[];}
   renderList(document.getElementById('search-input').value);
-  // フォームを閉じる
-  currentId=null;
-  document.getElementById('no-select').style.display='flex';
-  document.getElementById('form-area').style.display='none';
+    currentId=null;
+    document.getElementById('no-select').style.display='flex';
+    document.getElementById('form-area').style.display='none';
+  }
+}
+
+async function renderHistoryList(){
+  if(!currentId){
+    document.getElementById('history-list').innerHTML='<div class="empty-list">先に利用者を選択してください</div>';
+    return;
+  }
+  document.getElementById('history-list').innerHTML='<div class="empty-list">読み込み中...</div>';
+  try{
+    const res = await gasReq({action:'getHistory', sheet:'月次ケアマネ_報告書', residentId:String(currentId)});
+    const items = res.data || [];
+    if(!items.length){
+      document.getElementById('history-list').innerHTML='<div class="empty-list">報告書がありません</div>';
+      return;
+    }
+    const r=[...residents,...discharged].find(x=>x.id===currentId)||{};
+    document.getElementById('history-list').innerHTML = 
+      `<div style="padding:6px 10px;font-size:11px;color:rgba(255,255,255,0.6);border-bottom:1px solid rgba(255,255,255,0.1);">${r.name||''}　${items.length}件</div>` +
+      items.map(item=>{
+        const d = item.data||{};
+        const month = d['report_month'] || item.id.split('_').slice(1).join('_');
+        const overall = d['overall_status']||'';
+        return `<div class="ri" onclick="loadHistoryItem('${item.id}')" style="flex-direction:column;align-items:flex-start;gap:2px;padding:8px 10px;border-left:3px solid #3a7cb8;">
+          <div class="ri-name" style="font-size:13px;">${month}</div>
+          <div class="ri-sub">${overall}</div>
+          <div class="ri-sub" style="font-size:9px;opacity:0.5;">${item.updatedAt}</div>
+        </div>`;
+      }).join('');
+  }catch(e){
+    document.getElementById('history-list').innerHTML='<div class="empty-list">読込エラー</div>';
+  }
+}
+
+async function loadHistoryItem(id){
+  try{
+    const res = await gasReq({action:'getRecord', sheet:'月次ケアマネ_報告書', id:id});
+    if(res.data){
+      document.getElementById('no-select').style.display='none';
+      document.getElementById('form-area').style.display='block';
+      buildADL();
+      applyData(res.data);
+      const r=[...residents,...discharged].find(x=>x.id===currentId)||{};
+      updateServiceSections(r);
+      showToast('✓ 履歴を読み込みました');
+    }
+  }catch(e){ showToast('読込エラー'); }
 }
 
 // モーダル外クリックで閉じる
@@ -1152,9 +1200,10 @@ async function saveData(silent=false){
 
 async function loadData(id){
   const month=getCurrentMonth();
-  let raw=null; try{ const r=await gasReq({action:'getRecord', sheet:'月次ケアマネ_報告書', id:id+'_'+month}); raw=r.data?JSON.stringify(r.data):null; }catch(e){}
-  const _raw=raw;
-  if(raw){try{applyData(JSON.parse(raw));}catch(e){}}
+  try{
+    const r=await gasReq({action:'getRecord', sheet:'月次ケアマネ_報告書', id:id+'_'+month});
+    if(r.data){ applyData(r.data); }
+  }catch(e){}
   loadPhotos(id,month);
 }
 
