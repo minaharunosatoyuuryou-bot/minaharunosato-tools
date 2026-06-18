@@ -77,7 +77,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:#e8ecf0;color:var(--text);
 
 /* セクション */
 .sec{background:white;border-radius:8px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07);}
-.sh{color:white;padding:7px 13px;font-weight:700;font-size:12px;letter-spacing:0.04em;}
+.sh{color:white;padding:7px 13px;font-weight:700;font-size:12px;letter-spacing:0.04em;display:flex;align-items:center;justify-content:space-between;}
 .sh-n{background:var(--navy);}
 .sh-b{background:var(--blue);}
 .sh-g{background:var(--green);}
@@ -150,23 +150,45 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
 .mbtn-cancel{background:var(--gray);color:var(--text);}
 .mgrid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 
+/* ===== AI読み込みモーダル ===== */
+.ai-modal{background:white;border-radius:10px;padding:22px;width:500px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;}
+.ai-modal h3{font-size:15px;font-weight:700;color:#6a4a8a;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.ai-modal .ai-sub{font-size:11px;color:var(--muted);margin-bottom:14px;}
+.ai-drop-zone{border:2px dashed #b09aca;border-radius:8px;padding:28px 16px;text-align:center;cursor:pointer;background:#faf8ff;transition:all 0.18s;margin-bottom:12px;}
+.ai-drop-zone:hover,.ai-drop-zone.drag-over{border-color:#6a4a8a;background:#f0ebf8;}
+.ai-drop-zone .dz-icon{font-size:36px;margin-bottom:6px;}
+.ai-drop-zone .dz-text{font-size:13px;color:#6a4a8a;font-weight:700;}
+.ai-drop-zone .dz-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.ai-preview-wrap{position:relative;margin-bottom:12px;}
+.ai-preview-wrap img{width:100%;max-height:220px;object-fit:contain;border-radius:6px;border:1px solid var(--mgray);}
+.ai-preview-wrap .ai-clear{position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.55);color:white;border:none;border-radius:50%;width:24px;height:24px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.ai-result-area{background:#faf8ff;border:1px solid #d0c0e8;border-radius:7px;padding:10px 12px;margin-bottom:12px;font-size:12px;display:none;}
+.ai-result-area .ar-title{font-size:11px;font-weight:700;color:#6a4a8a;margin-bottom:7px;}
+.ar-item{display:grid;grid-template-columns:110px 1fr;gap:4px;margin-bottom:5px;align-items:start;}
+.ar-lbl{font-size:11px;font-weight:700;color:#6a4a8a;padding-top:1px;}
+.ar-val{font-size:12px;color:var(--text);background:white;border:1px solid #d0c0e8;border-radius:4px;padding:3px 7px;line-height:1.6;}
+.ai-status{font-size:12px;color:#6a4a8a;text-align:center;padding:10px;display:none;}
+.ai-err{font-size:12px;color:#c0392b;text-align:center;padding:8px;background:#fff0f0;border-radius:5px;margin-bottom:10px;display:none;}
+.btn-ai-scan{background:#6a4a8a;color:white;border:none;border-radius:5px;padding:8px 18px;font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.btn-ai-scan:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-ai-apply{background:#2d6a4f;color:white;border:none;border-radius:5px;padding:8px 18px;font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:none;}
+/* CP読み込みボタン（セクションヘッダー内） */
+.btn-cp-scan{background:rgba(255,255,255,0.22);color:white;border:1px solid rgba(255,255,255,0.35);border-radius:4px;padding:3px 10px;font-family:'Noto Sans JP',sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+.btn-cp-scan:hover{background:rgba(255,255,255,0.35);}
+
 /* ===== PRINT ===== */
 @media print{
   @page{size:A4 portrait;margin:6mm 7mm 6mm 7mm;}
-
   *{overflow:visible!important;max-height:none!important;}
   body{background:white!important;font-size:7pt;line-height:1.3;height:auto!important;}
-
   .layout{display:block!important;height:auto!important;overflow:visible!important;}
   .sidebar,.app-header,.banner,.modal-bg,.toast,.tab-bar,.sidebar-actions,
-  .btn-add-row,.btn-del-row,.topic-add-btn{display:none!important;}
+  .btn-add-row,.btn-del-row,.topic-add-btn,.btn-cp-scan{display:none!important;}
   .main{display:block!important;width:100%!important;height:auto!important;overflow:visible!important;}
   .main-body{display:block!important;width:100%!important;height:auto!important;
     overflow:visible!important;padding:0!important;flex:none!important;}
   .no-select{display:none!important;}
   #form-area{display:block!important;}
-
-  /* 印刷ヘッダー */
   .print-hdr{display:block!important;margin-bottom:3pt;padding-bottom:3pt;border-bottom:1.5pt solid #1a3050;}
   .print-hdr-top{display:flex;justify-content:space-between;align-items:flex-start;}
   .print-hdr-corp{font-size:7pt;color:#444;}
@@ -175,11 +197,7 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
   .print-hdr-user{display:flex;justify-content:space-between;font-size:7pt;color:#444;margin-top:1pt;}
   .print-hdr-user .uname{font-size:10pt;font-weight:700;color:#000;}
   .print-hdr-right{text-align:right;font-size:7pt;}
-
-  /* バナー非表示 */
   .banner{display:none!important;}
-
-  /* セクション */
   .sec{box-shadow:none;border:0.5pt solid #aaa;border-radius:0;margin-bottom:2pt;break-inside:avoid;}
   .sh{padding:1.5pt 5pt;font-size:7pt;font-weight:bold;}
   .row{border-bottom:0.4pt solid #ccc;}
@@ -196,31 +214,23 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
   textarea{min-height:unset;overflow:visible;height:auto;}
   .cg{padding:1pt 0;gap:1pt 6pt;font-size:7pt;}
   .ci{font-size:7pt;}
-
-  /* 出席者テーブル */
   .att-table{font-size:7pt;margin:2pt 6pt;width:calc(100% - 12pt);}
   .att-table th{font-size:6.5pt;padding:1.5pt 3pt;}
   .att-table td{padding:1.5pt 3pt;}
   .att-table input,.att-table select{font-size:7pt;}
-
-  /* 検討項目 */
   .topic-area{padding:2pt 6pt;}
   .topic-block{margin-bottom:2pt;}
   .topic-hdr{padding:1.5pt 5pt;font-size:7pt;}
   .tlbl{font-size:6.5pt;padding:1.5pt 4pt;}
   .tval{padding:1.5pt 4pt;font-size:7pt;}
   .topic-row{grid-template-columns:55pt 1fr;}
-
-  /* 署名欄 */
   .sign-block{display:block!important;margin-top:3pt;}
   .sign-table{width:100%;border-collapse:collapse;font-size:7pt;margin-top:0;}
   .sign-table th{background:#ddeeff;border:0.5pt solid #bbb;padding:2pt 4pt;font-weight:700;text-align:center;font-size:6.5pt;}
   .sign-table td{border:0.5pt solid #bbb;padding:2pt 4pt;}
   .hanko-svg{display:inline-block!important;}
-  /* 印鑑プレビューは画面表示用 */
 }
 .print-hdr{display:none;}
-/* 印鑑プレビュー（画面） */
 .hanko-preview{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;vertical-align:middle;}
 </style>
 </head>
@@ -314,7 +324,6 @@ function checkPW(){
   </div>
 
   <div class="main-body" id="main-body">
-    <!-- 未選択 -->
     <div class="no-select" id="no-select">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <p>左の「利用者を追加」で登録し、選択してください</p>
@@ -322,7 +331,7 @@ function checkPW(){
 
     <div id="form-area" style="display:none;">
 
-      <!-- 印刷ヘッダー（印刷時のみ表示） -->
+      <!-- 印刷ヘッダー -->
       <div class="print-hdr">
         <div class="print-hdr-top">
           <div class="print-hdr-corp">
@@ -412,7 +421,7 @@ function checkPW(){
         </div>
       </div>
 
-      <!-- 退所情報（退所選択時） -->
+      <!-- 退所情報 -->
       <div class="sec" id="discharge-sec" style="display:none;">
         <div class="sh sh-o">■ 退所情報</div>
         <div class="row r4">
@@ -439,9 +448,14 @@ function checkPW(){
         </div>
       </div>
 
-      <!-- ケアプラン反映 -->
+      <!-- ケアプラン反映（📷ボタン付き） -->
       <div class="sec">
-        <div class="sh sh-p">■ ケアプラン反映</div>
+        <div class="sh sh-p">
+          <span>■ ケアプラン反映</span>
+          <button class="btn-cp-scan" onclick="openAiModal()">
+            📷 写真から読み込む
+          </button>
+        </div>
         <div class="row r4">
           <div class="lbl pl">CP作成・変更日</div>
           <div class="val"><input type="date" id="f-cp-date"></div>
@@ -589,6 +603,52 @@ function checkPW(){
   </div>
 </div>
 
+<!-- ===== AI読み込みモーダル ===== -->
+<div class="modal-bg hidden" id="ai-modal-bg">
+  <div class="ai-modal">
+    <h3>📷 ケアプランを写真から読み込む</h3>
+    <div class="ai-sub">ケアプランの写真または画像ファイルをアップロードすると、AIが内容を読み取ってフォームに自動入力します。手書き・印刷どちらも対応しています。</div>
+
+    <!-- ドロップゾーン -->
+    <div class="ai-drop-zone" id="ai-drop-zone"
+      onclick="document.getElementById('ai-file-input').click()"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="handleAiDrop(event)">
+      <div class="dz-icon">📄</div>
+      <div class="dz-text">クリックまたはドラッグ＆ドロップ</div>
+      <div class="dz-sub">JPG・PNG・HEIC・PDF対応 / スマホで撮影した写真もOK</div>
+    </div>
+    <input type="file" id="ai-file-input" accept="image/*,application/pdf" style="display:none" onchange="handleAiFile(this.files[0])">
+
+    <!-- プレビュー -->
+    <div class="ai-preview-wrap" id="ai-preview-wrap" style="display:none;">
+      <img id="ai-preview-img" src="" alt="プレビュー">
+      <button class="ai-clear" onclick="clearAiImage()">×</button>
+    </div>
+
+    <!-- ステータス -->
+    <div class="ai-status" id="ai-status">🔍 AIが読み取り中です。しばらくお待ちください…</div>
+    <div class="ai-err" id="ai-err"></div>
+
+    <!-- 結果表示 -->
+    <div class="ai-result-area" id="ai-result-area">
+      <div class="ar-title">📋 読み取り結果（確認してから反映してください）</div>
+      <div id="ai-result-items"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="btn-ai-scan" id="btn-ai-scan" onclick="runAiScan()" disabled>
+        🔍 読み取り開始
+      </button>
+      <button class="btn-ai-apply" id="btn-ai-apply" onclick="applyAiResult()">
+        ✓ フォームに反映
+      </button>
+      <button class="mbtn mbtn-cancel" onclick="closeAiModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -604,6 +664,11 @@ let editingId  = null;
 let attCount   = 0;
 let topicCount = 0;
 
+// AI関連
+let aiImageBase64 = null;
+let aiImageType   = null;
+let aiResultData  = {};
+
 async function initData(){
   try{
     const r1 = await gasReq({action:'getResidents', sheet:'サービス担当者会議録_利用者'});
@@ -617,7 +682,6 @@ async function initData(){
 }
 
 // ===== ユーティリティ =====
-// GAS URL
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1zHlVcBn96IB9_YLsmCr3r6jpPpD9DJTNVDsp-dTi3IoNtE4SRawnXZ-ODukFQVhl/exec';
 
 async function gasReq(payload){
@@ -630,7 +694,7 @@ async function gasReq(payload){
   return res.json();
 }
 function load(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
-function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+function save(k,val){ localStorage.setItem(k, JSON.stringify(val)); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function v(id){ const e=document.getElementById(id); return e?e.value:''; }
 function sv(id,val){ const e=document.getElementById(id); if(e) e.value=val||''; }
@@ -646,7 +710,6 @@ function switchTab(tab){
   const hl = document.getElementById('history-list');
   const rl = document.getElementById('resident-list');
   if(hl) hl.style.display = tab==='history' ? 'block' : 'none';
-  // ri要素を表示/非表示
   if(rl){
     rl.querySelectorAll('.ri,.discharged-ri').forEach(el => el.style.display = tab==='history' ? 'none' : '');
     document.getElementById('empty-msg').style.display = tab==='history' ? 'none' : '';
@@ -659,7 +722,7 @@ function switchTab(tab){
 }
 
 async function renderHistoryList(){
-  if(!currentId){ 
+  if(!currentId){
     document.getElementById('history-list').innerHTML='<div class="empty-list">利用者を選択してください</div>';
     return;
   }
@@ -671,7 +734,6 @@ async function renderHistoryList(){
       document.getElementById('history-list').innerHTML='<div class="empty-list">記録がありません</div>';
       return;
     }
-    const r=[...residents,...discharged].find(x=>x.id===currentId)||{};
     document.getElementById('history-list').innerHTML = items.map(item=>{
       const d = item.data||{};
       const dateStr = d['f-date']||item.id;
@@ -692,7 +754,6 @@ async function loadHistoryItem(id){
   try{
     const res = await gasReq({action:'getRecord', sheet:'サービス担当者会議録', id:id});
     if(res.data){
-      // フォームエリアを表示
       document.getElementById('no-select').style.display='none';
       document.getElementById('form-area').style.display='block';
       applyData(res.data);
@@ -711,14 +772,12 @@ function renderList(){
   const em = document.getElementById('empty-msg');
   const hl = document.getElementById('history-list');
   if(!el) return;
-  // 既存のri要素だけ削除（empty-msgとhistory-listは保持）
   el.querySelectorAll('.ri').forEach(e=>e.remove());
   if(!filtered.length){ if(em) em.style.display='block'; return; }
   if(em) em.style.display='none';
-  const hasSaved = id => false;
   const items = filtered.map(r=>{
     const div=document.createElement('div');
-    div.className=`ri ${currentId===r.id?'active':''} ${hasSaved(r.id)?'saved':''} ${currentTab==='discharged'?'discharged-ri':''}`;
+    div.className=`ri ${currentId===r.id?'active':''} ${currentTab==='discharged'?'discharged-ri':''}`;
     div.onclick=()=>selectResident(r.id);
     div.innerHTML=`
       <div class="ri-dot"></div>
@@ -729,7 +788,6 @@ function renderList(){
       <button class="ri-edit" onclick="event.stopPropagation();openEditModal(${r.id})">✎</button>`;
     return div;
   });
-  // history-listの前に挿入
   items.forEach(div => el.insertBefore(div, hl || null));
 }
 
@@ -814,9 +872,7 @@ function updateExpire(){
   const exp = new Date(d); exp.setFullYear(exp.getFullYear()+5);
   const expStr = exp.toISOString().split('T')[0];
   const pe = document.getElementById('ph-expire');
-  const se = document.getElementById('sign-expire');
   if(pe) pe.textContent = expStr;
-  if(se) se.textContent = expStr;
 }
 
 // ===== データ収集・保存・読込 =====
@@ -834,11 +890,9 @@ function collectData(){
 }
 function applyData(d){
   TEXT_F.forEach(id=>{ if(d[id]!==undefined) sv(id,d[id]); });
-  // 出席者
   document.getElementById('att-tbody').innerHTML=''; attCount=0;
   (d.attendees||[]).forEach(a=>addAttendee(a.name,a.org,a.role));
   if(!d.attendees||!d.attendees.length) addAttendee('','','ケアマネジャー');
-  // 検討項目
   document.getElementById('topic-area').innerHTML=''; topicCount=0;
   (d.topics||[]).forEach(t=>addTopic(t.title,t.content,t.opinion,t.conclusion));
   if(!d.topics||!d.topics.length) addTopic();
@@ -857,7 +911,6 @@ async function saveData(silent=false){
   renderList();
 }
 async function loadData(id){
-  // 最新の記録を履歴から取得
   try{
     const res = await gasReq({action:'getHistory', sheet:'サービス担当者会議録', residentId:String(id)});
     const items = res.data || [];
@@ -865,26 +918,68 @@ async function loadData(id){
   }catch(e){}
 }
 
+// ===== 印鑑 =====
+function makeHankoSVG(type, name){
+  if(!type || !name) return '';
+  const myoji = name.trim().split(/[ 　]+/)[0] || name.trim();
+  const chars = myoji.split('');
+  const n = chars.length;
+  const W = 40, H = 40, cx = 20, cy = 20;
+  const fs = n <= 2 ? 14 : n === 3 ? 11 : 9;
+  const lineH = fs + 2;
+  const totalH = n * lineH;
+  const startY = cy - totalH / 2 + fs * 0.85;
+  const textEls = chars.map((c, i) =>
+    `<text x="${cx}" y="${(startY + i * lineH).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-family="serif" fill="#c0392b" font-weight="bold">${c}</text>`
+  ).join('');
+  if(type==='maru'){
+    return `<svg class="hanko-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${cx}" cy="${cy}" r="18" fill="none" stroke="#c0392b" stroke-width="1.8"/>${textEls}</svg>`;
+  } else if(type==='kaku'){
+    return `<svg class="hanko-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="2" width="36" height="36" fill="none" stroke="#c0392b" stroke-width="1.8"/>${textEls}</svg>`;
+  } else if(type==='niji'){
+    return `<svg class="hanko-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${cx}" cy="${cy}" r="18" fill="none" stroke="#c0392b" stroke-width="1.8"/>
+      <circle cx="${cx}" cy="${cy}" r="14" fill="none" stroke="#c0392b" stroke-width="0.8"/>${textEls}</svg>`;
+  }
+  return '';
+}
+function updateHanko(){
+  const type = v('f-hanko');
+  const name = v('f-recorder');
+  const preview = document.getElementById('hanko-preview-area');
+  if(preview){ preview.innerHTML = type && name ? makeHankoSVG(type, name) : ''; }
+}
+
 // ===== 印刷 =====
 function doPrint(){
   if(!currentId){ alert('利用者を選択してください'); return; }
-  const r=[...residents,...discharged].find(x=>x.id===currentId);
-  // ヘッダー埋め込み
-  document.getElementById('ph-name').textContent = r?.name||'';
-  document.getElementById('ph-facility').textContent = v('f-facility');
-  document.getElementById('ph-date').textContent = formatDate(v('f-date'));
-  document.getElementById('ph-place').textContent = v('f-place')||'—';
-  document.getElementById('ph-printdate').textContent = new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
-  updateExpire();
-  // 署名欄生成
-  const atts=getAttendees();
-  const sb=document.getElementById('sign-tbody-att');
-  sb.innerHTML='';
-  const rows = atts.length ? atts : [{name:'',org:'',role:''},{name:'',org:'',role:''},{name:'',org:'',role:''}];
-  rows.forEach(a=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${esc(a.name)}</td><td>${esc(a.org)}</td><td>${esc(a.role)}</td><td></td>`; sb.appendChild(tr); });
-  // 確認欄
-  document.getElementById('sign-recorder').textContent=v('f-recorder');
-  document.getElementById('sign-date').textContent=formatDate(v('f-date'));
+  try {
+    const r=[...residents,...discharged].find(x=>x.id===currentId)||{};
+    const setT=(id,t)=>{ const e=document.getElementById(id); if(e) e.textContent=t; };
+    setT('ph-name',      r.name||'');
+    setT('ph-facility',  v('f-facility'));
+    setT('ph-date',      formatDate(v('f-date')));
+    setT('ph-place',     v('f-place')||'—');
+    setT('ph-printdate', new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'}));
+    updateExpire();
+    const atts = getAttendees();
+    const sb = document.getElementById('sign-tbody-att');
+    if(sb){
+      sb.innerHTML='';
+      const rows = atts.length ? atts : [{name:'',org:'',role:''},{name:'',org:'',role:''},{name:'',org:'',role:''}];
+      rows.forEach(a=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${esc(a.name)}</td><td>${esc(a.org)}</td><td>${esc(a.role)}</td><td></td>`;
+        sb.appendChild(tr);
+      });
+    }
+    const srName = document.getElementById('sign-recorder-name');
+    if(srName) srName.textContent = v('f-recorder');
+    const srHanko = document.getElementById('sign-hanko-wrap');
+    if(srHanko) srHanko.innerHTML = makeHankoSVG(v('f-hanko'), v('f-recorder'));
+  } catch(e){ console.error('print prep error:', e); }
   window.print();
 }
 
@@ -964,82 +1059,175 @@ async function reinstateResident(){
   closeModal(); renderList(); toast('✓ 在籍中に戻しました');
 }
 
-// ===== 印刷 =====
-function doPrint(){
-  if(!currentId){ alert('利用者を選択してください'); return; }
-  try {
-    const r=[...residents,...discharged].find(x=>x.id===currentId)||{};
-    const setT=(id,t)=>{ const e=document.getElementById(id); if(e) e.textContent=t; };
-    setT('ph-name',      r.name||'');
-    setT('ph-facility',  v('f-facility'));
-    setT('ph-date',      formatDate(v('f-date')));
-    setT('ph-place',     v('f-place')||'—');
-    setT('ph-printdate', new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'}));
-    updateExpire();
-    const atts = getAttendees();
-    const sb = document.getElementById('sign-tbody-att');
-    if(sb){
-      sb.innerHTML='';
-      const rows = atts.length ? atts : [{name:'',org:'',role:''},{name:'',org:'',role:''},{name:'',org:'',role:''}];
-      rows.forEach(a=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td>${esc(a.name)}</td><td>${esc(a.org)}</td><td>${esc(a.role)}</td><td></td>`;
-        sb.appendChild(tr);
-      });
+// ===== AI読み込み機能 =====
+function openAiModal(){
+  aiImageBase64 = null;
+  aiImageType   = null;
+  aiResultData  = {};
+  document.getElementById('ai-preview-wrap').style.display='none';
+  document.getElementById('ai-drop-zone').style.display='block';
+  document.getElementById('ai-status').style.display='none';
+  document.getElementById('ai-err').style.display='none';
+  document.getElementById('ai-result-area').style.display='none';
+  document.getElementById('ai-result-items').innerHTML='';
+  document.getElementById('btn-ai-scan').disabled=true;
+  document.getElementById('btn-ai-apply').style.display='none';
+  document.getElementById('ai-file-input').value='';
+  document.getElementById('ai-modal-bg').classList.remove('hidden');
+}
+function closeAiModal(){
+  document.getElementById('ai-modal-bg').classList.add('hidden');
+}
+function handleAiDrop(e){
+  e.preventDefault();
+  document.getElementById('ai-drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if(file) handleAiFile(file);
+}
+function handleAiFile(file){
+  if(!file) return;
+  const allowed = ['image/jpeg','image/png','image/webp','image/heic','image/gif','application/pdf'];
+  if(!allowed.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|heic|gif|pdf)$/i)){
+    showAiErr('対応していないファイル形式です（JPG・PNG・PDF等をご利用ください）');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const dataUrl = e.target.result;
+    const parts = dataUrl.split(',');
+    aiImageBase64 = parts[1];
+    aiImageType = file.type.startsWith('image/') ? file.type : 'image/jpeg';
+    // プレビュー
+    if(file.type !== 'application/pdf'){
+      document.getElementById('ai-preview-img').src = dataUrl;
+      document.getElementById('ai-preview-wrap').style.display='block';
     }
-    // 記録者名と印鑑をセット
-    const srName = document.getElementById('sign-recorder-name');
-    if(srName) srName.textContent = v('f-recorder');
-    const srHanko = document.getElementById('sign-hanko-wrap');
-    if(srHanko) srHanko.innerHTML = makeHankoSVG(v('f-hanko'), v('f-recorder'));
-  } catch(e){ console.error('print prep error:', e); }
-  window.print();
+    document.getElementById('ai-drop-zone').style.display='none';
+    document.getElementById('btn-ai-scan').disabled=false;
+    document.getElementById('ai-err').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+function clearAiImage(){
+  aiImageBase64=null; aiImageType=null;
+  document.getElementById('ai-preview-wrap').style.display='none';
+  document.getElementById('ai-drop-zone').style.display='block';
+  document.getElementById('btn-ai-scan').disabled=true;
+  document.getElementById('ai-result-area').style.display='none';
+  document.getElementById('btn-ai-apply').style.display='none';
+  document.getElementById('ai-file-input').value='';
+}
+function showAiErr(msg){
+  const el = document.getElementById('ai-err');
+  el.textContent = msg;
+  el.style.display='block';
 }
 
-// ===== 印鑑 =====
-function makeHankoSVG(type, name){
-  if(!type || !name) return '';
-  // 名字だけ（スペース前の最初の単語）
-  const myoji = name.trim().split(/[ 　]+/)[0] || name.trim();
-  const chars = myoji.split('');
-  const n = chars.length;
-  const W = 40, H = 40, cx = 20, cy = 20;
-  const fs = n <= 2 ? 14 : n === 3 ? 11 : 9;
-  const lineH = fs + 2;
-  const totalH = n * lineH;
-  const startY = cy - totalH / 2 + fs * 0.85;
-  // 文字を縦一列に均等配置
-  const textEls = chars.map((c, i) =>
-    `<text x="${cx}" y="${(startY + i * lineH).toFixed(1)}" text-anchor="middle" font-size="${fs}" font-family="serif" fill="#c0392b" font-weight="bold">${c}</text>`
-  ).join('');
+async function runAiScan(){
+  if(!aiImageBase64){ showAiErr('画像をアップロードしてください'); return; }
+  document.getElementById('ai-status').style.display='block';
+  document.getElementById('ai-err').style.display='none';
+  document.getElementById('ai-result-area').style.display='none';
+  document.getElementById('btn-ai-scan').disabled=true;
+  document.getElementById('btn-ai-apply').style.display='none';
 
-  if(type==='maru'){
-    return `<svg class="hanko-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="${cx}" cy="${cy}" r="18" fill="none" stroke="#c0392b" stroke-width="1.8"/>
-      ${textEls}
-    </svg>`;
-  } else if(type==='kaku'){
-    return `<svg class="hanko-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="36" height="36" fill="none" stroke="#c0392b" stroke-width="1.8"/>
-      ${textEls}
-    </svg>`;
-  } else if(type==='niji'){
-    return `<svg class="hanko-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="${cx}" cy="${cy}" r="18" fill="none" stroke="#c0392b" stroke-width="1.8"/>
-      <circle cx="${cx}" cy="${cy}" r="14" fill="none" stroke="#c0392b" stroke-width="0.8"/>
-      ${textEls}
-    </svg>`;
-  }
-  return '';
+  try{
+    const systemPrompt = `あなたはケアプラン書類のOCR・情報抽出AIです。
+画像からケアプランに関する情報を読み取り、必ず以下のJSON形式のみで返答してください。
+マークダウン記号やコードブロックは不要です。JSONのみ出力してください。
+
+{
+  "cp_date": "CP作成・変更日（YYYY-MM-DD形式、不明なら空文字）",
+  "cp_start": "計画開始日（YYYY-MM-DD、不明なら空文字）",
+  "cp_end": "計画終了日（YYYY-MM-DD、不明なら空文字）",
+  "needs": "生活課題・ニーズ（読み取れた内容をそのまま）",
+  "long_goal": "長期目標",
+  "short_goal": "短期目標",
+  "service": "サービス内容・種別・頻度など",
+  "inquiry": "担当者照会事項や特記事項（あれば）",
+  "note": "その他特記事項"
 }
 
-function updateHanko(){
-  const type = v('f-hanko');
-  const name = v('f-recorder');
-  const preview = document.getElementById('hanko-preview-area');
-  if(preview){
-    preview.innerHTML = type && name ? makeHankoSVG(type, name) : '';
+読み取れない項目は空文字にしてください。ケアプラン以外の書類の場合でも、読み取れる情報を同じ形式で返してください。`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: aiImageType, data: aiImageBase64 }
+            },
+            {
+              type: 'text',
+              text: 'このケアプランから情報を抽出してJSONで返してください。'
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    if(data.error){ throw new Error(data.error.message); }
+
+    const raw = data.content.map(c=>c.text||'').join('').trim();
+    // JSON抽出（コードブロック対応）
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error('読み取り結果を解析できませんでした');
+    aiResultData = JSON.parse(jsonMatch[0]);
+
+    // 結果表示
+    const labels = {
+      cp_date:'CP作成・変更日', cp_start:'計画開始日', cp_end:'計画終了日',
+      needs:'生活課題（ニーズ）', long_goal:'長期目標', short_goal:'短期目標',
+      service:'サービス内容', inquiry:'担当者照会事項', note:'特記事項'
+    };
+    const items = Object.entries(aiResultData)
+      .filter(([k,vl])=>vl && labels[k])
+      .map(([k,vl])=>`<div class="ar-item"><div class="ar-lbl">${labels[k]}</div><div class="ar-val">${esc(vl)}</div></div>`)
+      .join('');
+
+    if(!items){
+      showAiErr('ケアプランの情報を読み取れませんでした。鮮明な写真で再試行してください。');
+    } else {
+      document.getElementById('ai-result-items').innerHTML = items;
+      document.getElementById('ai-result-area').style.display='block';
+      document.getElementById('btn-ai-apply').style.display='block';
+    }
+  } catch(e){
+    showAiErr('読み取りに失敗しました：' + e.message);
+  } finally {
+    document.getElementById('ai-status').style.display='none';
+    document.getElementById('btn-ai-scan').disabled=false;
   }
+}
+
+function applyAiResult(){
+  const d = aiResultData;
+  if(d.cp_date)   sv('f-cp-date',  d.cp_date);
+  if(d.cp_start)  sv('f-cp-start', d.cp_start);
+  if(d.cp_end)    sv('f-cp-end',   d.cp_end);
+  if(d.needs)     sv('f-cp-needs', d.needs);
+  if(d.long_goal) sv('f-cp-long',  d.long_goal);
+  if(d.short_goal)sv('f-cp-short', d.short_goal);
+  if(d.service)   sv('f-cp-svc',   d.service);
+  if(d.inquiry){
+    const cur = v('f-cp-inquiry');
+    sv('f-cp-inquiry', cur ? cur + '\n' + d.inquiry : d.inquiry);
+  }
+  closeAiModal();
+  toast('✓ ケアプランの内容を反映しました');
+  // ケアプランセクションへスクロール
+  setTimeout(()=>{
+    const el = document.getElementById('f-cp-needs');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 200);
 }
 
 // ===== 初期化 =====
