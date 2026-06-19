@@ -911,10 +911,19 @@ async function saveData(silent=false){
   renderList();
 }
 async function loadData(id){
+  // まずフォームをクリア
+  TEXT_F.forEach(fid=>{ const e=document.getElementById(fid); if(e) e.value=''; });
+  document.getElementById('att-tbody').innerHTML=''; attCount=0;
+  addAttendee('','','ケアマネジャー');
+  document.getElementById('topic-area').innerHTML=''; topicCount=0;
+  addTopic();
   try{
     const res = await gasReq({action:'getHistory', sheet:'サービス担当者会議録', residentId:String(id)});
     const items = res.data || [];
-    if(items.length > 0) applyData(items[0].data);
+    if(items.length > 0){
+      // 読み込んだデータが本当にこの利用者のものか確認
+      if(currentId === id) applyData(items[0].data);
+    }
   }catch(e){}
 }
 
