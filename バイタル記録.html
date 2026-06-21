@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>バイタル記録</title>
+<title>バイタル記録 - みなはるの里</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif; background: #f0f4f8; color: #1a1a2e; font-size: 14px; }
@@ -405,7 +405,7 @@ function checkPW(){
 <div class="toast" id="toast"></div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1zHlVcBn96IB9_YLsmCr3r6jpPpD9DJTNVDsp-dTi3IoNtE4SRawnXZ-ODukFQVhl/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
 
 let residents = [];
 let vitalCache = [];
@@ -455,14 +455,12 @@ async function loadResidents() {
     const res = await gas({ action: 'getResidents' });
     residents = res.data || [];
     const active = residents.filter(r => r.status === '在籍');
-    // 記録入力セレクト
     const sel = document.getElementById('residentSel');
     sel.innerHTML = '<option value="">-- 選択してください --</option>';
     active.forEach(r => {
       const o = document.createElement('option');
       o.value = r.id; o.textContent = r.name; sel.appendChild(o);
     });
-    // 絞込みセレクト
     const fsel = document.getElementById('filterResident');
     fsel.innerHTML = '<option value="">全員</option>';
     active.forEach(r => {
@@ -650,7 +648,6 @@ function renderTable() {
 }
 
 function jumpToEdit(name) {
-  // 記録タブへ移動して該当利用者を選択
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tabs button').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-record').classList.add('active');
