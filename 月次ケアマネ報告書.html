@@ -840,7 +840,7 @@ const FACILITY_KEY = 'minaharu';
 const RESIDENTS_KEY    = FACILITY_KEY + '_residents';
 const DISCHARGED_KEY   = FACILITY_KEY + '_discharged';
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1zHlVcBn96IB9_YLsmCr3r6jpPpD9DJTNVDsp-dTi3IoNtE4SRawnXZ-ODukFQVhl/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
 async function gasReq(payload){
   const url = GAS_URL + '?' + new URLSearchParams(
     Object.fromEntries(
@@ -1234,8 +1234,13 @@ async function saveDischarged(){
   await gasReq({action:'saveResidents', sheet:'月次ケアマネ_退所者', data:discharged});
 }
 
-function nextId(){
-  return residents.length ? Math.max(...residents.map(r=>r.id))+1 : 1;
+async function nextId(){
+  try{
+    const res = await gasReq({action:'getNextId', sheet:'月次ケアマネ_利用者'});
+    if(res.nextId) return res.nextId;
+  }catch(e){}
+  const all=[...residents,...discharged];
+  return all.length ? Math.max(...all.map(r=>r.id))+1 : 1;
 }
 
 function openAddModal(){
@@ -1295,7 +1300,7 @@ async function saveResident(){
   const name = document.getElementById('m-name').value.trim();
   if(!name){ alert('氏名を入力してください'); return; }
   const r = {
-    id: editingId || nextId(),
+    id: editingId || (await nextId()),
     name, kana:    document.getElementById('m-kana').value.trim(),
     care:          document.getElementById('m-care').value,
     room:          document.getElementById('m-room').value.trim(),
