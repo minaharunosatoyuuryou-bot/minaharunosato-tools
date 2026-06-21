@@ -682,7 +682,7 @@ async function initData(){
 }
 
 // ===== ユーティリティ =====
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1zHlVcBn96IB9_YLsmCr3r6jpPpD9DJTNVDsp-dTi3IoNtE4SRawnXZ-ODukFQVhl/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
 
 async function gasReq(payload){
   const url = GAS_URL + '?' + new URLSearchParams(
@@ -1024,18 +1024,12 @@ function openEditModal(id){
 }
 function closeModal(){ document.getElementById('modal-bg').classList.add('hidden'); }
 async function nextId(){
-  // GASから最新の利用者リストを取得してIDを計算（重複防止）
   try{
-    const r1 = await gasReq({action:'getResidents', sheet:'サービス担当者会議録_利用者'});
-    const r2 = await gasReq({action:'getResidents', sheet:'サービス担当者会議録_退所者'});
-    const all1 = (r1.data||[]).map(r=>typeof r==='string'?JSON.parse(r):r);
-    const all2 = (r2.data||[]).map(r=>typeof r==='string'?JSON.parse(r):r);
-    const all = [...all1,...all2];
-    return all.length ? Math.max(...all.map(r=>r.id))+1 : 1;
-  }catch(e){
-    const all=[...residents,...discharged];
-    return all.length ? Math.max(...all.map(r=>r.id))+1 : 1;
-  }
+    const res = await gasReq({action:'getNextId', sheet:'サービス担当者会議録_利用者'});
+    if(res.nextId) return res.nextId;
+  }catch(e){}
+  const all=[...residents,...discharged];
+  return all.length ? Math.max(...all.map(r=>r.id))+1 : 1;
 }
 async function saveResident(){
   const name=v('m-name').trim(); if(!name){ alert('氏名を入力してください'); return; }
