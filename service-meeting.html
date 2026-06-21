@@ -1023,10 +1023,23 @@ function openEditModal(id){
   document.getElementById('modal-bg').classList.remove('hidden');
 }
 function closeModal(){ document.getElementById('modal-bg').classList.add('hidden'); }
-function nextId(){ const all=[...residents,...discharged]; return all.length ? Math.max(...all.map(r=>r.id))+1 : 1; }
+async function nextId(){
+  // GASから最新の利用者リストを取得してIDを計算（重複防止）
+  try{
+    const r1 = await gasReq({action:'getResidents', sheet:'サービス担当者会議録_利用者'});
+    const r2 = await gasReq({action:'getResidents', sheet:'サービス担当者会議録_退所者'});
+    const all1 = (r1.data||[]).map(r=>typeof r==='string'?JSON.parse(r):r);
+    const all2 = (r2.data||[]).map(r=>typeof r==='string'?JSON.parse(r):r);
+    const all = [...all1,...all2];
+    return all.length ? Math.max(...all.map(r=>r.id))+1 : 1;
+  }catch(e){
+    const all=[...residents,...discharged];
+    return all.length ? Math.max(...all.map(r=>r.id))+1 : 1;
+  }
+}
 async function saveResident(){
   const name=v('m-name').trim(); if(!name){ alert('氏名を入力してください'); return; }
-  const r={ id:editingId||nextId(), name, kana:v('m-kana'), care:v('m-care'),
+  const r={ id:editingId||(await nextId()), name, kana:v('m-kana'), care:v('m-care'),
     facility:v('m-facility'), dob:v('m-dob'), certEnd:v('m-cert-end'),
     cm:v('m-cm'), doctor:v('m-doctor'), note:v('m-note') };
   if(editingId){ const idx=residents.findIndex(x=>x.id===editingId); if(idx>=0) residents[idx]=r; }
