@@ -1,1 +1,831 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ケア管理システム - みなはるの里</title>
+<style>
+:root {
+  --navy:#1a3050;--blue:#2c5f8a;--lblue:#dbeaf5;--accent:#3a7cb8;
+  --green:#2d6a4f;--lgreen:#e8f5ee;--orange:#b85c2c;--lorange:#fdeee6;
+  --purple:#5a4a8a;--lpurple:#ede8f5;
+  --teal:#2a6a5a;--lteal:#e0f0ec;
+  --gray:#f4f6f8;--mgray:#d0d8e0;--text:#1a2535;--muted:#5a6a7a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:#e8ecf0;color:var(--text);font-size:13px;line-height:1.6;}
+#pw-screen{position:fixed;inset:0;background:#1a3050;z-index:9999;display:flex;align-items:center;justify-content:center;}
+.layout{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:230px;min-width:230px;background:var(--navy);color:white;display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-top{padding:12px 12px 8px;border-bottom:1px solid rgba(255,255,255,0.12);}
+.sidebar-top .fname{font-size:14px;font-weight:700;}
+.sidebar-top .fsub{font-size:10px;opacity:0.55;margin-top:2px;}
+.tab-bar{display:flex;border-bottom:1px solid rgba(255,255,255,0.12);}
+.tab-btn{flex:1;padding:6px 2px;background:none;border:none;color:rgba(255,255,255,0.55);font-size:10px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;}
+.tab-btn.active{color:white;border-bottom-color:var(--accent);}
+.sidebar-search{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.sidebar-search input{width:100%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:5px;padding:5px 8px;font-size:12px;font-family:inherit;outline:none;}
+.sidebar-search input::placeholder{color:rgba(255,255,255,0.4);}
+.sidebar-actions{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.btn-add{width:100%;background:var(--accent);color:white;border:none;border-radius:5px;padding:7px 10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;}
+.resident-list{flex:1;overflow-y:auto;padding:4px 0;}
+.resident-item{display:flex;align-items:center;padding:8px 10px;cursor:pointer;border-left:3px solid transparent;font-size:12px;gap:8px;}
+.resident-item:hover{background:rgba(255,255,255,0.07);}
+.resident-item.active{background:rgba(255,255,255,0.15);border-left-color:var(--accent);}
+.ri-info{flex:1;min-width:0;}
+.ri-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ri-sub{font-size:10px;opacity:0.6;margin-top:1px;}
+.ri-edit{background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:3px;flex-shrink:0;}
+.ri-edit:hover{color:white;}
+.sidebar-footer{padding:8px 12px;border-top:1px solid rgba(255,255,255,0.1);font-size:10px;opacity:0.45;text-align:center;}
+.empty-list{padding:20px 12px;text-align:center;opacity:0.45;font-size:12px;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.app-header{background:var(--navy);color:white;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.25);flex-shrink:0;}
+.app-header-title{font-size:15px;font-weight:700;}
+.app-header-sub{font-size:10px;opacity:0.6;margin-top:2px;}
+.header-btns{display:flex;gap:7px;}
+.btn{border:none;padding:7px 14px;border-radius:5px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.btn-save{background:var(--green);color:white;}
+.btn-print{background:var(--accent);color:white;}
+.btn-sec{background:rgba(255,255,255,0.14);color:white;border:1px solid rgba(255,255,255,0.22);}
+.doc-tabs{display:flex;background:#f0f4f8;border-bottom:2px solid var(--mgray);flex-shrink:0;overflow-x:auto;}
+.doc-tab{padding:10px 16px;border:none;background:none;font-family:inherit;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;}
+.doc-tab.active{color:var(--navy);border-bottom-color:var(--accent);background:white;}
+.main-body{flex:1;overflow-y:auto;padding:16px;}
+.no-select{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--muted);}
+.banner{background:white;border-radius:8px;padding:11px 14px;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,0.07);flex-wrap:wrap;gap:8px;}
+.banner-name{font-size:17px;font-weight:700;color:var(--navy);}
+.banner-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.svc-badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;margin-right:3px;}
+.badge-stay{background:#dbeaf5;color:#1a3050;}
+.badge-day{background:#ede8f5;color:#5a4a8a;}
+.badge-teiki{background:#e0f0ec;color:#2a6a5a;}
+.sec{background:white;border-radius:8px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+.sh{color:white;padding:7px 13px;font-weight:700;font-size:12px;letter-spacing:0.04em;}
+.sh-n{background:var(--navy);}
+.sh-b{background:var(--blue);}
+.sh-g{background:var(--green);}
+.sh-o{background:var(--orange);}
+.sh-p{background:var(--purple);}
+.sh-t{background:var(--teal);}
+.sh-s{background:#4a5a6a;}
+.row{display:grid;gap:0;border-bottom:1px solid var(--mgray);}
+.row:last-child{border-bottom:none;}
+.r2{grid-template-columns:120px 1fr;}
+.r4{grid-template-columns:120px 1fr 120px 1fr;}
+.lbl{background:var(--lblue);padding:6px 9px;font-weight:700;font-size:11px;color:var(--navy);display:flex;align-items:center;border-right:1px solid var(--mgray);}
+.lbl.gl{background:var(--lgreen);color:var(--green);}
+.lbl.ol{background:var(--lorange);color:var(--orange);}
+.lbl.pl{background:var(--lpurple);color:var(--purple);}
+.lbl.tl{background:var(--lteal);color:var(--teal);}
+.val{padding:5px 9px;display:flex;align-items:center;border-right:1px solid var(--mgray);}
+.val:last-child{border-right:none;}
+input[type=text],input[type=date],input[type=month],textarea,select{width:100%;border:1px solid var(--mgray);border-radius:4px;padding:4px 7px;font-family:inherit;font-size:12px;color:var(--text);background:white;outline:none;}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:52px;line-height:1.7;}
+.cg{display:flex;flex-wrap:wrap;gap:4px 11px;padding:4px 0;align-items:center;}
+.ci{display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;}
+.ci input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--accent);}
+.adl-table{width:100%;border-collapse:collapse;font-size:11px;}
+.adl-table th{background:var(--navy);color:white;padding:5px 7px;text-align:center;font-weight:700;border:1px solid #3a5070;}
+.adl-table td{border:1px solid var(--mgray);padding:4px 6px;vertical-align:middle;}
+.adl-table tr:nth-child(even) td{background:var(--gray);}
+.adl-table .ilbl{background:var(--lblue);font-weight:700;color:var(--navy);text-align:center;width:78px;}
+.adl-table select{padding:2px 4px;font-size:11px;}
+.adl-table textarea{min-height:26px;font-size:11px;}
+.month-row{display:flex;align-items:center;gap:6px;font-size:12px;}
+.month-row label{font-weight:700;color:var(--navy);white-space:nowrap;}
+/* AI写真スキャン */
+.ai-scan-bar{background:linear-gradient(135deg,#1a3050,#2c5f8a);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.ai-scan-bar .ai-title{color:white;font-weight:700;font-size:13px;}
+.ai-scan-bar .ai-sub{color:rgba(255,255,255,0.7);font-size:11px;margin-top:2px;}
+.ai-btn{background:#27ae60;color:white;border:none;border-radius:6px;padding:8px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.ai-btn:hover{opacity:0.85;}
+.ai-btn:disabled{background:#888;cursor:not-allowed;}
+#ai-file-input{display:none;}
+.ai-preview{background:white;border-radius:8px;padding:10px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.1);display:none;}
+.ai-preview img{max-width:200px;max-height:150px;border-radius:6px;object-fit:cover;}
+.ai-status{font-size:12px;color:var(--muted);margin-top:6px;}
+/* 写真ギャラリー（ローカル保存） */
+.photo-section{padding:10px 12px;}
+.photo-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.photo-thumb{position:relative;width:120px;height:100px;border-radius:6px;overflow:hidden;border:2px solid var(--mgray);background:var(--gray);flex-shrink:0;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-cap{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:9px;padding:2px 4px;}
+.photo-cap[contenteditable]{cursor:text;}
+.del-photo{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.photo-add{width:120px;height:100px;border:2px dashed var(--mgray);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:11px;gap:5px;background:white;}
+.photo-add:hover{border-color:var(--accent);color:var(--accent);}
+/* モーダル */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px 0;}
+.modal-bg.hidden{display:none;}
+.modal{background:white;border-radius:10px;padding:20px 24px;width:400px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);}
+.modal h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px;}
+.mrow{margin-bottom:12px;}
+.mrow label{display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.mrow input,.mrow select{width:100%;border:1px solid var(--mgray);border-radius:4px;padding:7px 9px;font-family:inherit;font-size:13px;outline:none;}
+.modal-btns{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;padding:10px 0 0;border-top:1px solid #eee;}
+.mbtn{border:none;padding:8px 18px;border-radius:5px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;}
+.mbtn-primary{background:var(--accent);color:white;}
+.mbtn-cancel{background:var(--gray);color:var(--text);}
+.mbtn-danger{background:#c0392b;color:white;}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--green);color:white;padding:9px 16px;border-radius:7px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.22);opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;transform:translateY(0);}
+@media print {
+  @page{size:A4 portrait;margin:8mm;}
+  body{background:white;font-size:8pt;}
+  .layout{display:block;height:auto;}
+  .sidebar,.app-header,.doc-tabs,.modal-bg,.toast,.ai-scan-bar,.ai-preview,.photo-add,.del-photo{display:none!important;}
+  .main{display:block;overflow:visible;}
+  .main-body{overflow:visible;padding:0;}
+  .sec{box-shadow:none;border:0.5pt solid #aaa;border-radius:0;margin-bottom:3pt;break-inside:avoid;}
+  .sh{padding:2pt 5pt;font-size:8pt;}
+  .r2{grid-template-columns:80pt 1fr;}
+  .r4{grid-template-columns:80pt 1fr 80pt 1fr;}
+  .lbl{font-size:7pt;padding:2pt 4pt;background:#ddeeff!important;}
+  .val{font-size:8pt;padding:2pt 4pt;}
+  input,textarea,select{border:none;padding:0;font-size:8pt;background:transparent;box-shadow:none;}
+  textarea{min-height:unset;overflow:visible;height:auto;}
+  .cg{font-size:8pt;}
+  .adl-table{font-size:7pt;}
+  .adl-table th,.adl-table td{padding:2pt 3pt;}
+  .banner{box-shadow:none;border:0.5pt solid #888;padding:4pt 8pt;margin-bottom:4pt;}
+  .banner-name{font-size:12pt;}
+  .print-title{display:block!important;text-align:center;font-size:13pt;font-weight:bold;margin-bottom:6pt;padding-bottom:4pt;border-bottom:1.5pt solid #1a3050;}
+  .photo-thumb{width:80px;height:65px;}
+}
+.print-title{display:none;}
+</style>
+</head>
+<body>
 
+<div id="pw-screen">
+  <div style="background:white;border-radius:12px;padding:32px 28px;width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+    <div style="font-size:18px;font-weight:700;color:#1a3050;margin-bottom:6px;">みなはるの里</div>
+    <div style="font-size:12px;color:#888;margin-bottom:24px;">社会福祉法人 悠久福祉会</div>
+    <div style="font-size:13px;color:#555;margin-bottom:10px;font-weight:600;">パスワードを入力してください</div>
+    <input type="password" id="pw-input" placeholder="パスワード"
+      style="width:100%;padding:10px 14px;border:1px solid #ccc;border-radius:6px;font-size:16px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:8px;"
+      onkeydown="if(event.key==='Enter')checkPW()">
+    <div id="pw-error" style="color:#e74c3c;font-size:12px;height:16px;margin-bottom:8px;"></div>
+    <button onclick="checkPW()" style="width:100%;padding:11px;background:#2c5f8a;color:white;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;">ログイン</button>
+  </div>
+</div>
+<script>
+(function(){
+  if(sessionStorage.getItem('minaharu_auth')==='ok'){document.getElementById('pw-screen').style.display='none';return;}
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+})();
+function checkPW(){
+  if(document.getElementById('pw-input').value==='2408'){
+    sessionStorage.setItem('minaharu_auth','ok');
+    document.getElementById('pw-screen').style.display='none';
+  } else {
+    document.getElementById('pw-error').textContent='パスワードが違います';
+    document.getElementById('pw-input').value='';
+    setTimeout(()=>document.getElementById('pw-error').textContent='',2000);
+  }
+}
+</script>
+
+<div class="layout">
+<div class="sidebar">
+  <div class="sidebar-top">
+    <div class="fname">みなはるの里</div>
+    <div class="fsub">ケア管理システム</div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchSideTab('active',this)">在籍中</button>
+    <button class="tab-btn" onclick="switchSideTab('discharged',this)">退所者</button>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="search-input" placeholder="氏名で検索…" oninput="filterList()">
+  </div>
+  <div class="sidebar-actions">
+    <button class="btn-add" onclick="openAddModal()">＋ 利用者を追加</button>
+  </div>
+  <div class="resident-list" id="resident-list">
+    <div class="empty-list" id="empty-msg">利用者が登録されていません</div>
+  </div>
+  <div class="sidebar-footer">社会福祉法人 悠久福祉会</div>
+</div>
+
+<div class="main">
+  <div class="app-header">
+    <div>
+      <div class="app-header-title">ケア管理システム</div>
+      <div class="app-header-sub">みなはるの里（有料老人ホーム・デイサービス・定期巡回）</div>
+    </div>
+    <div class="header-btns">
+      <button class="btn btn-save" onclick="saveData()">💾 保存</button>
+      <button class="btn btn-print" onclick="window.print()">🖨️ 印刷・PDF</button>
+    </div>
+  </div>
+
+  <div class="doc-tabs">
+    <button class="doc-tab active" onclick="switchDocTab('assess',this)">📋 アセスメント</button>
+    <button class="doc-tab" onclick="switchDocTab('service',this)">👥 担当者会議録</button>
+    <button class="doc-tab" onclick="switchDocTab('monthly',this)">📊 月次ケアマネ報告</button>
+    <button class="doc-tab" onclick="switchDocTab('teiki',this)">🚗 定期巡回報告（悠巡）</button>
+    <button class="doc-tab" onclick="switchDocTab('photo',this)">📷 写真（褥瘡・状態）</button>
+  </div>
+
+  <div class="main-body" id="main-body">
+    <div class="no-select" id="no-select">
+      <p style="font-size:16px;">👈 左から利用者を選択してください</p>
+    </div>
+
+    <div id="form-area" style="display:none;">
+      <div class="banner">
+        <div>
+          <div class="banner-name" id="banner-name"></div>
+          <div class="banner-meta" id="banner-meta"></div>
+        </div>
+        <div id="banner-month" style="display:none;">
+          <div class="month-row">
+            <label>報告月：</label>
+            <input type="month" id="report_month" onchange="loadMonthlyData()">
+          </div>
+        </div>
+        <div id="banner-teiki-month" style="display:none;">
+          <div class="month-row">
+            <label>報告月：</label>
+            <input type="month" id="teiki_report_month" onchange="loadTeikiData()">
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== アセスメント ===== -->
+      <div id="doc-assess">
+        <div class="print-title">アセスメント（課題分析）</div>
+        <div class="sec">
+          <div class="sh sh-n">■ 基本情報</div>
+          <div class="row r4"><div class="lbl">作成日</div><div class="val"><input type="date" id="as_date"></div><div class="lbl">作成者</div><div class="val"><input type="text" id="as_author" placeholder="氏名・職種"></div></div>
+          <div class="row r4"><div class="lbl">住所</div><div class="val"><input type="text" id="as_address" placeholder="住所"></div><div class="lbl">家族構成</div><div class="val"><input type="text" id="as_family" placeholder="例：独居、妻と同居など"></div></div>
+          <div class="row r4"><div class="lbl">主治医</div><div class="val"><input type="text" id="as_doctor" placeholder="医師名・病院名"></div><div class="lbl">緊急連絡先</div><div class="val"><input type="text" id="as_emergency" placeholder="氏名・続柄・電話番号"></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ 健康状態</div>
+          <div class="row r2"><div class="lbl">既往歴</div><div class="val"><textarea id="as_history" placeholder="過去の病気・手術など"></textarea></div></div>
+          <div class="row r2"><div class="lbl">現病歴</div><div class="val"><textarea id="as_current" placeholder="現在治療中の疾患"></textarea></div></div>
+          <div class="row r4"><div class="lbl">障害・認知症</div><div class="val"><input type="text" id="as_disability" placeholder="例：アルツハイマー型認知症（中度）"></div><div class="lbl">障害高齢者区分</div><div class="val"><select id="as_rank"><option>自立</option><option>J1</option><option>J2</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div></div>
+          <div class="row r4"><div class="lbl">認知症高齢者区分</div><div class="val"><select id="as_dementia_rank"><option>自立</option><option>Ⅰ</option><option>Ⅱa</option><option>Ⅱb</option><option>Ⅲa</option><option>Ⅲb</option><option>Ⅳ</option><option>M</option></select></div><div class="lbl">褥瘡リスク</div><div class="val"><select id="as_sore_risk"><option>なし</option><option>低リスク</option><option>中リスク</option><option>高リスク</option></select></div></div>
+          <div class="row r2"><div class="lbl">服薬状況</div><div class="val"><textarea id="as_medicine" placeholder="主な内服薬・外用薬など"></textarea></div></div>
+          <div class="row r2"><div class="lbl">健康上の特記事項</div><div class="val"><textarea id="as_health_note" placeholder="アレルギー・感染症・医療処置など"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ ADL・IADL状況</div>
+          <div style="padding:8px 10px;"><table class="adl-table"><thead><tr><th>項目</th><th>状況</th><th>備考</th></tr></thead><tbody id="as-adl-tbody"></tbody></table></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ コミュニケーション・認知</div>
+          <div class="row r4"><div class="lbl">意思疎通</div><div class="val"><select id="as_comm"><option>問題なし</option><option>一部困難</option><option>困難</option><option>不可</option></select></div><div class="lbl">視力</div><div class="val"><select id="as_vision"><option>問題なし</option><option>眼鏡使用</option><option>低下あり</option><option>ほぼ見えない</option></select></div></div>
+          <div class="row r4"><div class="lbl">聴力</div><div class="val"><select id="as_hearing"><option>問題なし</option><option>補聴器使用</option><option>低下あり</option><option>ほぼ聞こえない</option></select></div><div class="lbl">認知機能</div><div class="val"><select id="as_cognition"><option>問題なし</option><option>軽度低下</option><option>中度低下</option><option>高度低下</option></select></div></div>
+          <div class="row r2"><div class="lbl">BPSD</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="as_bpsd1"> 徘徊</label><label class="ci"><input type="checkbox" id="as_bpsd2"> 夜間不穏</label><label class="ci"><input type="checkbox" id="as_bpsd3"> 暴言・暴力</label><label class="ci"><input type="checkbox" id="as_bpsd4"> 介護拒否</label><label class="ci"><input type="checkbox" id="as_bpsd5"> 物盗られ妄想</label><label class="ci"><input type="checkbox" id="as_bpsd6"> その他</label></div></div></div>
+          <div class="row r2"><div class="lbl">特記事項</div><div class="val"><textarea id="as_comm_note" placeholder="コミュニケーション・認知に関する詳細"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ 生活状況</div>
+          <div class="row r4"><div class="lbl">睡眠状況</div><div class="val"><select id="as_sleep"><option>良好</option><option>やや不良</option><option>不良</option><option>昼夜逆転</option></select></div><div class="lbl">食欲・栄養</div><div class="val"><select id="as_nutrition"><option>良好</option><option>やや不良</option><option>不良</option><option>経管栄養</option></select></div></div>
+          <div class="row r4"><div class="lbl">口腔状態</div><div class="val"><select id="as_oral"><option>良好</option><option>義歯使用</option><option>要ケア</option><option>治療中</option></select></div><div class="lbl">嚥下状態</div><div class="val"><select id="as_swallow"><option>問題なし</option><option>要観察</option><option>むせあり</option><option>誤嚥リスク高</option></select></div></div>
+          <div class="row r2"><div class="lbl">趣味・楽しみ</div><div class="val"><input type="text" id="as_hobby" placeholder="趣味・楽しみ・得意なこと"></div></div>
+          <div class="row r2"><div class="lbl">生活上の特記事項</div><div class="val"><textarea id="as_life_note" placeholder="日課・こだわり・生活習慣など"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-g">■ 住環境・家族支援</div>
+          <div class="row r2"><div class="lbl">住環境</div><div class="val"><input type="text" id="as_housing" placeholder="例：施設入所（みなはるの里）101号室"></div></div>
+          <div class="row r4"><div class="lbl">家族の支援状況</div><div class="val"><select id="as_family_support"><option>積極的に支援</option><option>時々支援</option><option>支援困難</option><option>支援者なし</option></select></div><div class="lbl">面会頻度</div><div class="val"><input type="text" id="as_visit" placeholder="例：月1〜2回"></div></div>
+          <div class="row r2"><div class="lbl">家族状況・特記事項</div><div class="val"><textarea id="as_family_note" placeholder="キーパーソン・家族関係・経済状況など"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-p">■ 本人・家族の意向・希望</div>
+          <div class="row r2"><div class="lbl">本人の意向</div><div class="val"><textarea id="as_wish_self" placeholder="本人が望む生活・希望・不安など"></textarea></div></div>
+          <div class="row r2"><div class="lbl">家族の意向</div><div class="val"><textarea id="as_wish_family" placeholder="家族が望む状態・要望・不安など"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-s">■ 現在のサービス利用状況・課題</div>
+          <div class="row r2"><div class="lbl">利用中のサービス</div><div class="val"><textarea id="as_services" placeholder="例：有料老人ホーム入所、デイサービス週3回、定期巡回など"></textarea></div></div>
+          <div class="row r2"><div class="lbl">生活上の課題・ニーズ</div><div class="val"><textarea id="as_needs" placeholder="現在の生活課題・今後対応が必要な事項"></textarea></div></div>
+          <div class="row r2"><div class="lbl">総合的な評価・方針</div><div class="val"><textarea id="as_assessment" placeholder="アセスメントのまとめ・支援方針"></textarea></div></div>
+        </div>
+      </div>
+
+      <!-- ===== サービス担当者会議録 ===== -->
+      <div id="doc-service" style="display:none;">
+        <div class="print-title">サービス担当者会議録</div>
+
+        <!-- AI写真スキャンバー -->
+        <div class="ai-scan-bar">
+          <div style="flex:1;">
+            <div class="ai-title">📸 ケアプラン写真読み取り（AI）</div>
+            <div class="ai-sub">ケアプランを撮影した写真をアップロードすると、AIが内容を読み取って自動入力します</div>
+          </div>
+          <input type="file" id="ai-file-input" accept="image/*" onchange="scanCareplan(event)">
+          <button class="ai-btn" id="ai-scan-btn" onclick="document.getElementById('ai-file-input').click()">📷 写真を選択</button>
+        </div>
+        <div class="ai-preview" id="ai-preview">
+          <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+            <img id="ai-preview-img" src="" alt="プレビュー">
+            <div style="flex:1;min-width:150px;">
+              <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">読み取り結果</div>
+              <div class="ai-status" id="ai-status">読み取り中...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="sh sh-n">■ 会議情報</div>
+          <div class="row r4"><div class="lbl">開催日</div><div class="val"><input type="date" id="sv_date"></div><div class="lbl">開催時間</div><div class="val"><input type="text" id="sv_time" placeholder="例：14:00〜15:00"></div></div>
+          <div class="row r4"><div class="lbl">開催場所</div><div class="val"><input type="text" id="sv_place" placeholder="例：みなはるの里 会議室"></div><div class="lbl">司会・記録者</div><div class="val"><input type="text" id="sv_facilitator" placeholder="氏名・職種"></div></div>
+          <div class="row r2"><div class="lbl">開催理由</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="sv_reason1"> 新規</label><label class="ci"><input type="checkbox" id="sv_reason2"> 更新</label><label class="ci"><input type="checkbox" id="sv_reason3"> 区分変更</label><label class="ci"><input type="checkbox" id="sv_reason4"> 状態変化</label><label class="ci"><input type="checkbox" id="sv_reason5"> サービス変更</label><label class="ci"><input type="checkbox" id="sv_reason6"> その他</label></div></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ 出席者</div>
+          <div class="row r2"><div class="lbl">出席者一覧</div><div class="val"><textarea id="sv_attendees" placeholder="例：&#10;ケアマネジャー：○○CM&#10;施設相談員：○○&#10;担当介護職：○○&#10;ご本人・ご家族：○○様" style="min-height:80px;"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ 検討内容</div>
+          <div class="row r2"><div class="lbl">利用者の状況</div><div class="val"><textarea id="sv_status" placeholder="現在の心身状況・生活状況の報告"></textarea></div></div>
+          <div class="row r2"><div class="lbl">ケアプランの内容</div><div class="val"><textarea id="sv_plan" placeholder="ケアプランの目標・サービス内容の説明"></textarea></div></div>
+          <div class="row r2"><div class="lbl">各担当者からの意見</div><div class="val"><textarea id="sv_opinions" placeholder="各サービス担当者からの意見・情報提供"></textarea></div></div>
+          <div class="row r2"><div class="lbl">検討・協議内容</div><div class="val"><textarea id="sv_discussion" placeholder="会議で話し合った内容・課題・対応策"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-g">■ 決定事項・今後の対応</div>
+          <div class="row r2"><div class="lbl">決定事項</div><div class="val"><textarea id="sv_decisions" placeholder="会議で決定した事項"></textarea></div></div>
+          <div class="row r2"><div class="lbl">今後の対応・役割分担</div><div class="val"><textarea id="sv_actions" placeholder="誰が・何を・いつまでに行うか"></textarea></div></div>
+          <div class="row r4"><div class="lbl">次回開催予定</div><div class="val"><input type="date" id="sv_next"></div><div class="lbl">サービス変更</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="sv_change_yes"> あり</label><label class="ci"><input type="checkbox" id="sv_change_no"> なし</label></div></div></div>
+          <div class="row r2"><div class="lbl">特記事項</div><div class="val"><textarea id="sv_note" placeholder="その他特記事項"></textarea></div></div>
+        </div>
+      </div>
+
+      <!-- ===== 月次ケアマネ報告書 ===== -->
+      <div id="doc-monthly" style="display:none;">
+        <div class="print-title">月次ケアマネ状態報告書</div>
+        <div class="sec">
+          <div class="sh sh-n">■ 基本情報</div>
+          <div class="row r4"><div class="lbl">報告日</div><div class="val"><input type="date" id="mn_date"></div><div class="lbl">報告者</div><div class="val"><input type="text" id="mn_reporter" placeholder="氏名・職種"></div></div>
+          <div class="row r4"><div class="lbl">ケアマネジャー</div><div class="val"><input type="text" id="mn_cm"></div><div class="lbl">主治医</div><div class="val"><input type="text" id="mn_doctor" placeholder="医師名・病院名"></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ 今月の全体状態</div>
+          <div class="row r4"><div class="lbl">全体状態</div><div class="val"><select id="mn_overall"><option>安定</option><option>やや改善</option><option>変化なし</option><option>やや悪化</option><option>要注意</option></select></div><div class="lbl">前月比</div><div class="val"><select id="mn_change"><option>改善</option><option selected>変化なし</option><option>悪化</option></select></div></div>
+          <div class="row r2"><div class="lbl">状態概要</div><div class="val"><textarea id="mn_summary" placeholder="今月の全体的な様子・変化"></textarea></div></div>
+          <div class="row r2"><div class="lbl">前月からの変化</div><div class="val"><textarea id="mn_changes" placeholder="前月と比較した変化点"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ バイタル・健康状態</div>
+          <div class="row r4"><div class="lbl">体温（平均）</div><div class="val"><input type="text" id="mn_temp" placeholder="例：36.5℃"></div><div class="lbl">血圧（平均）</div><div class="val"><input type="text" id="mn_bp" placeholder="例：130/80"></div></div>
+          <div class="row r4"><div class="lbl">脈拍（平均）</div><div class="val"><input type="text" id="mn_pulse" placeholder="例：72回/分"></div><div class="lbl">体重</div><div class="val"><input type="text" id="mn_weight" placeholder="例：48.5kg"></div></div>
+          <div class="row r2"><div class="lbl">健康特記事項</div><div class="val"><textarea id="mn_health" placeholder="発熱・感染症・受診・救急対応など"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ ADL状況</div>
+          <div style="padding:8px 10px;"><table class="adl-table"><thead><tr><th>項目</th><th>介助区分</th><th>前月比</th><th>備考</th></tr></thead><tbody id="mn-adl-tbody"></tbody></table></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-b">■ 食事・排泄・服薬</div>
+          <div class="row r4"><div class="lbl">食事形態</div><div class="val"><input type="text" id="mn_food" placeholder="例：全がゆ・刻みとろみ食"></div><div class="lbl">摂取量</div><div class="val"><select id="mn_food_amount"><option>全量</option><option>8割以上</option><option>5〜7割</option><option>3〜5割</option><option>3割未満</option></select></div></div>
+          <div class="row r4"><div class="lbl">排泄形態</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="mn_toilet1"> 自立</label><label class="ci"><input type="checkbox" id="mn_toilet2"> ポータブルトイレ</label><label class="ci"><input type="checkbox" id="mn_toilet3"> オムツ</label><label class="ci"><input type="checkbox" id="mn_toilet4"> パッド</label></div></div><div class="lbl">服薬状況</div><div class="val"><select id="mn_med"><option>問題なし</option><option>拒否あり</option><option>飲み忘れあり</option></select></div></div>
+          <div class="row r2"><div class="lbl">特記事項</div><div class="val"><textarea id="mn_daily_note" placeholder="食事・排泄・服薬に関する特記事項"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-o">■ リスク・事故</div>
+          <div class="row r4"><div class="lbl ol">転倒・転落</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="mn_fall_yes"> あり</label><label class="ci"><input type="checkbox" id="mn_fall_no"> なし</label></div></div><div class="lbl ol">褥瘡</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="mn_sore_yes"> あり</label><label class="ci"><input type="checkbox" id="mn_sore_no"> なし</label></div></div></div>
+          <div class="row r2"><div class="lbl ol">事故・ヒヤリ詳細</div><div class="val"><textarea id="mn_incident" placeholder="発生状況・対応・再発防止策など"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-g">■ 家族・ケアマネへの連絡</div>
+          <div class="row r4"><div class="lbl gl">家族連絡回数</div><div class="val"><input type="text" id="mn_family_contact" placeholder="例：3回（電話2回・面会1回）"></div><div class="lbl gl">面会状況</div><div class="val"><select id="mn_family_visit"><option>複数回あり</option><option>1回あり</option><option>なし</option></select></div></div>
+          <div class="row r2"><div class="lbl gl">家族への連絡内容</div><div class="val"><textarea id="mn_family_note" placeholder="連絡内容・家族からの要望など"></textarea></div></div>
+          <div class="row r2"><div class="lbl">ケアマネへの相談・報告</div><div class="val"><textarea id="mn_cm_note" placeholder="プラン変更の要否・新たなニーズ・連携依頼など"></textarea></div></div>
+          <div class="row r4"><div class="lbl">次回連絡予定日</div><div class="val"><input type="date" id="mn_next"></div><div class="lbl">作成者</div><div class="val"><input type="text" id="mn_author" placeholder="氏名"></div></div>
+        </div>
+        <div class="sec" id="mn-sec-day" style="display:none;">
+          <div class="sh sh-p">■ デイサービス利用状況</div>
+          <div class="row r4"><div class="lbl pl">利用回数（月間）</div><div class="val"><input type="text" id="mn_day_count" placeholder="例：12回"></div><div class="lbl pl">欠席・キャンセル</div><div class="val"><input type="text" id="mn_day_absent" placeholder="例：2回（体調不良）"></div></div>
+          <div class="row r4"><div class="lbl pl">プログラム参加</div><div class="val"><select id="mn_day_program"><option>積極的に参加</option><option>概ね参加</option><option>一部参加</option><option>参加困難</option></select></div><div class="lbl pl">入浴サービス</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="mn_day_bath_yes"> 利用あり</label><label class="ci"><input type="checkbox" id="mn_day_bath_no"> 利用なし</label></div></div></div>
+          <div class="row r2"><div class="lbl pl">デイでの特記事項</div><div class="val"><textarea id="mn_day_note" placeholder="活動の様子・変化・気になる点など"></textarea></div></div>
+        </div>
+      </div>
+
+      <!-- ===== 定期巡回報告書（悠巡） ===== -->
+      <div id="doc-teiki" style="display:none;">
+        <div class="print-title">定期巡回・随時対応型訪問介護看護 月次報告書（悠巡）</div>
+        <div class="sec">
+          <div class="sh sh-t">■ 基本情報</div>
+          <div class="row r4"><div class="lbl tl">報告月</div><div class="val"><input type="month" id="tk_month_display" readonly style="background:#f5f5f5;"></div><div class="lbl tl">報告日</div><div class="val"><input type="date" id="tk_date"></div></div>
+          <div class="row r4"><div class="lbl tl">報告者</div><div class="val"><input type="text" id="tk_reporter" placeholder="氏名・職種"></div><div class="lbl tl">ケアマネジャー</div><div class="val"><input type="text" id="tk_cm"></div></div>
+          <div class="row r4"><div class="lbl tl">主治医</div><div class="val"><input type="text" id="tk_doctor" placeholder="医師名・病院名"></div><div class="lbl tl">訪問看護</div><div class="val"><input type="text" id="tk_nurse" placeholder="訪問看護ステーション名"></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-t">■ 訪問実績</div>
+          <div class="row r4"><div class="lbl tl">定期訪問回数（月間）</div><div class="val"><input type="text" id="tk_count" placeholder="例：30回"></div><div class="lbl tl">随時対応件数</div><div class="val"><input type="text" id="tk_zuiji" placeholder="例：2件"></div></div>
+          <div class="row r2"><div class="lbl tl">定期訪問の主な内容</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="tk_care1"> 身体介護</label><label class="ci"><input type="checkbox" id="tk_care2"> 排泄介助</label><label class="ci"><input type="checkbox" id="tk_care3"> 食事介助</label><label class="ci"><input type="checkbox" id="tk_care4"> 服薬確認</label><label class="ci"><input type="checkbox" id="tk_care5"> バイタル測定</label><label class="ci"><input type="checkbox" id="tk_care6"> 入浴介助</label><label class="ci"><input type="checkbox" id="tk_care7"> 清拭</label><label class="ci"><input type="checkbox" id="tk_care8"> その他</label></div></div></div>
+          <div class="row r2"><div class="lbl tl">随時対応の主な理由</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="tk_call1"> 転倒・転落</label><label class="ci"><input type="checkbox" id="tk_call2"> 体調不良</label><label class="ci"><input type="checkbox" id="tk_call3"> 排泄対応</label><label class="ci"><input type="checkbox" id="tk_call4"> 不安・混乱</label><label class="ci"><input type="checkbox" id="tk_call5"> 疼痛</label><label class="ci"><input type="checkbox" id="tk_call6"> その他</label></div></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-t">■ 利用者の状態</div>
+          <div class="row r4"><div class="lbl tl">全体状態</div><div class="val"><select id="tk_overall"><option>安定</option><option>やや改善</option><option>変化なし</option><option>やや悪化</option><option>要注意</option></select></div><div class="lbl tl">前月比</div><div class="val"><select id="tk_change"><option>改善</option><option selected>変化なし</option><option>悪化</option></select></div></div>
+          <div class="row r4"><div class="lbl tl">体温（平均）</div><div class="val"><input type="text" id="tk_temp" placeholder="例：36.5℃"></div><div class="lbl tl">血圧（平均）</div><div class="val"><input type="text" id="tk_bp" placeholder="例：130/80"></div></div>
+          <div class="row r4"><div class="lbl tl">脈拍（平均）</div><div class="val"><input type="text" id="tk_pulse" placeholder="例：72回/分"></div><div class="lbl tl">夜間対応状況</div><div class="val"><select id="tk_night"><option>問題なし</option><option>コールあり（対応済）</option><option>夜間不穏あり</option><option>要注意</option></select></div></div>
+          <div class="row r2"><div class="lbl tl">今月の状態・様子</div><div class="val"><textarea id="tk_status" placeholder="今月の心身状態・生活状況・変化など"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-t">■ ケア提供状況・特記事項</div>
+          <div class="row r4"><div class="lbl tl">転倒・転落</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="tk_fall_yes"> あり</label><label class="ci"><input type="checkbox" id="tk_fall_no"> なし</label></div></div><div class="lbl tl">医療連携</div><div class="val"><select id="tk_medical"><option>連携良好</option><option>主治医報告あり</option><option>救急対応あり</option><option>連携不要</option></select></div></div>
+          <div class="row r2"><div class="lbl tl">随時対応の詳細</div><div class="val"><textarea id="tk_zuiji_detail" placeholder="随時対応の内容・時刻・対応者・対応内容など"></textarea></div></div>
+          <div class="row r2"><div class="lbl tl">ケア提供上の課題</div><div class="val"><textarea id="tk_issues" placeholder="ケア提供上の問題・改善事項など"></textarea></div></div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-t">■ 家族・ケアマネへの連絡・申し送り</div>
+          <div class="row r2"><div class="lbl tl">家族への連絡内容</div><div class="val"><textarea id="tk_family_note" placeholder="家族への連絡内容・要望・確認事項"></textarea></div></div>
+          <div class="row r2"><div class="lbl tl">ケアマネへの連絡・相談</div><div class="val"><textarea id="tk_cm_note" placeholder="サービス量変更の必要性・新たなニーズ・連携依頼など"></textarea></div></div>
+          <div class="row r4"><div class="lbl tl">次回連絡予定日</div><div class="val"><input type="date" id="tk_next"></div><div class="lbl tl">作成者</div><div class="val"><input type="text" id="tk_author" placeholder="氏名"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== 写真タブ（ローカル保存） ===== -->
+      <div id="doc-photo" style="display:none;">
+        <div class="print-title">写真記録（褥瘡・状態確認）</div>
+        <div class="sec">
+          <div class="sh sh-s">■ 写真記録（このデバイスのみに保存）</div>
+          <div class="photo-section">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">⚠️ 写真はこのデバイス内のみに保存されます。GASへの送信はしません。印刷時も出力されます。</div>
+            <div class="photo-grid" id="photo-grid">
+              <div class="photo-add" onclick="document.getElementById('photo-file-input').click()">
+                <span style="font-size:24px;">📷</span>
+                <span>写真を追加</span>
+              </div>
+            </div>
+            <input type="file" id="photo-file-input" accept="image/*" multiple style="display:none;" onchange="addPhotos(event)">
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sh sh-s">■ 写真に関するメモ</div>
+          <div class="row r2"><div class="lbl">観察日・記録者</div><div class="val"><input type="text" id="ph_info" placeholder="例：2026/06/21 記録者：○○"></div></div>
+          <div class="row r2"><div class="lbl">状態・対応内容</div><div class="val"><textarea id="ph_note" placeholder="褥瘡の状態・部位・処置内容・経過など"></textarea></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- モーダル -->
+<div class="modal-bg hidden" id="modal-bg">
+  <div class="modal">
+    <h3 id="modal-title">利用者を追加</h3>
+    <div class="mrow"><label>氏名 *</label><input type="text" id="m-name" placeholder="例：山田　花子"></div>
+    <div class="mrow"><label>フリガナ</label><input type="text" id="m-kana" placeholder="例：ヤマダ　ハナコ"></div>
+    <div class="mrow"><label>要介護度</label><select id="m-care"><option>要支援１</option><option>要支援２</option><option>要介護１</option><option>要介護２</option><option>要介護３</option><option selected>要介護４</option><option>要介護５</option></select></div>
+    <div class="mrow"><label>部屋番号</label><input type="text" id="m-room" placeholder="例：101"></div>
+    <div class="mrow"><label>ケアマネジャー</label><input type="text" id="m-cm" placeholder="例：菊川 哲也CM"></div>
+    <div class="mrow"><label>利用サービス</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;"><input type="checkbox" id="m-svc-stay" style="width:14px;height:14px;"> 入所（有料老人ホーム）</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;"><input type="checkbox" id="m-svc-day" style="width:14px;height:14px;"> デイサービス</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;"><input type="checkbox" id="m-svc-teiki" style="width:14px;height:14px;"> 定期巡回（悠巡）</label>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="mrow" style="margin-bottom:0;"><label>生年月日</label><input type="date" id="m-dob"></div>
+      <div class="mrow" style="margin-bottom:0;"><label>性別</label><select id="m-gender"><option value="">-</option><option>男</option><option>女</option></select></div>
+    </div>
+    <div class="mrow"><label>住所</label><input type="text" id="m-address" placeholder="大分県大分市○○町1-1"></div>
+    <div class="mrow"><label>主治医</label><input type="text" id="m-doctor" placeholder="例：大分健生病院　山田Dr."></div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-danger" id="btn-delete" style="display:none;margin-right:auto;" onclick="deleteResident()">削除</button>
+      <button class="mbtn mbtn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="mbtn mbtn-primary" onclick="saveResident()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
+const GEMINI_API_KEY = 'AQ.Ab8RN6ICwIc0KYnemEvTSBaum2hIwnPmyx-ztTC36tWsXIrbjg';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=' + GEMINI_API_KEY;
+
+async function gasReq(payload){
+  const url = GAS_URL + '?' + new URLSearchParams(
+    Object.fromEntries(Object.entries(payload).map(([k,v])=>[k,typeof v==='object'?JSON.stringify(v):v]))
+  ).toString();
+  const res = await fetch(url);
+  return res.json();
+}
+
+let residents=[], discharged=[], currentId=null, editingId=null, currentSideTab='active', currentDocTab='assess';
+
+const ADL_ITEMS_AS=['寝返り','起き上がり','立ち上がり','移乗','歩行・移動','食事','服薬','排泄','整容','更衣','入浴','意思疎通','電話','買い物','金銭管理'];
+const ADL_AS_STATUS=['自立','見守り','一部介助','全介助','実施なし'];
+const ADL_ITEMS_MN=['寝返り','起き上がり','立ち上がり','移乗','歩行・移動','食事','服薬','排泄','整容','更衣','入浴','意思疎通'];
+const ADL_ASSIST=['自立','見守り','一部介助','全介助','実施なし'];
+const ADL_CHANGE=['改善','変化なし','悪化','未確認'];
+
+const AS_TEXT=['as_date','as_author','as_address','as_family','as_doctor','as_emergency','as_history','as_current','as_disability','as_rank','as_dementia_rank','as_sore_risk','as_medicine','as_health_note','as_comm','as_vision','as_hearing','as_cognition','as_comm_note','as_sleep','as_nutrition','as_oral','as_swallow','as_hobby','as_life_note','as_housing','as_family_support','as_visit','as_family_note','as_wish_self','as_wish_family','as_services','as_needs','as_assessment'];
+const AS_CHECK=['as_bpsd1','as_bpsd2','as_bpsd3','as_bpsd4','as_bpsd5','as_bpsd6'];
+const SV_TEXT=['sv_date','sv_time','sv_place','sv_facilitator','sv_attendees','sv_status','sv_plan','sv_opinions','sv_discussion','sv_decisions','sv_actions','sv_next','sv_note'];
+const SV_CHECK=['sv_reason1','sv_reason2','sv_reason3','sv_reason4','sv_reason5','sv_reason6','sv_change_yes','sv_change_no'];
+const MN_TEXT=['mn_date','mn_reporter','mn_cm','mn_doctor','mn_overall','mn_change','mn_summary','mn_changes','mn_temp','mn_bp','mn_pulse','mn_weight','mn_health','mn_food','mn_food_amount','mn_med','mn_daily_note','mn_incident','mn_family_contact','mn_family_visit','mn_family_note','mn_cm_note','mn_next','mn_author','mn_day_count','mn_day_absent','mn_day_program','mn_day_note'];
+const MN_CHECK=['mn_toilet1','mn_toilet2','mn_toilet3','mn_toilet4','mn_fall_yes','mn_fall_no','mn_sore_yes','mn_sore_no','mn_day_bath_yes','mn_day_bath_no'];
+const TK_TEXT=['tk_date','tk_reporter','tk_cm','tk_doctor','tk_nurse','tk_count','tk_zuiji','tk_overall','tk_change','tk_temp','tk_bp','tk_pulse','tk_night','tk_status','tk_medical','tk_zuiji_detail','tk_issues','tk_family_note','tk_cm_note','tk_next','tk_author'];
+const TK_CHECK=['tk_care1','tk_care2','tk_care3','tk_care4','tk_care5','tk_care6','tk_care7','tk_care8','tk_call1','tk_call2','tk_call3','tk_call4','tk_call5','tk_call6','tk_fall_yes','tk_fall_no'];
+const PH_TEXT=['ph_info','ph_note'];
+
+window.onload=()=>{
+  buildADL('as-adl-tbody',ADL_ITEMS_AS,true);
+  buildADL('mn-adl-tbody',ADL_ITEMS_MN,false);
+  const today=new Date().toISOString().slice(0,10);
+  const ym=new Date().toISOString().slice(0,7);
+  ['as_date','sv_date','mn_date','tk_date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
+  document.getElementById('report_month').value=ym;
+  document.getElementById('teiki_report_month').value=ym;
+  loadResidents();
+};
+
+function buildADL(tbodyId,items,isAssess){
+  const tbody=document.getElementById(tbodyId);
+  tbody.innerHTML='';
+  items.forEach((label,i)=>{
+    const tr=document.createElement('tr');
+    const s1=document.createElement('select');
+    (isAssess?ADL_AS_STATUS:ADL_ASSIST).forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;s1.appendChild(op);});
+    s1.className='adl-s1';s1.dataset.idx=i;s1.dataset.tbl=tbodyId;
+    const ta=document.createElement('textarea');
+    ta.placeholder='備考';ta.className='adl-ta';ta.dataset.idx=i;ta.dataset.tbl=tbodyId;
+    tr.innerHTML=`<td class="ilbl">${label}</td>`;
+    const td1=document.createElement('td');td1.appendChild(s1);tr.appendChild(td1);
+    if(!isAssess){
+      const s2=document.createElement('select');
+      ADL_CHANGE.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;if(o==='変化なし')op.selected=true;s2.appendChild(op);});
+      s2.className='adl-s2';s2.dataset.idx=i;s2.dataset.tbl=tbodyId;
+      const td2=document.createElement('td');td2.appendChild(s2);tr.appendChild(td2);
+    }
+    const td3=document.createElement('td');td3.appendChild(ta);tr.appendChild(td3);
+    tbody.appendChild(tr);
+  });
+}
+
+function switchSideTab(tab,btn){
+  currentSideTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function switchDocTab(tab,btn){
+  currentDocTab=tab;
+  document.querySelectorAll('.doc-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['assess','service','monthly','teiki','photo'].forEach(t=>{
+    const el=document.getElementById('doc-'+t);
+    if(el) el.style.display=t===tab?'block':'none';
+  });
+  document.getElementById('banner-month').style.display=tab==='monthly'?'block':'none';
+  document.getElementById('banner-teiki-month').style.display=tab==='teiki'?'block':'none';
+  if(tab==='monthly'&&currentId) loadMonthlyData();
+  if(tab==='teiki'&&currentId) loadTeikiData();
+}
+
+async function loadResidents(){
+  try{
+    const r1=await gasReq({action:'getResidents',sheet:'ケア管理_利用者'});
+    residents=(r1.data||[]).filter(r=>r&&r.name);
+    const r2=await gasReq({action:'getResidents',sheet:'ケア管理_退所者'});
+    discharged=(r2.data||[]).filter(r=>r&&r.name);
+  }catch(e){residents=[];discharged=[];}
+  renderList();
+}
+
+function renderList(filter){
+  filter=filter||document.getElementById('search-input').value;
+  const ul=document.getElementById('resident-list');
+  ul.querySelectorAll('.resident-item').forEach(el=>el.remove());
+  const em=document.getElementById('empty-msg');
+  const list=currentSideTab==='active'?residents:discharged;
+  const filtered=list.filter(r=>!filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter)));
+  em.style.display=filtered.length===0?'block':'none';
+  filtered.forEach(r=>{
+    const div=document.createElement('div');
+    div.className='resident-item'+(r.id===currentId?' active':'');
+    const badges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')+(r.svcDay?'<span class="svc-badge badge-day">デイ</span>':'')+(r.svcTeiki?'<span class="svc-badge badge-teiki">定巡</span>':'');
+    div.innerHTML=`<div class="ri-info"><div class="ri-name">${r.name}</div><div class="ri-sub">${r.care||''}${r.room?'　'+r.room+'号室':''}</div><div style="margin-top:2px;">${badges}</div></div><button class="ri-edit" onclick="event.stopPropagation();openEditModal(${r.id})">✎</button>`;
+    div.onclick=()=>selectResident(r.id);
+    ul.appendChild(div);
+  });
+}
+
+function filterList(){renderList(document.getElementById('search-input').value);}
+
+function selectResident(id){
+  if(currentId&&currentId!==id) saveData(true);
+  currentId=id;
+  const r=[...residents,...discharged].find(x=>x.id===id);
+  document.getElementById('no-select').style.display='none';
+  document.getElementById('form-area').style.display='block';
+  document.getElementById('banner-name').textContent=r.name+(r.kana?'　'+r.kana:'');
+  const badges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')+(r.svcDay?'<span class="svc-badge badge-day">デイサービス</span>':'')+(r.svcTeiki?'<span class="svc-badge badge-teiki">定期巡回</span>':'');
+  document.getElementById('banner-meta').innerHTML=(r.care||'')+(r.room?'　'+r.room+'号室':'')+' '+badges;
+  document.getElementById('mn-sec-day').style.display=r.svcDay?'block':'none';
+  document.getElementById('as_address').value=r.address||'';
+  document.getElementById('as_doctor').value=r.doctor||'';
+  document.getElementById('mn_cm').value=r.cm||'';
+  document.getElementById('mn_doctor').value=r.doctor||'';
+  document.getElementById('tk_cm').value=r.cm||'';
+  document.getElementById('tk_doctor').value=r.doctor||'';
+  renderList();
+  loadAllData(id);
+  document.getElementById('main-body').scrollTop=0;
+}
+
+function collectData(){
+  const d={};
+  [...AS_TEXT,...SV_TEXT,...MN_TEXT,...TK_TEXT,...PH_TEXT].forEach(id=>{const el=document.getElementById(id);if(el)d[id]=el.value;});
+  [...AS_CHECK,...SV_CHECK,...MN_CHECK,...TK_CHECK].forEach(id=>{const el=document.getElementById(id);if(el)d[id]=el.checked;});
+  d.as_adl=ADL_ITEMS_AS.map((_,i)=>({s1:document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="as-adl-tbody"]`)?.value||'',ta:document.querySelector(`.adl-ta[data-idx="${i}"][data-tbl="as-adl-tbody"]`)?.value||''}));
+  d.mn_adl=ADL_ITEMS_MN.map((_,i)=>({s1:document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="mn-adl-tbody"]`)?.value||'',s2:document.querySelector(`.adl-s2[data-idx="${i}"][data-tbl="mn-adl-tbody"]`)?.value||'',ta:document.querySelector(`.adl-ta[data-idx="${i}"][data-tbl="mn-adl-tbody"]`)?.value||''}));
+  return d;
+}
+
+function applyData(d){
+  [...AS_TEXT,...SV_TEXT,...MN_TEXT,...TK_TEXT,...PH_TEXT].forEach(id=>{const el=document.getElementById(id);if(el&&d[id]!==undefined)el.value=d[id];});
+  [...AS_CHECK,...SV_CHECK,...MN_CHECK,...TK_CHECK].forEach(id=>{const el=document.getElementById(id);if(el&&d[id]!==undefined)el.checked=d[id];});
+  if(d.as_adl) d.as_adl.forEach((a,i)=>{
+    const s1=document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="as-adl-tbody"]`);
+    const ta=document.querySelector(`.adl-ta[data-idx="${i}"][data-tbl="as-adl-tbody"]`);
+    if(s1)s1.value=a.s1;if(ta)ta.value=a.ta;
+  });
+  if(d.mn_adl) d.mn_adl.forEach((a,i)=>{
+    const s1=document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+    const s2=document.querySelector(`.adl-s2[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+    const ta=document.querySelector(`.adl-ta[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+    if(s1)s1.value=a.s1;if(s2)s2.value=a.s2;if(ta)ta.value=a.ta;
+  });
+}
+
+async function loadAllData(id){
+  try{
+    const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(id)+'_base'});
+    if(res.data) applyData(res.data);
+  }catch(e){}
+  loadMonthlyData();
+  loadTeikiData();
+}
+
+async function loadMonthlyData(){
+  if(!currentId) return;
+  const month=document.getElementById('report_month').value;
+  try{
+    const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(currentId)+'_mn_'+month});
+    if(res.data){
+      MN_TEXT.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.value=res.data[id];});
+      MN_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.checked=res.data[id];});
+      if(res.data.mn_adl) res.data.mn_adl.forEach((a,i)=>{
+        const s1=document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+        const s2=document.querySelector(`.adl-s2[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+        const ta=document.querySelector(`.adl-ta[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+        if(s1)s1.value=a.s1;if(s2)s2.value=a.s2;if(ta)ta.value=a.ta;
+      });
+    }
+  }catch(e){}
+}
+
+async function loadTeikiData(){
+  if(!currentId) return;
+  const month=document.getElementById('teiki_report_month').value;
+  document.getElementById('tk_month_display').value=month;
+  try{
+    const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(currentId)+'_tk_'+month});
+    if(res.data){
+      TK_TEXT.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.value=res.data[id];});
+      TK_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.checked=res.data[id];});
+    }
+  }catch(e){}
+}
+
+async function saveData(silent=false){
+  if(!currentId) return;
+  const d=collectData();
+  const mnMonth=document.getElementById('report_month').value;
+  const tkMonth=document.getElementById('teiki_report_month').value;
+  // 基本データ（アセスメント・担当者会議）
+  const baseData={};
+  [...AS_TEXT,...AS_CHECK,...SV_TEXT,...SV_CHECK,...PH_TEXT].forEach(id=>{baseData[id]=d[id];});
+  baseData.as_adl=d.as_adl;
+  await gasReq({action:'saveRecord',sheet:'ケア管理_記録',id:String(currentId)+'_base',data:baseData});
+  // 月次データ
+  const mnData={};
+  [...MN_TEXT,...MN_CHECK].forEach(id=>{mnData[id]=d[id];});
+  mnData.mn_adl=d.mn_adl;
+  await gasReq({action:'saveRecord',sheet:'ケア管理_記録',id:String(currentId)+'_mn_'+mnMonth,data:mnData});
+  // 定期巡回データ
+  const tkData={};
+  [...TK_TEXT,...TK_CHECK].forEach(id=>{tkData[id]=d[id];});
+  await gasReq({action:'saveRecord',sheet:'ケア管理_記録',id:String(currentId)+'_tk_'+tkMonth,data:tkData});
+  if(!silent) showToast('✓ 保存しました');
+  renderList();
+}
+
+// ===== AI写真スキャン =====
+async function scanCareplan(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const btn=document.getElementById('ai-scan-btn');
+  btn.disabled=true;btn.textContent='読み取り中...';
+  const preview=document.getElementById('ai-preview');
+  const previewImg=document.getElementById('ai-preview-img');
+  const status=document.getElementById('ai-status');
+  preview.style.display='block';
+  // プレビュー表示
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    previewImg.src=e.target.result;
+    const base64=e.target.result.split(',')[1];
+    const mediaType=file.type||'image/jpeg';
+    status.textContent='AIがケアプランを読み取り中...';
+    try{
+      const body={
+        contents:[{parts:[
+          {text:`このケアプランの画像から以下の情報を読み取ってJSON形式で返してください。読み取れない項目は空文字にしてください。
+{
+  "sv_plan": "ケアプランの目標・サービス内容",
+  "sv_status": "利用者の現在の状況",
+  "sv_attendees": "出席者・担当者名",
+  "sv_date": "会議開催日（YYYY-MM-DD形式）",
+  "as_needs": "生活上の課題・ニーズ",
+  "as_wish_self": "本人の意向・希望",
+  "as_wish_family": "家族の意向・希望"
+}
+JSONのみ返してください。マークダウンのコードブロックは不要です。`},
+          {inline_data:{mime_type:mediaType,data:base64}}
+        ]}]
+      };
+      const res=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const data=await res.json();
+      const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
+      let parsed={};
+      try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim());}catch(e){}
+      let count=0;
+      Object.entries(parsed).forEach(([key,val])=>{
+        if(val){
+          const el=document.getElementById(key);
+          if(el){el.value=val;count++;}
+        }
+      });
+      status.textContent=count>0?`✓ ${count}項目を自動入力しました`:'読み取れる情報がありませんでした';
+      status.style.color=count>0?'#27ae60':'#e74c3c';
+    }catch(err){
+      status.textContent='読み取りエラーが発生しました';
+      status.style.color='#e74c3c';
+    }
+    btn.disabled=false;btn.textContent='📷 写真を選択';
+    event.target.value='';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ===== 写真ギャラリー（ローカル） =====
+function addPhotos(event){
+  [...event.target.files].forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>addPhotoThumb(ev.target.result,'');
+    r.readAsDataURL(f);
+  });
+  event.target.value='';
+}
+
+function addPhotoThumb(src,cap){
+  const grid=document.getElementById('photo-grid');
+  const addBtn=grid.querySelector('.photo-add');
+  const div=document.createElement('div');div.className='photo-thumb';
+  const img=document.createElement('img');img.src=src;
+  const capEl=document.createElement('div');capEl.className='photo-cap';
+  capEl.contentEditable=true;capEl.textContent=cap||'コメントを入力';
+  const del=document.createElement('button');del.className='del-photo';del.textContent='×';
+  del.onclick=()=>{if(confirm('この写真を削除しますか？'))div.remove();};
+  div.appendChild(img);div.appendChild(del);div.appendChild(capEl);
+  grid.insertBefore(div,addBtn);
+}
+
+// ===== 利用者CRUD =====
+async function nextId(){
+  try{const res=await gasReq({action:'getNextId',sheet:'ケア管理_利用者'});if(res.nextId)return res.nextId;}catch(e){}
+  const all=[...residents,...discharged];
+  return all.length?Math.max(...all.map(r=>r.id))+1:1;
+}
+
+function openAddModal(){
+  editingId=null;
+  document.getElementById('modal-title').textContent='利用者を追加';
+  ['m-name','m-kana','m-room','m-cm','m-address','m-doctor'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-care').value='要介護４';
+  document.getElementById('m-dob').value='';
+  document.getElementById('m-gender').value='';
+  document.getElementById('m-svc-stay').checked=true;
+  document.getElementById('m-svc-day').checked=false;
+  document.getElementById('m-svc-teiki').checked=false;
+  document.getElementById('btn-delete').style.display=
