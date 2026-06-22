@@ -828,4 +828,75 @@ function openAddModal(){
   document.getElementById('m-svc-stay').checked=true;
   document.getElementById('m-svc-day').checked=false;
   document.getElementById('m-svc-teiki').checked=false;
-  document.getElementById('btn-delete').style.display=
+  document.getElementById('btn-delete').style.display='none';
+  document.getElementById('modal-bg').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('m-name').focus(),50);
+}
+
+function openEditModal(id){
+  const r=[...residents,...discharged].find(x=>x.id===id);
+  if(!r) return;
+  editingId=id;
+  document.getElementById('modal-title').textContent='利用者情報を編集';
+  document.getElementById('m-name').value=r.name||'';
+  document.getElementById('m-kana').value=r.kana||'';
+  document.getElementById('m-care').value=r.care||'要介護４';
+  document.getElementById('m-room').value=r.room||'';
+  document.getElementById('m-cm').value=r.cm||'';
+  document.getElementById('m-dob').value=r.dob||'';
+  document.getElementById('m-gender').value=r.gender||'';
+  document.getElementById('m-address').value=r.address||'';
+  document.getElementById('m-doctor').value=r.doctor||'';
+  document.getElementById('m-svc-stay').checked=r.svcStay!==false;
+  document.getElementById('m-svc-day').checked=!!r.svcDay;
+  document.getElementById('m-svc-teiki').checked=!!r.svcTeiki;
+  document.getElementById('btn-delete').style.display='inline-flex';
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+
+function closeModal(){document.getElementById('modal-bg').classList.add('hidden');}
+document.getElementById('modal-bg').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+async function saveResident(){
+  const name=document.getElementById('m-name').value.trim();
+  if(!name){alert('氏名を入力してください');return;}
+  const r={
+    id:editingId||(await nextId()),
+    name,kana:document.getElementById('m-kana').value.trim(),
+    care:document.getElementById('m-care').value,
+    room:document.getElementById('m-room').value.trim(),
+    cm:document.getElementById('m-cm').value.trim(),
+    dob:document.getElementById('m-dob').value,
+    gender:document.getElementById('m-gender').value,
+    address:document.getElementById('m-address').value.trim(),
+    doctor:document.getElementById('m-doctor').value.trim(),
+    svcStay:document.getElementById('m-svc-stay').checked,
+    svcDay:document.getElementById('m-svc-day').checked,
+    svcTeiki:document.getElementById('m-svc-teiki').checked,
+  };
+  if(editingId){const idx=residents.findIndex(x=>x.id===editingId);if(idx>=0)residents[idx]=r;}
+  else residents.push(r);
+  await gasReq({action:'saveResidents',sheet:'ケア管理_利用者',data:residents});
+  closeModal();renderList();
+  showToast(editingId?'✓ 利用者情報を更新しました':'✓ 利用者を追加しました');
+}
+
+async function deleteResident(){
+  if(!editingId) return;
+  const r=[...residents,...discharged].find(x=>x.id===editingId);
+  if(!confirm(`「${r?.name}」を削除しますか？`)) return;
+  residents=residents.filter(x=>x.id!==editingId);
+  await gasReq({action:'saveResidents',sheet:'ケア管理_利用者',data:residents});
+  closeModal();
+  if(currentId===editingId){currentId=null;document.getElementById('no-select').style.display='flex';document.getElementById('form-area').style.display='none';}
+  renderList();showToast('✓ 削除しました');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+</script>
+</body>
+</html>
