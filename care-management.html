@@ -95,16 +95,16 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
 .adl-table textarea{min-height:26px;font-size:11px;}
 .month-row{display:flex;align-items:center;gap:6px;font-size:12px;}
 .month-row label{font-weight:700;color:var(--navy);white-space:nowrap;}
+.ai-scan-bar{background:linear-gradient(135deg,#1a3050,#2c5f8a);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.ai-scan-bar .ai-title{color:white;font-weight:700;font-size:13px;}
+.ai-scan-bar .ai-sub{color:rgba(255,255,255,0.7);font-size:11px;margin-top:2px;}
+.ai-btn{background:#27ae60;color:white;border:none;border-radius:6px;padding:8px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.ai-btn:hover{opacity:0.85;}
+.ai-btn:disabled{background:#888;cursor:not-allowed;}
 
-
-
-
-
-
-
-
-
-
+.ai-preview{background:white;border-radius:8px;padding:10px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.1);display:none;}
+.ai-preview img{max-width:200px;max-height:150px;border-radius:6px;object-fit:cover;}
+.ai-status{font-size:12px;color:var(--muted);margin-top:6px;}
 .photo-section{padding:10px 12px;}
 .photo-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
 .photo-thumb{position:relative;width:120px;height:100px;border-radius:6px;overflow:hidden;border:2px solid var(--mgray);background:var(--gray);flex-shrink:0;}
@@ -311,11 +311,6 @@ function checkPW(){
       <div id="doc-service" style="display:none;">
         <div class="print-title">サービス担当者会議録</div>
 
-        
-              <div class="ai-status" id="ai-status">読み取り中...</div>
-            </div>
-          </div>
-        </div>
 
         <div class="sec">
           <div class="sh sh-n">■ 会議情報</div>
@@ -589,7 +584,7 @@ function renderList(filter){
   ul.querySelectorAll('.resident-item').forEach(el=>el.remove());
   const em=document.getElementById('empty-msg');
   const list=currentSideTab==='active'?residents:discharged;
-  const filtered=list.filter(r=>!filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter)));
+  const filtered=list.filter(r=>!filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter))).sort((a,b)=>(a.kana||a.name).localeCompare((b.kana||b.name),'ja'));
   em.style.display=filtered.length===0?'block':'none';
   filtered.forEach(r=>{
     const div=document.createElement('div');
@@ -709,7 +704,73 @@ async function saveData(silent=false){
   renderList();
 }
 
+JSONのみ返してください。マークダウンのコードブロックは不要です。`},
+        {inline_data:{mime_type:'image/jpeg',data:base64Compressed}}
+      ]}]
+    };
 
+    let res;
+    try{
+      res=await fetch(GEMINI_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body),
+        signal:controller.signal
+      });
+    }catch(fetchErr){
+      clearTimeout(timeoutId);
+      if(fetchErr.name==='AbortError'){
+        status.textContent='⚠️ タイムアウトしました（30秒）。通信環境を確認してください。';
+      }else{
+        status.textContent='⚠️ 通信エラー：インターネット接続を確認してください。';
+      }
+      status.style.color='#e74c3c';
+      btn.disabled=false;btn.textContent='📷 写真を選択・撮影';
+      event.target.value='';
+      return;
+    }
+    clearTimeout(timeoutId);
+
+    if(!res.ok){
+      let errMsg='APIエラー（コード：'+res.status+')';
+      try{const ej=await res.json();if(ej.error?.message)errMsg+='　'+ej.error.message;}catch(e){}
+      status.textContent='⚠️ '+errMsg;
+      status.style.color='#e74c3c';
+      btn.disabled=false;btn.textContent='📷 写真を選択・撮影';
+      event.target.value='';
+      return;
+    }
+
+    const data=await res.json();
+    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
+    let parsed={};
+    try{
+      parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
+    }catch(e){
+      status.textContent='⚠️ 読み取り結果を解析できませんでした。もう一度試してください。';
+      status.style.color='#e74c3c';
+      btn.disabled=false;btn.textContent='📷 写真を選択・撮影';
+      event.target.value='';
+      return;
+    }
+
+    let count=0;
+    Object.entries(parsed).forEach(([key,val])=>{
+      if(val){const el=document.getElementById(key);if(el){el.value=val;count++;}}
+    });
+    status.textContent=count>0
+      ?`✓ ${count}項目を自動入力しました`
+      :'読み取れる情報がありませんでした（写真を明るく・真っすぐ撮り直してみてください）';
+    status.style.color=count>0?'#27ae60':'#e74c3c';
+
+  }catch(err){
+    status.textContent='⚠️ エラーが発生しました：'+err.message;
+    status.style.color='#e74c3c';
+  }
+
+  btn.disabled=false;btn.textContent='📷 写真を選択・撮影';
+  event.target.value='';
+}
 
 // ===== 写真ギャラリー（ローカル） =====
 function addPhotos(event){
