@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>研修管理アプリ｜悠久福祉会</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F3;
+    --surface: #FFFFFF;
+    --border: #E4E2DC;
+    --border-strong: #C8C5BC;
+    --text: #1A1917;
+    --text-muted: #6B6860;
+    --text-hint: #9E9B94;
+    --accent: #1A5CFF;
+    --accent-light: #EEF2FF;
+    --green: #2D7D46;
+    --green-light: #EBF7EF;
+    --amber: #B45309;
+    --amber-light: #FFFBEB;
+    --red: #C0392B;
+    --red-light: #FEF2F2;
+    --purple: #7C3AED;
+    --purple-light: #F3F0FF;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 0.5px rgba(0,0,0,0.06);
+  }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 56px;
+  }
+  .logo {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+  }
+  .logo span { color: var(--accent); }
+  .header-tabs { display: flex; gap: 2px; margin-left: auto; }
+  .htab {
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .htab:hover { background: var(--bg); color: var(--text); }
+  .htab.active { background: var(--accent); color: #fff; }
+
+  /* Layout */
+  .main { max-width: 760px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+  }
+
+  /* Form elements */
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  input[type=text], input[type=date], input[type=month], input[type=number], select, textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(26,92,255,0.1);
+  }
+  textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B6860' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
+
+  .field { margin-bottom: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* Buttons */
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: #1449d4; }
+  .btn-primary:active { transform: scale(0.99); }
+  .btn-outline {
+    padding: 8px 16px;
+    background: none;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-outline:hover { background: var(--bg); color: var(--text); }
+  .btn-danger {
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: 1px solid var(--red);
+    color: var(--red);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: all 0.15s;
+  }
+  .btn-danger:hover { background: var(--red-light); }
+
+  /* Office segmented control */
+  .office-seg {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .office-btn {
+    padding: 10px 4px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .office-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .office-btn.sel-yuryo { background: #FFF7E6; border-color: var(--amber); color: var(--amber); font-weight: 700; }
+  .office-btn.sel-day { background: var(--green-light); border-color: var(--green); color: var(--green); font-weight: 700; }
+  .office-btn.sel-teiki { background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .office-btn.sel-godo { background: var(--purple-light); border-color: var(--purple); color: var(--purple); font-weight: 700; }
+
+  /* Office badge */
+  .office-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .ob-yuryo { background: #FFF7E6; color: var(--amber); }
+  .ob-day { background: var(--green-light); color: var(--green); }
+  .ob-teiki { background: var(--accent-light); color: var(--accent); }
+  .ob-godo { background: var(--purple-light); color: var(--purple); }
+
+  /* Theme chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-muted);
+    transition: all 0.15s;
+    font-weight: 400;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 500; }
+
+  /* Theme hint box */
+  .theme-hint {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--accent-light);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .theme-hint.show { display: block; }
+  .theme-hint .th-label { font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .badge-done { background: var(--green-light); color: var(--green); }
+  .badge-pending { background: var(--amber-light); color: var(--amber); }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-num { font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+  .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+  /* Office filter tabs */
+  .office-filter {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .of-tab {
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-family: inherit;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .of-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .of-tab.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+  /* Month grid */
+  .month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.5rem; }
+  .month-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: var(--shadow);
+  }
+  .month-cell:hover { border-color: var(--accent); }
+  .month-cell.has { background: var(--accent-light); border-color: var(--accent); }
+  .month-cell .mn { font-size: 14px; font-weight: 700; color: var(--text); }
+  .month-cell .mc { font-size: 11px; color: var(--text-hint); margin-top: 2px; }
+  .month-cell.has .mn { color: var(--accent); }
+  .month-cell.has .mc { color: var(--accent); }
+
+  /* Report list */
+  .report-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .report-item:last-child { border-bottom: none; }
+  .report-item:hover { opacity: 0.75; }
+  .report-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .report-body { flex: 1; min-width: 0; }
+  .report-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .report-sub { font-size: 12px; color: var(--text-muted); }
+  .chevron { color: var(--text-hint); font-size: 16px; }
+
+  /* Detail */
+  .detail-header { margin-bottom: 1.25rem; }
+  .detail-theme { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .detail-meta { font-size: 13px; color: var(--text-muted); }
+  .info-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 1rem; }
+  .info-table td { padding: 6px 0; vertical-align: top; }
+  .info-table td:first-child { color: var(--text-muted); width: 80px; }
+  .detail-section { margin-bottom: 1rem; }
+  .detail-section-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .detail-section-text { font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+
+  /* Back button */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    margin-bottom: 1rem;
+    padding: 4px 0;
+    transition: color 0.15s;
+  }
+  .back-btn:hover { color: var(--text); }
+
+  /* Attendance */
+  .att-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .att-select-all {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .att-select-all:hover { text-decoration: underline; }
+  .att-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .att-row:last-child { border-bottom: none; }
+  .att-name { flex: 1; font-size: 14px; }
+  .att-role { font-size: 11px; color: var(--text-muted); }
+  .att-cb {
+    width: 20px; height: 20px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Staff list */
+  .staff-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .staff-row:last-child { border-bottom: none; }
+  .staff-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .staff-info { flex: 1; }
+  .staff-name { font-size: 14px; font-weight: 500; }
+  .staff-role-badge { font-size: 11px; color: var(--text-muted); }
+
+  /* Section heading */
+  .section-heading {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Annual plan table */
+  .plan-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .plan-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 640px; }
+  .plan-table th, .plan-table td {
+    border: 1px solid var(--border);
+    padding: 6px 5px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .plan-table th { background: var(--bg); font-weight: 700; font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .plan-table td.pt-theme { text-align: left; font-weight: 500; white-space: nowrap; font-size: 12px; }
+  .plan-table td.pt-content { text-align: left; font-size: 11px; color: var(--text-muted); line-height: 1.5; min-width: 160px; }
+  .pt-plan { color: var(--text-hint); font-size: 13px; }
+  .pt-done { color: var(--green); font-weight: 700; font-size: 13px; }
+  .pt-monthly { font-size: 10px; color: var(--text-hint); }
+  .pt-monthly.done { color: var(--green); font-weight: 700; }
+  .plan-legend { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+  .plan-legend b { color: var(--green); }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 2rem 1rem; color: var(--text-hint); font-size: 14px; }
+
+  /* Loading bar */
+  .loading-bar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent) 0%, #7ab8ff 50%, var(--accent) 100%);
+    background-size: 200% 100%;
+    animation: loading-slide 1.2s linear infinite;
+    z-index: 9999;
+  }
+  @keyframes loading-slide {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: var(--text);
+    color: var(--surface);
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Mobile */
+  @media (max-width: 520px) {
+    .grid3 { grid-template-columns: 1fr 1fr; }
+    .month-grid { grid-template-columns: repeat(4, 1fr); }
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .stat-num { font-size: 22px; }
+    .logo { font-size: 13px; }
+    .htab { padding: 5px 8px; font-size: 11px; }
+    .main { padding: 1rem 1rem 4rem; }
+    .office-seg { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* Filter bar */
+  .filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
+  .filter-reset { font-size: 12px; color: var(--accent); background: none; border: none; cursor: pointer; font-family: inherit; }
+  .filter-reset:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="loading-bar" id="loading-bar"></div>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">研修管理<span>●</span></div>
+    <button onclick="reloadData()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted);padding:4px 8px;flex-shrink:0" title="データ更新">↻</button>
+    <div class="header-tabs">
+      <button class="htab active" onclick="switchTab('input')">入力</button>
+      <button class="htab" onclick="switchTab('list')">月別管理</button>
+      <button class="htab" onclick="switchTab('plan')">年間計画</button>
+      <button class="htab" onclick="switchTab('staff')">職員</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ===== 入力ページ ===== -->
+  <div class="page active" id="page-input">
+
+    <div class="card">
+      <div class="card-title">実施事業所</div>
+      <div class="office-seg" id="office-seg">
+        <button class="office-btn" data-office="有料" onclick="selectOffice('有料')">有料</button>
+        <button class="office-btn" data-office="デイサービス" onclick="selectOffice('デイサービス')">デイサービス</button>
+        <button class="office-btn" data-office="定期巡回" onclick="selectOffice('定期巡回')">定期巡回</button>
+        <button class="office-btn" data-office="合同" onclick="selectOffice('合同')">合同（全体）</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">研修テーマ</div>
+      <div class="chips" id="theme-chips"></div>
+      <div class="field" style="margin-top:10px;margin-bottom:0">
+        <input type="text" id="inp-theme-text" placeholder="上記にない場合は直接入力" oninput="onThemeTextInput(this.value)">
+      </div>
+      <div class="theme-hint" id="theme-hint">
+        <div class="th-label">年間計画の研修内容・目的</div>
+        <div id="theme-hint-body"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">実施情報</div>
+      <div class="grid3">
+        <div class="field">
+          <label>実施年月 *</label>
+          <input type="month" id="inp-month">
+        </div>
+        <div class="field">
+          <label>実施日</label>
+          <input type="date" id="inp-date">
+        </div>
+        <div class="field">
+          <label>研修時間（分）</label>
+          <input type="number" id="inp-duration" placeholder="60" min="0">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>研修場所</label>
+          <input type="text" id="inp-place" placeholder="事業所・オンライン など">
+        </div>
+        <div class="field">
+          <label>担当講師</label>
+          <input type="text" id="inp-lecturer" placeholder="氏名">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>研修形式</label>
+        <select id="inp-format">
+          <option>集合研修</option>
+          <option>OJT</option>
+          <option>オンライン</option>
+          <option>自己学習</option>
+          <option>外部研修</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">研修内容</div>
+      <div class="field">
+        <label>研修内容・概要（テーマ選択で年間計画の内容を自動入力）</label>
+        <textarea id="inp-content" placeholder="今回の研修で扱った内容を記入"></textarea>
+      </div>
+      <div class="field">
+        <label>学んだこと・まとめ</label>
+        <textarea id="inp-summary" placeholder="研修を通じて学んだこと、気づきを記入"></textarea>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>課題・今後の取り組み</label>
+        <textarea id="inp-issue" placeholder="改善点や実践計画を記入"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">受講者チェック</div>
+      <div id="att-list">
+        <div class="empty">「職員」タブで職員を先に登録してください</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">承認</div>
+      <div class="grid2">
+        <div class="field">
+          <label>報告者</label>
+          <input type="text" id="inp-reporter" placeholder="氏名">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>管理者確認</label>
+          <input type="text" id="inp-approver" placeholder="管理者氏名">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="saveReport()">保存する</button>
+  </div>
+
+  <!-- ===== 月別管理ページ ===== -->
+  <div class="page" id="page-list">
+    <div id="list-main">
+
+      <div class="office-filter" id="list-office-filter">
+        <button class="of-tab active" data-of="all" onclick="setListOffice('all')">すべて</button>
+        <button class="of-tab" data-of="有料" onclick="setListOffice('有料')">有料</button>
+        <button class="of-tab" data-of="デイサービス" onclick="setListOffice('デイサービス')">デイサービス</button>
+        <button class="of-tab" data-of="定期巡回" onclick="setListOffice('定期巡回')">定期巡回</button>
+        <button class="of-tab" data-of="合同" onclick="setListOffice('合同')">合同</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-num" id="stat-total">0</div>
+          <div class="stat-label">総実施回数</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="stat-month">0</div>
+          <div class="stat-label">今月の実施</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="stat-themes">0</div>
+          <div class="stat-label">実施テーマ数</div>
+        </div>
+      </div>
+
+      <div class="section-heading" id="month-grid-heading">月別カレンダー（年度）</div>
+      <div class="month-grid" id="month-grid"></div>
+
+      <div class="filter-bar">
+        <div class="section-heading" style="margin-bottom:0" id="list-heading">研修一覧</div>
+        <button class="filter-reset" id="filter-reset" onclick="resetFilter()" style="display:none">× 月フィルター解除</button>
+      </div>
+
+      <div class="card">
+        <div id="empty-msg" class="empty">まだ研修が登録されていません</div>
+        <div id="report-list"></div>
+      </div>
+    </div>
+
+    <div id="list-detail" style="display:none">
+      <button class="back-btn" onclick="showListMain()">← 一覧に戻る</button>
+      <div class="card" id="detail-card"></div>
+    </div>
+  </div>
+
+  <!-- ===== 年間計画ページ ===== -->
+  <div class="page" id="page-plan">
+    <div class="office-filter">
+      <button class="of-tab active" data-pof="有料" onclick="setPlanOffice('有料')">有料</button>
+      <button class="of-tab" data-pof="デイサービス" onclick="setPlanOffice('デイサービス')">デイサービス</button>
+      <button class="of-tab" data-pof="定期巡回" onclick="setPlanOffice('定期巡回')">定期巡回</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="plan-title">年間研修計画</div>
+      <div class="plan-wrap">
+        <table class="plan-table" id="plan-table"></table>
+      </div>
+      <div class="plan-legend">●＝計画月　<b>✓</b>＝実施済（記録あり・合同実施を含む）　毎月＝毎月実施（ヒヤリハット事例検討）</div>
+    </div>
+  </div>
+
+  <!-- ===== 職員ページ ===== -->
+  <div class="page" id="page-staff">
+    <div class="card">
+      <div class="card-title">職員を追加</div>
+      <div class="grid2" style="margin-bottom:14px">
+        <div class="field" style="margin-bottom:0">
+          <label>氏名</label>
+          <input type="text" id="staff-name" placeholder="山田 太郎">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>職種</label>
+          <select id="staff-role">
+            <option>介護士</option>
+            <option>看護師</option>
+            <option>管理者</option>
+            <option>主任</option>
+            <option>相談員</option>
+            <option>その他</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label>所属事業所（複数選択可）</label>
+        <div class="office-seg" id="staff-office-seg" style="grid-template-columns:repeat(3,1fr)">
+          <button type="button" class="office-btn" data-so="有料" onclick="toggleStaffOffice('有料')">有料</button>
+          <button type="button" class="office-btn" data-so="デイサービス" onclick="toggleStaffOffice('デイサービス')">デイサービス</button>
+          <button type="button" class="office-btn" data-so="定期巡回" onclick="toggleStaffOffice('定期巡回')">定期巡回</button>
+        </div>
+      </div>
+      <button class="btn-outline" onclick="addStaff()" style="width:100%">追加する</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">登録済み職員</div>
+      <div id="staff-list"><div class="empty">職員が登録されていません</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================================================================
+   年間研修計画マスター（研修管理_定期巡回.xlsx より取り込み）
+   plan: 計画実施月（4〜3月）。'monthly' は毎月実施。
+=================================================================== */
+const PLAN = [
+  { theme:'緊急時・急変対応',        icon:'🚨', color:'#FEF2F2', content:'急変時の対応手順、心肺蘇生法（BLS）、AED操作訓練', target:'全職員', owner:'管理者/看護師', months:[4] },
+  { theme:'感染症・食中毒予防',      icon:'🦠', color:'#EBF7EF', content:'標準予防策、手指衛生、PPE着脱、発生時の対応', target:'全職員', owner:'感染対策担当', months:[5] },
+  { theme:'高齢者虐待防止',          icon:'🛡', color:'#EEF2FF', content:'虐待の種類・早期発見・通報義務、権利擁護', target:'全職員', owner:'管理者', months:[6] },
+  { theme:'認知症ケア',              icon:'🧠', color:'#F3F0FF', content:'認知症の理解、BPSDへの対応、コミュニケーション技術', target:'全職員', owner:'認知症担当', months:[7] },
+  { theme:'身体拘束廃止',            icon:'✋', color:'#FFFBEB', content:'身体拘束の定義・廃止の取り組み・記録', target:'全職員', owner:'管理者', months:[8] },
+  { theme:'ターミナルケア',          icon:'💐', color:'#FDF2F8', content:'看取りの基本、本人・家族支援、多職種連携', target:'全職員', owner:'看護師', months:[9] },
+  { theme:'個人情報保護',            icon:'🔒', color:'#EEF2FF', content:'個人情報の取扱い、情報漏洩防止、SNSリスク', target:'全職員', owner:'管理者', months:[10] },
+  { theme:'BCP・業務継続計画',       icon:'📋', color:'#F7F6F3', content:'災害・感染症発生時の対応、避難手順確認', target:'全職員', owner:'管理者', months:[11] },
+  { theme:'ハラスメント防止',        icon:'🤝', color:'#EBF7EF', content:'ハラスメントの種類、対応方法、相談窓口', target:'全職員', owner:'管理者', months:[12] },
+  { theme:'事故防止・ヒヤリハット',  icon:'⚠️', color:'#FFFBEB', content:'事例検討、再発防止策、報告・記録の徹底', target:'全職員', owner:'安全担当', months:'monthly' },
+  { theme:'医療的ケア・看護連携',    icon:'💉', color:'#F0FDF4', content:'医療的ケアの基礎知識、看護職との情報共有・連携', target:'全職員', owner:'看護師', months:[] },
+  { theme:'接遇・コミュニケーション', icon:'💬', color:'#F3F0FF', content:'利用者・家族への言葉遣い、傾聴・共感技術', target:'全職員', owner:'主任', months:[4,7,10] },
+];
+
+const OFFICES = ['有料','デイサービス','定期巡回'];
+const OFFICE_CLASS = { '有料':'yuryo', 'デイサービス':'day', '定期巡回':'teiki', '合同':'godo' };
+const FISCAL_MONTHS = [4,5,6,7,8,9,10,11,12,1,2,3];
+
+let reports = [];
+let staff = [];
+let selectedTheme = '';
+let selectedOffice = '';
+let currentFilter = null;   // 月フィルター
+let listOffice = 'all';     // 月別管理の事業所フィルター
+let planOffice = '有料';    // 年間計画の表示事業所
+
+/* ---- GAS 設定 ---- */
+const GAS_URL  = 'AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW';
+const GAS_ENDPOINT = `https://script.google.com/macros/s/${GAS_URL}/exec`;
+
+function setLoading(on) {
+  const el = document.getElementById('loading-bar');
+  if (el) el.style.display = on ? 'block' : 'none';
+}
+
+async function gasGet(params) {
+  const qs = Object.entries(params)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(typeof v === 'object' ? JSON.stringify(v) : v)}`)
+    .join('&');
+  const res = await fetch(`${GAS_ENDPOINT}?${qs}`, { redirect: 'follow' });
+  return res.json();
+}
+
+/* ---- データ読み込み ---- */
+async function loadData() {
+  setLoading(true);
+  try {
+    const [rRes, sRes] = await Promise.all([
+      gasGet({ action: 'kennshu_get_reports' }),
+      gasGet({ action: 'kennshu_get_staff' })
+    ]);
+    if (rRes.status === 'ok') reports = rRes.data || [];
+    if (sRes.status === 'ok') staff   = sRes.data || [];
+  } catch(e) {
+    toast('⚠️ データ読み込み失敗。ネットワークを確認してください');
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ---- 研修記録保存 ---- */
+async function gasAppendReport(rec) {
+  return gasGet({ action: 'kennshu_save_report', data: rec });
+}
+
+/* ---- 研修記録削除 ---- */
+async function gasDeleteReport(id) {
+  return gasGet({ action: 'kennshu_delete_report', id });
+}
+
+/* ---- 職員保存（全件） ---- */
+async function gasSaveStaff() {
+  return gasGet({ action: 'kennshu_save_staff', data: staff });
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ---- 年度ユーティリティ ---- */
+function fiscalYearOf(date) {
+  return date.getMonth() + 1 >= 4 ? date.getFullYear() : date.getFullYear() - 1;
+}
+function monthKey(fy, m) {
+  const y = m >= 4 ? fy : fy + 1;
+  return `${y}-${String(m).padStart(2,'0')}`;
+}
+
+/* ---- TABS ---- */
+function switchTab(name) {
+  const names = ['input','list','plan','staff'];
+  names.forEach((n, i) => {
+    document.querySelectorAll('.htab')[i].classList.toggle('active', n === name);
+    document.getElementById('page-' + n).classList.toggle('active', n === name);
+  });
+  if (name === 'list') renderList();
+  if (name === 'plan') renderPlan();
+  if (name === 'staff') renderStaff();
+  if (name === 'input') renderAttList();
+}
+
+async function reloadData() {
+  await loadData();
+  renderList();
+  renderAttList();
+  toast('🔄 データを更新しました');
+}
+
+/* ---- 入力：事業所選択 ---- */
+function selectOffice(office) {
+  selectedOffice = office;
+  document.querySelectorAll('#office-seg .office-btn').forEach(b => {
+    b.className = 'office-btn';
+    if (b.dataset.office === office) b.classList.add('sel-' + OFFICE_CLASS[office]);
+  });
+  renderAttList();
+}
+
+/* ---- 入力：テーマ選択 ---- */
+function renderThemeChips() {
+  const el = document.getElementById('theme-chips');
+  el.innerHTML = PLAN.map(p =>
+    `<button class="chip" onclick="selectTheme(this,'${p.theme}')">${p.icon} ${p.theme}</button>`
+  ).join('');
+}
+
+function selectTheme(el, theme) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTheme = theme;
+  document.getElementById('inp-theme-text').value = '';
+
+  const p = PLAN.find(x => x.theme === theme);
+  const hint = document.getElementById('theme-hint');
+  if (p) {
+    document.getElementById('theme-hint-body').textContent = `${p.content}（対象：${p.target}／担当：${p.owner}）`;
+    hint.classList.add('show');
+    // 研修内容が空欄なら年間計画の内容を自動入力
+    const c = document.getElementById('inp-content');
+    if (!c.value.trim()) c.value = p.content;
+  } else {
+    hint.classList.remove('show');
+  }
+}
+
+function onThemeTextInput(v) {
+  selectedTheme = v;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('theme-hint').classList.remove('show');
+}
+
+/* ---- 入力：受講者リスト（事業所別グループ表示） ---- */
+function renderAttList() {
+  const el = document.getElementById('att-list');
+  if (!staff.length) {
+    el.innerHTML = '<div class="empty">「職員」タブで職員を登録してください</div>';
+    return;
+  }
+
+  const showAll = !selectedOffice || selectedOffice === '合同';
+  const groups = OFFICES
+    .filter(o => showAll || o === selectedOffice)
+    .map(o => ({ office: o, members: staff.filter(s => (s.offices || [s.office]).includes(o)) }))
+    .filter(g => g.members.length);
+
+  if (!groups.length) {
+    el.innerHTML = '<div class="empty">選択した事業所に職員が登録されていません</div>';
+    return;
+  }
+
+  el.innerHTML = groups.map(g => `
+    <div class="att-group-title">
+      <span class="office-badge ob-${OFFICE_CLASS[g.office]}">${g.office}</span>
+      <button class="att-select-all" onclick="toggleGroup('${g.office}')">全員チェック / 解除</button>
+    </div>
+    ${g.members.map(s => {
+      const idx = staff.indexOf(s);
+      return `<div class="att-row">
+        <input type="checkbox" class="att-cb" id="att-${idx}" data-office="${g.office}">
+        <label for="att-${idx}" class="att-name" style="margin:0;cursor:pointer">
+          ${s.name} <span class="att-role">${s.role}</span>
+        </label>
+      </div>`;
+    }).join('')}
+  `).join('');
+}
+
+function toggleGroup(office) {
+  const cbs = [...document.querySelectorAll(`.att-cb[data-office="${office}"]`)];
+  const allChecked = cbs.every(cb => cb.checked);
+  cbs.forEach(cb => cb.checked = !allChecked);
+}
+
+/* ---- SAVE ---- */
+async function saveReport() {
+  const theme = selectedTheme || document.getElementById('inp-theme-text').value.trim();
+  const month = document.getElementById('inp-month').value;
+  if (!selectedOffice) { toast('実施事業所を選択してください'); return; }
+  if (!theme) { toast('研修テーマを選択または入力してください'); return; }
+  if (!month) { toast('実施年月を入力してください'); return; }
+
+  const attendees = staff
+    .filter((_, i) => { const cb = document.getElementById(`att-${i}`); return cb && cb.checked; })
+    .map(s => {
+      const officesArr = s.offices || [s.office];
+      return `${s.name}（${officesArr.join('/')}）`;
+    });
+
+  const rec = {
+    id: Date.now(),
+    office: selectedOffice,
+    theme, month,
+    date: document.getElementById('inp-date').value,
+    duration: document.getElementById('inp-duration').value,
+    place: document.getElementById('inp-place').value,
+    lecturer: document.getElementById('inp-lecturer').value,
+    format: document.getElementById('inp-format').value,
+    content: document.getElementById('inp-content').value,
+    summary: document.getElementById('inp-summary').value,
+    issue: document.getElementById('inp-issue').value,
+    reporter: document.getElementById('inp-reporter').value,
+    approver: document.getElementById('inp-approver').value,
+    attendees,
+    createdAt: new Date().toISOString()
+  };
+
+  setLoading(true);
+  try {
+    const res = await gasAppendReport(rec);
+    if (res.status !== 'ok') throw new Error();
+    reports.push(rec);
+    toast('✓ 保存しました！');
+  } catch(e) {
+    toast('⚠️ 保存に失敗しました');
+    setLoading(false);
+    return;
+  }
+  setLoading(false);
+
+  // フォームリセット（事業所選択は維持）
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  selectedTheme = '';
+  document.getElementById('theme-hint').classList.remove('show');
+  ['inp-theme-text','inp-duration','inp-place','inp-lecturer','inp-reporter','inp-approver','inp-content','inp-summary','inp-issue'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('inp-format').value = '集合研修';
+  const now = new Date();
+  document.getElementById('inp-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('inp-date').value = now.toISOString().split('T')[0];
+  renderAttList();
+}
+
+/* ---- 月別管理 ---- */
+function getPlanMeta(theme) {
+  return PLAN.find(p => p.theme === theme) || { icon:'📝', color:'#F7F6F3' };
+}
+
+function filteredByOffice() {
+  return listOffice === 'all' ? reports : reports.filter(r => r.office === listOffice);
+}
+
+function setListOffice(of) {
+  listOffice = of;
+  document.querySelectorAll('#list-office-filter .of-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.of === of);
+  });
+  renderList();
+}
+
+function renderList() {
+  const now = new Date();
+  const fy = fiscalYearOf(now);
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const list = filteredByOffice();
+
+  document.getElementById('stat-total').textContent = list.length;
+  document.getElementById('stat-month').textContent = list.filter(r => r.month === thisMonth).length;
+  document.getElementById('stat-themes').textContent = new Set(list.map(r => r.theme)).size;
+
+  document.getElementById('month-grid-heading').textContent = `月別カレンダー（令和${fy - 2018}年度 / ${fy}年度）`;
+
+  // 年度順（4月〜3月）の月別カレンダー
+  const grid = document.getElementById('month-grid');
+  grid.innerHTML = FISCAL_MONTHS.map(m => {
+    const key = monthKey(fy, m);
+    const count = list.filter(r => r.month === key).length;
+    return `<div class="month-cell ${count > 0 ? 'has' : ''}" onclick="filterMonth('${key}')">
+      <div class="mn">${m}月</div>
+      <div class="mc">${count > 0 ? count + '件' : '－'}</div>
+    </div>`;
+  }).join('');
+
+  renderReports(currentFilter ? list.filter(r => r.month === currentFilter) : list);
+}
+
+function renderReports(list) {
+  const el = document.getElementById('report-list');
+  const em = document.getElementById('empty-msg');
+  if (!list.length) { em.style.display = 'block'; el.innerHTML = ''; return; }
+  em.style.display = 'none';
+  el.innerHTML = [...list].reverse().map(r => {
+    const meta = getPlanMeta(r.theme);
+    const oc = OFFICE_CLASS[r.office] || 'godo';
+    return `
+    <div class="report-item" onclick="showDetail(${r.id})">
+      <div class="report-icon" style="background:${meta.color}">${meta.icon}</div>
+      <div class="report-body">
+        <div class="report-title"><span class="office-badge ob-${oc}">${r.office || '－'}</span> ${r.theme}</div>
+        <div class="report-sub">${r.month}${r.date ? ' / ' + r.date : ''}${r.duration ? ' ・ ' + r.duration + '分' : ''}${r.attendees && r.attendees.length ? ' ・ ' + r.attendees.length + '名' : ''}</div>
+      </div>
+      <span class="badge ${r.approver ? 'badge-done' : 'badge-pending'}">${r.approver ? '承認済' : '未承認'}</span>
+      <span class="chevron">›</span>
+    </div>`;
+  }).join('');
+}
+
+function filterMonth(key) {
+  currentFilter = key;
+  document.getElementById('list-heading').textContent = key.replace('-','年') + '月 の研修';
+  document.getElementById('filter-reset').style.display = 'inline';
+  renderReports(filteredByOffice().filter(r => r.month === key));
+}
+
+function resetFilter() {
+  currentFilter = null;
+  document.getElementById('list-heading').textContent = '研修一覧';
+  document.getElementById('filter-reset').style.display = 'none';
+  renderReports(filteredByOffice());
+}
+
+function showDetail(id) {
+  const r = reports.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('list-main').style.display = 'none';
+  document.getElementById('list-detail').style.display = 'block';
+
+  const rows = [
+    ['事業所', r.office],
+    ['場所', r.place], ['講師', r.lecturer], ['形式', r.format],
+    ['時間', r.duration ? r.duration + '分' : ''],
+    ['受講者', r.attendees && r.attendees.length ? r.attendees.join('、') : ''],
+    ['報告者', r.reporter], ['管理者', r.approver]
+  ].filter(([, v]) => v).map(([l, v]) => `<tr><td>${l}</td><td>${v}</td></tr>`).join('');
+
+  const sections = [
+    ['研修内容・概要', r.content],
+    ['学んだこと・まとめ', r.summary],
+    ['課題・今後の取り組み', r.issue]
+  ].filter(([, v]) => v).map(([l, v]) => `
+    <div class="detail-section">
+      <div class="detail-section-label">${l}</div>
+      <div class="detail-section-text">${v}</div>
+    </div>
+  `).join('');
+
+  const meta = getPlanMeta(r.theme);
+  const oc = OFFICE_CLASS[r.office] || 'godo';
+  document.getElementById('detail-card').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-theme">${meta.icon} ${r.theme}</div>
+      <div class="detail-meta"><span class="office-badge ob-${oc}">${r.office || '－'}</span> &nbsp;${r.month}${r.date ? ' / ' + r.date : ''} &nbsp; <span class="badge ${r.approver ? 'badge-done' : 'badge-pending'}">${r.approver ? '承認済' : '未承認'}</span></div>
+    </div>
+    ${rows ? `<table class="info-table">${rows}</table>` : ''}
+    ${sections}
+    <button class="btn-danger" onclick="deleteReport(${r.id})">この記録を削除する</button>
+  `;
+}
+
+function showListMain() {
+  document.getElementById('list-main').style.display = 'block';
+  document.getElementById('list-detail').style.display = 'none';
+}
+
+async function deleteReport(id) {
+  if (!confirm('この研修記録を削除しますか？')) return;
+  setLoading(true);
+  try {
+    await gasDeleteReport(id);
+    reports = reports.filter(r => r.id !== id);
+    toast('削除しました');
+  } catch(e) {
+    toast('⚠️ 削除に失敗しました');
+  }
+  setLoading(false);
+  showListMain();
+  renderList();
+}
+
+/* ---- 年間計画 ---- */
+function setPlanOffice(of) {
+  planOffice = of;
+  document.querySelectorAll('[data-pof]').forEach(b => {
+    b.classList.toggle('active', b.dataset.pof === of);
+  });
+  renderPlan();
+}
+
+function isDone(theme, fy, m) {
+  const key = monthKey(fy, m);
+  return reports.some(r => r.theme === theme && r.month === key && (r.office === planOffice || r.office === '合同'));
+}
+
+function renderPlan() {
+  const fy = fiscalYearOf(new Date());
+  document.getElementById('plan-title').textContent = `年間研修計画（${planOffice}）　令和${fy - 2018}年度`;
+
+  const head = `<tr><th style="text-align:left">研修テーマ</th><th style="text-align:left">研修内容・目的</th>${FISCAL_MONTHS.map(m => `<th>${m}月</th>`).join('')}</tr>`;
+
+  const rows = PLAN.map(p => {
+    const cells = FISCAL_MONTHS.map(m => {
+      if (p.months === 'monthly') {
+        const done = isDone(p.theme, fy, m);
+        return `<td class="pt-monthly ${done ? 'done' : ''}">${done ? '✓' : '毎月'}</td>`;
+      }
+      const planned = p.months.includes(m);
+      const done = isDone(p.theme, fy, m);
+      if (done) return `<td class="pt-done">✓</td>`;
+      if (planned) return `<td class="pt-plan">●</td>`;
+      return `<td></td>`;
+    }).join('');
+    return `<tr>
+      <td class="pt-theme">${p.icon} ${p.theme}</td>
+      <td class="pt-content">${p.content}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  document.getElementById('plan-table').innerHTML = head + rows;
+}
+
+/* ---- STAFF ---- */
+/* ---- 職員登録：事業所トグル ---- */
+let staffOfficesSel = [];
+function toggleStaffOffice(o) {
+  const idx = staffOfficesSel.indexOf(o);
+  if (idx >= 0) staffOfficesSel.splice(idx, 1);
+  else staffOfficesSel.push(o);
+  document.querySelectorAll('#staff-office-seg .office-btn').forEach(b => {
+    const oc = OFFICE_CLASS[b.dataset.so];
+    b.className = 'office-btn';
+    if (staffOfficesSel.includes(b.dataset.so)) b.classList.add('sel-' + oc);
+  });
+}
+
+function addStaff() {
+  const name = document.getElementById('staff-name').value.trim();
+  const offices = [...staffOfficesSel];
+  const role = document.getElementById('staff-role').value;
+  if (!name) { toast('氏名を入力してください'); return; }
+  if (!offices.length) { toast('所属事業所を1つ以上選択してください'); return; }
+  if (staff.find(s => s.name === name)) { toast('すでに登録されています'); return; }
+  staff.push({ id: Date.now(), name, offices, role });
+  _syncStaff('職員を追加しました');
+  document.getElementById('staff-name').value = '';
+  staffOfficesSel = [];
+  document.querySelectorAll('#staff-office-seg .office-btn').forEach(b => b.className = 'office-btn');
+  renderStaff();
+}
+
+function removeStaff(id) {
+  if (!confirm('この職員を削除しますか？')) return;
+  staff = staff.filter(s => s.id !== id);
+  _syncStaff('削除しました');
+  renderStaff();
+}
+
+async function _syncStaff(msg) {
+  setLoading(true);
+  try {
+    await gasSaveStaff();
+    toast(msg);
+  } catch(e) {
+    toast('⚠️ 職員データの保存に失敗しました');
+  }
+  setLoading(false);
+}
+
+function renderStaff() {
+  const el = document.getElementById('staff-list');
+  if (!staff.length) { el.innerHTML = '<div class="empty">職員が登録されていません</div>'; return; }
+
+  el.innerHTML = OFFICES.map(o => {
+    const members = staff.filter(s => (s.offices || [s.office]).includes(o));
+    if (!members.length) return '';
+    return `
+      <div class="att-group-title"><span class="office-badge ob-${OFFICE_CLASS[o]}">${o}</span><span style="font-size:11px;color:var(--text-hint)">${members.length}名</span></div>
+      ${members.map(s => {
+        const initials = s.name.replace(/\s/g,'').slice(-2);
+        const officesArr = s.offices || [s.office];
+        const badges = officesArr.map(x => `<span class="office-badge ob-${OFFICE_CLASS[x]}">${x}</span>`).join(' ');
+        return `<div class="staff-row">
+          <div class="staff-avatar">${initials}</div>
+          <div class="staff-info">
+            <div class="staff-name">${s.name} &nbsp;${badges}</div>
+            <div class="staff-role-badge">${s.role}</div>
+          </div>
+          <button class="btn-outline" style="font-size:12px;padding:5px 12px" onclick="removeStaff(${s.id})">削除</button>
+        </div>`;
+      }).join('')}
+    `;
+  }).join('');
+}
+
+/* ---- INIT ---- */
+(async () => {
+  renderThemeChips();
+  const now = new Date();
+  document.getElementById('inp-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('inp-date').value = now.toISOString().split('T')[0];
+  await loadData();
+  renderAttList();
+})();
+</script>
+</body>
+</html>
