@@ -160,6 +160,17 @@ textarea{resize:vertical;min-height:60px}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.err{background:var(--red)}
 
+
+/* マスター選択チップ */
+.mchip{padding:4px 10px;border-radius:20px;border:1px solid var(--bdr);background:#f7f9fc;font-size:12px;cursor:pointer;user-select:none;color:var(--txs);display:inline-block;margin:2px}
+.mchip.on.staff{background:var(--pri-l);border-color:#7ab8d8;color:var(--pri-d);font-weight:600}
+.mchip.on.user{background:#e8f5e9;border-color:#81c784;color:#2e7d32;font-weight:600}
+.mchip-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;min-height:32px;padding:4px;background:#f7f9fc;border:1px solid var(--bdr);border-radius:6px}
+.master-add-bar{display:flex;gap:6px;margin-bottom:8px}
+.master-add-bar input{flex:1;border:1px solid var(--bdr);border-radius:5px;padding:6px 9px;font-size:13px;font-family:inherit}
+.master-add-bar input:focus{outline:none;border-color:var(--pri)}
+.master-item{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;border:1px solid var(--bdr);border-radius:5px;margin-bottom:4px;font-size:13px;background:#fafafa}
+.master-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 4px;line-height:1}
 @media print{
   #pw-screen,.no-print{display:none!important}
   .app-hdr{position:static;background:#fff;color:#000;border-bottom:2px solid #000}
@@ -215,6 +226,7 @@ function checkPW(){
   <button class="tab-btn" onclick="switchTab('individual',this)">👤 個別記録</button>
   <button class="tab-btn" onclick="switchTab('history',this)">📅 履歴</button>
   <button class="tab-btn" onclick="switchTab('staff',this)">👥 職員・利用者</button>
+  <button class="tab-btn" onclick="switchTab('master',this)">⚙️ マスター</button>
 </div>
 
 <!-- ========== 業務日誌 ========== -->
@@ -245,6 +257,10 @@ function checkPW(){
       <div class="fg"><label>送迎（午後）</label><input type="text" id="j-tr-pm" placeholder="担当者名"></div>
       <div class="fg"><label>看護師</label><input type="text" id="j-nurse" placeholder="担当者名"></div>
     </div>
+    <div style="margin-top:4px">
+      <div style="font-size:11px;color:var(--txs);font-weight:700;margin-bottom:5px">本日の出勤職員（タップで選択）</div>
+      <div class="mchip-wrap" id="staff-sel-wrap"><span style="font-size:11px;color:var(--txs)">マスタータブで職員を登録してください</span></div>
+    </div>
   </div>
 
   <div class="card">
@@ -258,13 +274,7 @@ function checkPW(){
     <div class="fg"><label>補足</label><textarea id="j-pm-free" placeholder="補足を入力"></textarea></div>
   </div>
 
-  <div class="card">
-    <div class="card-title">食事・おやつ</div>
-    <div class="grid2">
-      <div class="fg"><label>昼食メニュー</label><textarea id="j-lunch" placeholder="例: ご飯、味噌汁、焼き魚"></textarea></div>
-      <div class="fg"><label>おやつ</label><textarea id="j-snack" placeholder="例: どら焼き、麦茶"></textarea></div>
-    </div>
-  </div>
+
 
   <div class="card">
     <div class="card-title">全体の様子・特記</div>
@@ -288,6 +298,12 @@ function checkPW(){
     <button class="btn btn-pri" onclick="saveToGAS()">💾 保存</button>
     <button class="btn btn-out" onclick="window.print()">🖨️ 印刷</button>
     <button class="btn btn-out btn-sm" onclick="clearVitals()">🔄 リセット</button>
+  </div>
+  <div class="card">
+    <div class="card-title">本日の利用者（タップで選択）</div>
+    <p style="font-size:11px;color:var(--txs);margin-bottom:6px">選択した利用者のみバイタル表に表示されます。</p>
+    <div class="mchip-wrap" id="user-sel-wrap"><span style="font-size:11px;color:var(--txs)">マスタータブで利用者を登録してください</span></div>
+    <button class="btn btn-out btn-sm" style="margin-top:6px" onclick="applyUserSelection()">✅ 選択を反映</button>
   </div>
   <div class="card">
     <div class="card-title">バイタル・ケア状況 一覧</div>
@@ -371,6 +387,26 @@ function checkPW(){
       </div>
       <div id="hist-detail-body"></div>
     </div>
+  </div>
+</div>
+
+<!-- ========== マスター ========== -->
+<div class="tab-panel" id="tab-master">
+  <div class="card">
+    <div class="card-title">職員マスター</div>
+    <div class="master-add-bar">
+      <input type="text" id="ms-staff-input" placeholder="職員名（例: 田中 美咲）" onkeydown="if(event.key==='Enter')addMsStaff()">
+      <button class="btn btn-pri btn-sm" onclick="addMsStaff()">＋ 追加</button>
+    </div>
+    <div id="ms-staff-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">利用者マスター</div>
+    <div class="master-add-bar">
+      <input type="text" id="ms-user-input" placeholder="利用者名（例: 山田 花子）" onkeydown="if(event.key==='Enter')addMsUser()">
+      <button class="btn btn-acc btn-sm" onclick="addMsUser()">＋ 追加</button>
+    </div>
+    <div id="ms-user-list"></div>
   </div>
 </div>
 
@@ -472,11 +508,12 @@ function buildPayload(){
     am_free: val('j-am-free'),
     pm_chips: D.journal.pm_chips ? D.journal.pm_chips.join('・') : '',
     pm_free: val('j-pm-free'),
-    lunch: val('j-lunch'), snack: val('j-snack'),
     atm: val('j-atm'),
     family: val('j-family'), cm: val('j-cm'),
     handover: val('j-handover'), incident: val('j-incident'),
     staff_names: D.staff.map(s=>s.name).join('、'),
+    staff_sel: getSelStaff().join('、'),
+    users_sel: getSelUsers().join('、'),
     vitals: JSON.stringify(D.vitals),
     individual: JSON.stringify(D.individual)
   };
@@ -506,7 +543,6 @@ function fillFormFromGAS(r){
   setVal('j-weather', r.weather);
   setVal('j-tr-am', r.tr_am); setVal('j-tr-pm', r.tr_pm); setVal('j-nurse', r.nurse);
   setVal('j-am-free', r.am_free); setVal('j-pm-free', r.pm_free);
-  setVal('j-lunch', r.lunch); setVal('j-snack', r.snack);
   setVal('j-atm', r.atm);
   setVal('j-family', r.family); setVal('j-cm', r.cm);
   setVal('j-handover', r.handover); setVal('j-incident', r.incident);
@@ -514,6 +550,8 @@ function fillFormFromGAS(r){
   D.journal.pm_chips = r.pm_chips ? r.pm_chips.split('・') : [];
   buildChips('am', D.journal.am_chips);
   buildChips('pm', D.journal.pm_chips);
+  if(r.staff_sel) setSelStaff(r.staff_sel.split('、').filter(Boolean));
+  if(r.users_sel) setSelUsers(r.users_sel.split('、').filter(Boolean));
   if(r.vitals) try{D.vitals=JSON.parse(r.vitals);}catch(e){}
   if(r.individual) try{D.individual=JSON.parse(r.individual);}catch(e){}
 }
@@ -641,10 +679,7 @@ function showHistDetail(date){
       ${kv('午前',r.am_chips+(r.am_free?' / '+r.am_free:''))}
       ${kv('午後',r.pm_chips+(r.pm_free?' / '+r.pm_free:''))}
     </div>
-    <div class="hist-section">
-      <h4>食事</h4>
-      ${kv('昼食',r.lunch)}${kv('おやつ',r.snack)}
-    </div>
+
     <div class="hist-section">
       <h4>全体の様子</h4>
       <div style="font-size:13px;line-height:1.6;white-space:pre-wrap">${r.atm||'―'}</div>
@@ -822,11 +857,12 @@ function switchTab(name,btn){
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
   if(name==='history') initHistYearSelect();
+  if(name==='master'){ renderMsStaffList(); renderMsUserList(); }
 }
 function val(id){const el=document.getElementById(id);return el?el.value:'';}
 function setVal(id,v){const el=document.getElementById(id);if(el&&v!=null)el.value=v;}
 function clearForm(){
-  ['j-weather','j-tr-am','j-tr-pm','j-nurse','j-am-free','j-pm-free','j-lunch','j-snack','j-atm','j-family','j-cm','j-handover','j-incident'].forEach(id=>setVal(id,''));
+  ['j-weather','j-tr-am','j-tr-pm','j-nurse','j-am-free','j-pm-free','j-atm','j-family','j-cm','j-handover','j-incident'].forEach(id=>setVal(id,''));
   buildChips('am',[]);buildChips('pm',[]);
   D.vitals={};D.individual={};
 }
@@ -843,6 +879,111 @@ function init(){
   loadFromGAS();
 }
 init();
+loadMaster();
+
+// ===================== マスター管理 =====================
+let msStaff=[], msUsers=[];
+
+function loadMaster(){
+  try{msStaff=JSON.parse(localStorage.getItem('dsj_ms_staff')||'[]');}catch(e){msStaff=[];}
+  try{msUsers=JSON.parse(localStorage.getItem('dsj_ms_users')||'[]');}catch(e){msUsers=[];}
+  renderStaffSelChips();
+  renderUserSelChips();
+}
+
+function saveMsStaff(){localStorage.setItem('dsj_ms_staff',JSON.stringify(msStaff));}
+function saveMsUsers(){localStorage.setItem('dsj_ms_users',JSON.stringify(msUsers));}
+
+function addMsStaff(){
+  const n=document.getElementById('ms-staff-input').value.trim();
+  if(!n)return;
+  if(msStaff.includes(n)){showToast('すでに登録済みです',true);return;}
+  msStaff.push(n); saveMsStaff();
+  document.getElementById('ms-staff-input').value='';
+  renderMsStaffList(); renderStaffSelChips();
+  showToast('👥 '+n+' を追加');
+}
+
+function removeMsStaff(n){
+  msStaff=msStaff.filter(s=>s!==n); saveMsStaff();
+  renderMsStaffList(); renderStaffSelChips();
+}
+
+function addMsUser(){
+  const n=document.getElementById('ms-user-input').value.trim();
+  if(!n)return;
+  if(msUsers.includes(n)){showToast('すでに登録済みです',true);return;}
+  msUsers.push(n); saveMsUsers();
+  document.getElementById('ms-user-input').value='';
+  renderMsUserList(); renderUserSelChips();
+  showToast('👤 '+n+' を追加');
+}
+
+function removeMsUser(n){
+  msUsers=msUsers.filter(u=>u!==n); saveMsUsers();
+  renderMsUserList(); renderUserSelChips();
+}
+
+function renderMsStaffList(){
+  const el=document.getElementById('ms-staff-list');
+  if(!el)return;
+  if(!msStaff.length){el.innerHTML='<p style="font-size:13px;color:var(--txs);padding:4px 0">職員が登録されていません</p>';return;}
+  el.innerHTML=msStaff.map(n=>`<div class="master-item"><span>${n}</span><button class="master-del" onclick="removeMsStaff('${n}')">×</button></div>`).join('');
+}
+
+function renderMsUserList(){
+  const el=document.getElementById('ms-user-list');
+  if(!el)return;
+  if(!msUsers.length){el.innerHTML='<p style="font-size:13px;color:var(--txs);padding:4px 0">利用者が登録されていません</p>';return;}
+  el.innerHTML=msUsers.map(n=>`<div class="master-item"><span>${n}</span><button class="master-del" onclick="removeMsUser('${n}')">×</button></div>`).join('');
+}
+
+function renderStaffSelChips(){
+  const el=document.getElementById('staff-sel-wrap');
+  if(!el)return;
+  if(!msStaff.length){el.innerHTML='<span style="font-size:11px;color:var(--txs)">マスタータブで職員を登録してください</span>';return;}
+  const sel=getSelStaff();
+  el.innerHTML=msStaff.map(n=>`<span class="mchip staff${sel.includes(n)?' on':''}" onclick="this.classList.toggle('on')">${n}</span>`).join('');
+}
+
+function renderUserSelChips(){
+  const el=document.getElementById('user-sel-wrap');
+  if(!el)return;
+  if(!msUsers.length){el.innerHTML='<span style="font-size:11px;color:var(--txs)">マスタータブで利用者を登録してください</span>';return;}
+  const sel=getSelUsers();
+  el.innerHTML=msUsers.map(n=>`<span class="mchip user${sel.includes(n)?' on':''}" onclick="this.classList.toggle('on')">${n}</span>`).join('');
+}
+
+function getSelStaff(){
+  return Array.from(document.querySelectorAll('#staff-sel-wrap .mchip.on')).map(e=>e.textContent);
+}
+
+function getSelUsers(){
+  return Array.from(document.querySelectorAll('#user-sel-wrap .mchip.on')).map(e=>e.textContent);
+}
+
+function setSelStaff(arr){
+  document.querySelectorAll('#staff-sel-wrap .mchip').forEach(e=>e.classList.toggle('on',(arr||[]).includes(e.textContent)));
+}
+
+function setSelUsers(arr){
+  document.querySelectorAll('#user-sel-wrap .mchip').forEach(e=>e.classList.toggle('on',(arr||[]).includes(e.textContent)));
+}
+
+// 利用者選択をバイタルテーブルに反映（選択者のみ表示）
+function applyUserSelection(){
+  const sel=getSelUsers();
+  if(!sel.length){
+    // 全員表示
+    D.users=msUsers.map(n=>{const ex=D.users.find(u=>u.name===n);return ex||{uid:'u'+Date.now()+Math.random(),name:n};});
+  } else {
+    D.users=sel.map(n=>{const ex=D.users.find(u=>u.name===n);return ex||{uid:'u'+Date.now()+Math.random(),name:n};});
+  }
+  saveLocal();
+  renderUsers(); renderVitalTable(); renderIndividual(); updateStats();
+  showToast('✅ 利用者を反映しました');
+}
+
 </script>
 </body>
 </html>
