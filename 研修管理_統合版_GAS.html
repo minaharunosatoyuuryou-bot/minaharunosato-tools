@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -314,6 +315,83 @@
     box-shadow: var(--shadow);
   }
   .month-cell:hover { border-color: var(--accent); }
+  /* 個人受講マトリクス */
+  #personal-matrix th {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+  #personal-matrix th.col-name { min-width: 80px; }
+  #personal-matrix td {
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+    text-align: center;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  #personal-matrix td.name-cell { text-align: left; font-weight: 500; background: var(--surface); }
+  #personal-matrix td.done-cell { background: var(--green-light); color: var(--green); font-weight: 700; cursor: pointer; }
+  #personal-matrix td.done-cell:hover { background: #d4edda; }
+  #personal-matrix td.no-theme { background: var(--bg); color: var(--text-hint); }
+  #personal-matrix td.pending-cell { cursor: pointer; }
+  #personal-matrix td.pending-cell:hover { background: var(--accent-light); }
+  #personal-matrix tr:hover td.name-cell { background: var(--accent-light); }
+
+  /* 押印UI */
+  .stamp-btn {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 2px dashed var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 11px; color: var(--text-hint);
+    transition: all 0.15s;
+    background: var(--surface);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .stamp-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .stamp-btn.stamped {
+    border: 2.5px solid #c0392b;
+    background: #fff0f0;
+    color: #c0392b;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+  }
+  /* 詳細ページの印影 */
+  .stamp-display {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 2.5px solid #c0392b;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    color: #c0392b;
+    background: #fff0f0;
+    text-align: center;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+  .stamp-display.empty {
+    border: 2px dashed var(--border-strong);
+    color: var(--text-hint);
+    background: var(--surface);
+    font-size: 11px;
+    font-weight: 400;
+    cursor: pointer;
+  }
+  .stamp-display.empty:hover { border-color: var(--accent); color: var(--accent); }
+  .stamp-area {
+    display: flex; gap: 24px; align-items: flex-end; margin-top: 12px;
+  }
+  .stamp-col { text-align: center; }
+  .stamp-col-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
   .month-cell.has { background: var(--accent-light); border-color: var(--accent); }
   .month-cell .mn { font-size: 14px; font-weight: 700; color: var(--text); }
   .month-cell .mc { font-size: 11px; color: var(--text-hint); margin-top: 2px; }
@@ -525,6 +603,7 @@
     <div class="header-tabs">
       <button class="htab active" onclick="switchTab('input')">入力</button>
       <button class="htab" onclick="switchTab('list')">月別管理</button>
+      <button class="htab" onclick="switchTab('personal')">個人受講</button>
       <button class="htab" onclick="switchTab('plan')">年間計画</button>
       <button class="htab" onclick="switchTab('staff')">職員</button>
     </div>
@@ -620,7 +699,7 @@
     </div>
 
     <div class="card">
-      <div class="card-title">承認</div>
+      <div class="card-title">承認・押印</div>
       <div class="grid2">
         <div class="field">
           <label>報告者</label>
@@ -629,6 +708,23 @@
         <div class="field" style="margin-bottom:0">
           <label>管理者確認</label>
           <input type="text" id="inp-approver" placeholder="管理者氏名">
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <label style="margin-bottom:8px">押印（タップして押印）</label>
+        <div style="display:flex;gap:20px;align-items:flex-start">
+          <div style="text-align:center">
+            <div class="stamp-btn" id="stamp-shicho" onclick="tapStamp('shicho')">
+              <span id="stamp-shicho-label">施設長印</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">施設長</div>
+          </div>
+          <div style="text-align:center">
+            <div class="stamp-btn" id="stamp-kacho" onclick="tapStamp('kacho')">
+              <span id="stamp-kacho-label">課長印</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">課長</div>
+          </div>
         </div>
       </div>
     </div>
@@ -698,6 +794,74 @@
       </div>
       <div class="plan-legend">●＝計画月　<b>✓</b>＝実施済（記録あり・合同実施を含む）　毎月＝毎月実施（ヒヤリハット事例検討）</div>
     </div>
+  </div>
+
+  <!-- ===== 個人受講ページ ===== -->
+  <div class="page" id="page-personal">
+
+    <!-- 月別テーマ設定カード（管理者用） -->
+    <div class="card" id="personal-theme-card">
+      <div class="card-title">📅 月別研修テーマ設定</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">各月に研修テーマを割り当てます。職員はその月のテーマに沿って個別に受講記録を登録できます。</p>
+      <div class="grid2" style="margin-bottom:10px">
+        <div class="field" style="margin-bottom:0">
+          <label>対象年月</label>
+          <input type="month" id="pt-month">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>研修テーマ</label>
+          <select id="pt-theme-sel">
+            <option value="">テーマを選択</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>備考（任意）</label>
+        <input type="text" id="pt-note" placeholder="例：動画視聴・テキスト配布など">
+      </div>
+      <button class="btn-primary" onclick="saveMonthTheme()">この月のテーマを設定</button>
+    </div>
+
+    <!-- 個人受講記録カード -->
+    <div class="card">
+      <div class="card-title">✍️ 個人受講を記録する</div>
+      <div class="grid2" style="margin-bottom:10px">
+        <div class="field" style="margin-bottom:0">
+          <label>氏名</label>
+          <select id="pr-staff-sel">
+            <option value="">職員を選択</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>受講年月</label>
+          <select id="pr-month-sel" onchange="onPrMonthChange()">
+            <option value="">年月を選択</option>
+          </select>
+        </div>
+      </div>
+      <div id="pr-theme-display" style="display:none;padding:10px;background:var(--accent-light);border-radius:var(--radius-sm);margin-bottom:12px;font-size:13px;color:var(--accent);font-weight:600"></div>
+      <div class="field">
+        <label>感想・学んだこと（任意）</label>
+        <textarea id="pr-memo" placeholder="研修を通じて感じたこと、現場に活かせること等" style="min-height:70px"></textarea>
+      </div>
+      <div class="field">
+        <label>受講日</label>
+        <input type="date" id="pr-date">
+      </div>
+      <button class="btn-primary" onclick="savePersonalRecord()">受講を記録する</button>
+    </div>
+
+    <!-- 進捗マトリクス -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:0">📊 受講進捗（2024年10月〜）</div>
+        <button class="btn-outline" style="font-size:11px;padding:5px 10px" onclick="exportPersonalCSV()">CSV出力</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="personal-matrix" style="border-collapse:collapse;font-size:12px;min-width:600px;width:100%"></table>
+      </div>
+    </div>
+
   </div>
 
   <!-- ===== 職員ページ ===== -->
@@ -794,12 +958,16 @@ async function gasGet(params) {
 async function loadData() {
   setLoading(true);
   try {
-    const [rRes, sRes] = await Promise.all([
+    const [rRes, sRes, mtRes, prRes] = await Promise.all([
       gasGet({ action: 'kennshu_get_reports' }),
-      gasGet({ action: 'kennshu_get_staff' })
+      gasGet({ action: 'kennshu_get_staff' }),
+      gasGet({ action: 'kennshu_get_month_themes' }),
+      gasGet({ action: 'kennshu_get_personal_records' })
     ]);
-    if (rRes.status === 'ok') reports = rRes.data || [];
-    if (sRes.status === 'ok') staff   = sRes.data || [];
+    if (rRes.status === 'ok') reports         = rRes.data || [];
+    if (sRes.status === 'ok') staff           = sRes.data || [];
+    if (mtRes.status === 'ok') monthThemes    = mtRes.data || {};
+    if (prRes.status === 'ok') personalRecords = prRes.data || [];
   } catch(e) {
     toast('⚠️ データ読み込み失敗。ネットワークを確認してください');
   } finally {
@@ -840,7 +1008,7 @@ function monthKey(fy, m) {
 
 /* ---- TABS ---- */
 function switchTab(name) {
-  const names = ['input','list','plan','staff'];
+  const names = ['input','list','plan','personal','staff'];
   names.forEach((n, i) => {
     document.querySelectorAll('.htab')[i].classList.toggle('active', n === name);
     document.getElementById('page-' + n).classList.toggle('active', n === name);
@@ -848,6 +1016,7 @@ function switchTab(name) {
   if (name === 'list') renderList();
   if (name === 'plan') renderPlan();
   if (name === 'staff') renderStaff();
+  if (name === 'personal') renderPersonalPage();
   if (name === 'input') renderAttList();
 }
 
@@ -972,6 +1141,8 @@ async function saveReport() {
     issue: document.getElementById('inp-issue').value,
     reporter: document.getElementById('inp-reporter').value,
     approver: document.getElementById('inp-approver').value,
+    stampKacho,
+    stampShicho,
     attendees,
     createdAt: new Date().toISOString()
   };
@@ -1000,6 +1171,7 @@ async function saveReport() {
   const now = new Date();
   document.getElementById('inp-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('inp-date').value = now.toISOString().split('T')[0];
+  resetStamps();
   renderAttList();
 }
 
@@ -1108,6 +1280,21 @@ function showDetail(id) {
 
   const meta = getPlanMeta(r.theme);
   const oc = OFFICE_CLASS[r.office] || 'godo';
+
+  // 押印エリアHTML生成
+  function stampHtml(type, val, label) {
+    const chars = val ? [...val] : [];
+    const mid = Math.ceil(chars.length / 2);
+    const inner = val
+      ? (chars.length > 2 ? chars.slice(0,mid).join('') + '<br>' + chars.slice(mid).join('') : val)
+      : `<span style="font-size:10px">${label}印<br>未押印</span>`;
+    const cls = val ? 'stamp-display' : 'stamp-display empty';
+    return `<div class="stamp-col">
+      <div class="${cls}" onclick="tapDetailStamp(${r.id},'${type}')" title="${val ? val + '（タップで取消）' : 'タップして押印'}">${inner}</div>
+      <div class="stamp-col-label">${label}</div>
+    </div>`;
+  }
+
   document.getElementById('detail-card').innerHTML = `
     <div class="detail-header">
       <div class="detail-theme">${meta.icon} ${r.theme}</div>
@@ -1115,6 +1302,13 @@ function showDetail(id) {
     </div>
     ${rows ? `<table class="info-table">${rows}</table>` : ''}
     ${sections}
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px">押印（タップして押印・取消）</div>
+      <div class="stamp-area">
+        ${stampHtml('shicho', r.stampShicho || '', '施設長')}
+        ${stampHtml('kacho', r.stampKacho || '', '課長')}
+      </div>
+    </div>
     <button class="btn-danger" onclick="deleteReport(${r.id})">この記録を削除する</button>
   `;
 }
@@ -1254,12 +1448,336 @@ function renderStaff() {
   }).join('');
 }
 
+/* ===================================================================
+   押印機能
+=================================================================== */
+let stampKacho  = '';  // 課長印の氏名
+let stampShicho = '';  // 施設長印の氏名
+
+function tapStamp(type) {
+  const current = type === 'kacho' ? stampKacho : stampShicho;
+  const label   = type === 'kacho' ? '課長' : '施設長';
+  if (current) {
+    // 押印済み→確認してクリア
+    if (confirm(`${label}印を取り消しますか？`)) {
+      if (type === 'kacho') stampKacho = '';
+      else stampShicho = '';
+      updateStampUI(type, '');
+    }
+    return;
+  }
+  const name = prompt(`${label}の氏名を入力してください（または「済」でOK）`);
+  if (!name && name !== '') return; // キャンセル
+  const val = name.trim() || label;
+  if (type === 'kacho') stampKacho = val;
+  else stampShicho = val;
+  updateStampUI(type, val);
+}
+
+function updateStampUI(type, val) {
+  const el  = document.getElementById(`stamp-${type}`);
+  const lbl = document.getElementById(`stamp-${type}-label`);
+  if (val) {
+    el.classList.add('stamped');
+    // 氏名を縦組み風に改行して表示（3文字以上なら前半/後半）
+    const chars = [...val];
+    const mid = Math.ceil(chars.length / 2);
+    lbl.innerHTML = chars.length > 2
+      ? chars.slice(0,mid).join('') + '<br>' + chars.slice(mid).join('')
+      : val;
+  } else {
+    el.classList.remove('stamped');
+    lbl.innerHTML = type === 'kacho' ? '課長印' : '施設長印';
+  }
+}
+
+function resetStamps() {
+  stampKacho = ''; stampShicho = '';
+  updateStampUI('kacho', '');
+  updateStampUI('shicho', '');
+}
+
+/* 詳細ページ内で押印（後から押すケース） */
+async function tapDetailStamp(reportId, type) {
+  const r = reports.find(x => x.id === reportId);
+  if (!r) return;
+  const label = type === 'kacho' ? '課長' : '施設長';
+  const field = type === 'kacho' ? 'stampKacho' : 'stampShicho';
+  if (r[field]) {
+    if (confirm(`${label}印を取り消しますか？`)) {
+      r[field] = '';
+    } else return;
+  } else {
+    const name = prompt(`${label}の氏名を入力してください`);
+    if (name === null) return;
+    r[field] = name.trim() || label;
+  }
+  setLoading(true);
+  try {
+    const res = await gasGet({ action: 'kennshu_save_report', data: r });
+    if (res.status !== 'ok') throw new Error();
+    // reports配列も更新
+    const idx = reports.findIndex(x => x.id === reportId);
+    if (idx >= 0) reports[idx] = r;
+    toast(r[field] ? `✓ ${label}印を押しました` : `${label}印を取り消しました`);
+    showDetail(reportId); // 再描画
+  } catch(e) {
+    toast('⚠️ 保存に失敗しました');
+  }
+  setLoading(false);
+}
+
+/* ===================================================================
+   個人受講管理
+=================================================================== */
+
+// 月別テーマ設定: { "2024-10": { theme, note }, ... }
+let monthThemes = {};
+// 個人受講記録: [{ id, staffId, staffName, month, theme, memo, date, createdAt }, ...]
+let personalRecords = [];
+
+/* --- GAS操作 --- */
+async function gasGetMonthThemes() {
+  return gasGet({ action: 'kennshu_get_month_themes' });
+}
+async function gasSaveMonthTheme(data) {
+  return gasGet({ action: 'kennshu_save_month_theme', data });
+}
+async function gasGetPersonalRecords() {
+  return gasGet({ action: 'kennshu_get_personal_records' });
+}
+async function gasSavePersonalRecord(rec) {
+  return gasGet({ action: 'kennshu_save_personal_record', data: rec });
+}
+async function gasDeletePersonalRecord(id) {
+  return gasGet({ action: 'kennshu_delete_personal_record', id });
+}
+
+/* --- 2024-10から現在月までの月リスト --- */
+function getMonthsFrom2410() {
+  const result = [];
+  const start = new Date(2024, 9, 1); // 2024-10
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth(), 1);
+  let d = start;
+  while (d <= end) {
+    result.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    d = new Date(d.getFullYear(), d.getMonth()+1, 1);
+  }
+  return result;
+}
+
+/* --- 月別テーマ設定保存 --- */
+async function saveMonthTheme() {
+  const month = document.getElementById('pt-month').value;
+  const theme = document.getElementById('pt-theme-sel').value;
+  const note  = document.getElementById('pt-note').value.trim();
+  if (!month) { toast('対象年月を選択してください'); return; }
+  if (!theme) { toast('テーマを選択してください'); return; }
+  monthThemes[month] = { theme, note };
+  setLoading(true);
+  try {
+    const res = await gasSaveMonthTheme(monthThemes);
+    if (res.status !== 'ok') throw new Error();
+    toast(`✓ ${month} のテーマを設定しました`);
+    renderPersonalPage();
+  } catch(e) {
+    toast('⚠️ 保存に失敗しました');
+  }
+  setLoading(false);
+}
+
+/* --- 個人受講セレクト更新 --- */
+function renderPersonalSelects() {
+  // 職員
+  const sEl = document.getElementById('pr-staff-sel');
+  const prev = sEl.value;
+  sEl.innerHTML = '<option value="">職員を選択</option>' +
+    staff.map(s => `<option value="${s.id}">${s.name}（${(s.offices||[s.office]).join('/')}）</option>`).join('');
+  if (prev) sEl.value = prev;
+
+  // テーマ設定用セレクト
+  const tEl = document.getElementById('pt-theme-sel');
+  tEl.innerHTML = '<option value="">テーマを選択</option>' +
+    PLAN.map(p => `<option value="${p.theme}">${p.icon} ${p.theme}</option>`).join('');
+
+  // 受講年月（テーマが設定されている月のみ）
+  const mEl = document.getElementById('pr-month-sel');
+  const prevM = mEl.value;
+  const months = getMonthsFrom2410();
+  mEl.innerHTML = '<option value="">年月を選択</option>' +
+    months.map(m => {
+      const t = monthThemes[m];
+      return t ? `<option value="${m}">${m}（${t.theme}）</option>` : `<option value="${m}">${m}（未設定）</option>`;
+    }).reverse().join(''); // 新しい月を上に
+  if (prevM) mEl.value = prevM;
+}
+
+/* --- 受講月選択時にテーマ表示 --- */
+function onPrMonthChange() {
+  const month = document.getElementById('pr-month-sel').value;
+  const disp  = document.getElementById('pr-theme-display');
+  if (month && monthThemes[month]) {
+    const mt = monthThemes[month];
+    disp.style.display = 'block';
+    disp.innerHTML = `📌 ${month} の研修テーマ：<strong>${mt.theme}</strong>${mt.note ? `　<span style="font-weight:400;font-size:12px">${mt.note}</span>` : ''}`;
+  } else {
+    disp.style.display = 'none';
+  }
+}
+
+/* --- 個人受講記録保存 --- */
+async function savePersonalRecord() {
+  const staffId = document.getElementById('pr-staff-sel').value;
+  const month   = document.getElementById('pr-month-sel').value;
+  const memo    = document.getElementById('pr-memo').value.trim();
+  const date    = document.getElementById('pr-date').value;
+  if (!staffId) { toast('職員を選択してください'); return; }
+  if (!month)   { toast('受講年月を選択してください'); return; }
+
+  const s = staff.find(x => String(x.id) === String(staffId));
+  if (!s) return;
+  const mt = monthThemes[month] || {};
+  const theme = mt.theme || '（テーマ未設定）';
+
+  // 重複チェック
+  if (personalRecords.find(r => String(r.staffId) === String(staffId) && r.month === month)) {
+    if (!confirm(`${s.name} の ${month} は既に記録があります。上書きしますか？`)) return;
+    personalRecords = personalRecords.filter(r => !(String(r.staffId) === String(staffId) && r.month === month));
+    await gasDeletePersonalRecord(`${staffId}_${month}`);
+  }
+
+  const rec = {
+    id: `${staffId}_${month}`,
+    staffId: s.id,
+    staffName: s.name,
+    offices: (s.offices || [s.office]).join('/'),
+    month, theme, memo, date,
+    createdAt: new Date().toISOString()
+  };
+  setLoading(true);
+  try {
+    const res = await gasSavePersonalRecord(rec);
+    if (res.status !== 'ok') throw new Error();
+    personalRecords.push(rec);
+    toast(`✓ ${s.name}（${month}）の受講を記録しました`);
+    document.getElementById('pr-memo').value = '';
+    renderPersonalMatrix();
+  } catch(e) {
+    toast('⚠️ 保存に失敗しました');
+  }
+  setLoading(false);
+}
+
+/* --- マトリクス描画 --- */
+function renderPersonalMatrix() {
+  const months  = getMonthsFrom2410();
+  const tbl     = document.getElementById('personal-matrix');
+  if (!staff.length) {
+    tbl.innerHTML = '<tr><td style="padding:16px;color:var(--text-muted)">職員が登録されていません</td></tr>';
+    return;
+  }
+
+  // ヘッダー
+  let html = '<thead><tr><th class="col-name">氏名</th>' +
+    months.map(m => {
+      const t = monthThemes[m];
+      return `<th title="${t ? t.theme : '未設定'}">${m.replace(/^\d{4}-/,'')}<br><span style="font-weight:400;color:${t?'var(--accent)':'var(--text-hint)'}">${t ? t.theme.slice(0,6)+'…' : '未設定'}</span></th>`;
+    }).join('') +
+    '<th>受講数</th></tr></thead>';
+
+  // 行
+  html += '<tbody>';
+  const allStaff = [...staff].sort((a,b) => {
+    const ao = (a.offices||[a.office])[0];
+    const bo = (b.offices||[b.office])[0];
+    return OFFICES.indexOf(ao) - OFFICES.indexOf(bo);
+  });
+
+  for (const s of allStaff) {
+    const doneCount = months.filter(m => personalRecords.find(r => String(r.staffId)===String(s.id) && r.month===m)).length;
+    html += `<tr>`;
+    html += `<td class="name-cell">${s.name}<br><span style="font-size:10px;color:var(--text-hint)">${(s.offices||[s.office]).join('/')}</span></td>`;
+    for (const m of months) {
+      const rec = personalRecords.find(r => String(r.staffId)===String(s.id) && r.month===m);
+      const hasTheme = !!monthThemes[m];
+      if (rec) {
+        const tip = rec.memo ? rec.memo.slice(0,30) : '受講済';
+        html += `<td class="done-cell" title="${tip}" onclick="showPersonalDetail('${s.id}','${m}')">✓</td>`;
+      } else if (!hasTheme) {
+        html += `<td class="no-theme">－</td>`;
+      } else {
+        html += `<td class="pending-cell" onclick="quickFillPersonal('${s.id}','${m}')" title="クリックで入力フォームに反映">　</td>`;
+      }
+    }
+    html += `<td style="font-weight:700;color:${doneCount>0?'var(--green)':'var(--text-hint)'}">${doneCount}</td>`;
+    html += `</tr>`;
+  }
+  html += '</tbody>';
+  tbl.innerHTML = html;
+}
+
+function showPersonalDetail(staffId, month) {
+  const rec = personalRecords.find(r => String(r.staffId)===String(staffId) && r.month===month);
+  if (!rec) return;
+  const msg = [`受講者：${rec.staffName}`, `年月：${rec.month}`, `テーマ：${rec.theme}`,
+    rec.date ? `受講日：${rec.date}` : '', rec.memo ? `感想：${rec.memo}` : ''].filter(Boolean).join('\n');
+  if (confirm(msg + '\n\n--- この受講記録を削除しますか？ ---\n（削除→OK / キャンセル→閉じる）')) {
+    deletePersonalRecord(rec.id, staffId, month);
+  }
+}
+
+async function deletePersonalRecord(id, staffId, month) {
+  setLoading(true);
+  try {
+    await gasDeletePersonalRecord(id);
+    personalRecords = personalRecords.filter(r => r.id !== id);
+    toast('削除しました');
+    renderPersonalMatrix();
+  } catch(e) {
+    toast('⚠️ 削除に失敗しました');
+  }
+  setLoading(false);
+}
+
+function quickFillPersonal(staffId, month) {
+  document.getElementById('pr-staff-sel').value = staffId;
+  document.getElementById('pr-month-sel').value = month;
+  onPrMonthChange();
+  document.getElementById('pr-date').value = new Date().toISOString().split('T')[0];
+  document.querySelector('[onclick="savePersonalRecord()"]').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function renderPersonalPage() {
+  renderPersonalSelects();
+  renderPersonalMatrix();
+}
+
+function exportPersonalCSV() {
+  const months = getMonthsFrom2410();
+  const header = ['氏名', '所属', ...months].join(',');
+  const rows = [...staff].map(s => {
+    const cells = months.map(m => {
+      const rec = personalRecords.find(r => String(r.staffId)===String(s.id) && r.month===m);
+      return rec ? '受講済' : (monthThemes[m] ? '未受講' : '');
+    });
+    return [s.name, (s.offices||[s.office]).join('/'), ...cells].map(v => `"${v}"`).join(',');
+  });
+  const csv = '\uFEFF' + [header, ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = `個人受講記録_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
 /* ---- INIT ---- */
 (async () => {
   renderThemeChips();
   const now = new Date();
   document.getElementById('inp-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('inp-date').value = now.toISOString().split('T')[0];
+  document.getElementById('pt-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('pr-date').value = now.toISOString().split('T')[0];
   await loadData();
   renderAttList();
 })();
