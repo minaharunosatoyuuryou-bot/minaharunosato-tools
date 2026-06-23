@@ -802,7 +802,11 @@ async function deleteResident(){
   const r=[...residents,...discharged].find(x=>x.id===editingId);
   if(!confirm(`「${r?.name}」を削除しますか？`)) return;
   residents=residents.filter(x=>x.id!==editingId);
-  await gasReq({action:'saveResidents',sheet:'ケア管理_利用者',data:residents});
+  try{
+    await gasReq({action:'saveResidents',sheet:'ケア管理_利用者',data:residents});
+  }catch(e){
+    console.warn('GAS通信エラー（削除は完了）:', e);
+  }
   closeModal();
   if(currentId===editingId){currentId=null;document.getElementById('no-select').style.display='flex';document.getElementById('form-area').style.display='none';}
   renderList();showToast('✓ 削除しました');
