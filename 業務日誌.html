@@ -1,851 +1,848 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>業務日誌 - みなはるの里</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<title>デイサービス 業務日誌</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #f5f4f0;
-    --surface: #ffffff;
-    --border: #d8d6ce;
-    --border-light: #e8e6de;
-    --text: #1a1917;
-    --text-sub: #6b6a65;
-    --text-hint: #9b9a95;
-    --accent: #1d6fa4;
-    --accent-bg: #e8f2fa;
-    --accent-border: #a8cce8;
-    --success: #1d9e75;
-    --success-bg: #e1f5ee;
-    --danger: #c94040;
-    --chip-sel-bg: #dceef8;
-    --chip-sel-border: #7ab8d8;
-    --chip-sel-text: #155c8a;
-    --radius: 10px;
-    --radius-sm: 6px;
-  }
-  body {
-    font-family: 'Noto Sans JP', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-    min-height: 100vh;
-  }
-  /* ---- TOP BAR ---- */
-  .topbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 52px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .topbar-title { font-size: 16px; font-weight: 700; letter-spacing: 0.04em; }
-  .tab-row { display: flex; gap: 0; }
-  .tab {
-    padding: 6px 16px;
-    font-size: 13px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text-sub);
-    font-family: inherit;
-    transition: all 0.15s;
-  }
-  .tab:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
-  .tab:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-left: none; }
-  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 500; }
+:root{
+  --pri:#2c5f8a;--pri-l:#dbeafe;--pri-d:#1e4a6e;
+  --acc:#16a085;--acc-l:#d1f5ee;
+  --grn:#27ae60;--warn:#e67e22;--warn-l:#fff8e8;
+  --red:#e74c3c;--red-l:#fdecea;
+  --gold:#b8860b;--gold-l:#fff8e8;
+  --bg:#f0f4f8;--sur:#fff;
+  --bdr:#cdd8ea;--tx:#1a2535;--txs:#5a6e8a;
+  --r:8px;--sh:0 2px 8px rgba(44,95,138,.1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Meiryo','メイリオ','Hiragino Sans',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;min-height:100vh}
 
-  /* ---- LAYOUT ---- */
-  .main { max-width: 720px; margin: 0 auto; padding: 1.25rem; }
+/* パスワード */
+#pw-screen{position:fixed;inset:0;background:#1a3050;z-index:9999;display:flex;align-items:center;justify-content:center}
+.pw-box{background:#fff;border-radius:12px;padding:32px 28px;width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.pw-box h2{font-size:18px;font-weight:700;color:#1a3050;margin-bottom:4px}
+.pw-box p{font-size:12px;color:#888;margin-bottom:22px}
+.pw-box input{width:100%;padding:10px 14px;border:1px solid #ccc;border-radius:6px;font-size:18px;text-align:center;letter-spacing:4px;margin-bottom:8px;font-family:inherit}
+.pw-box input:focus{outline:none;border-color:var(--pri)}
+.pw-err{color:var(--red);font-size:12px;height:16px;margin-bottom:6px}
+.pw-box button{width:100%;padding:11px;background:var(--pri);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
 
-  /* ---- SECTION CARD ---- */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-  }
-  .card-title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: var(--text-hint);
-    text-transform: uppercase;
-    margin-bottom: 0.6rem;
-    padding-bottom: 0.4rem;
-    border-bottom: 1px solid var(--border-light);
-  }
+/* ヘッダー */
+.app-hdr{background:var(--pri);color:#fff;padding:0 14px;display:flex;align-items:center;justify-content:space-between;height:50px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.22)}
+.app-hdr h1{font-size:15px;font-weight:700}
+.hdate{font-size:12px;opacity:.82}
+.date-nav{display:flex;align-items:center;gap:5px}
+.date-nav button{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:4px;padding:4px 9px;font-size:14px;cursor:pointer}
+.date-nav input[type=date]{border:none;border-radius:4px;padding:4px 8px;font-size:12px;background:#fff;color:#1a2535}
 
-  /* ---- FIELDS ---- */
-  .field { display: flex; flex-direction: column; gap: 3px; }
-  .field label { font-size: 11px; color: var(--text-sub); font-weight: 500; }
-  .field input, .field textarea, .field select {
-    font-size: 14px;
-    font-family: inherit;
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: #fafaf8;
-    color: var(--text);
-    width: 100%;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .field input:focus, .field textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(29,111,164,0.12);
-    background: #fff;
-  }
-  .field textarea { resize: vertical; min-height: 44px; }
-  .field input[readonly] { background: var(--bg); color: var(--text-sub); cursor: default; }
+/* タブ */
+.tabs{display:flex;background:var(--pri-d);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab-btn{flex:0 0 auto;padding:10px 13px;border:none;background:transparent;color:rgba(255,255,255,.6);font-size:12px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;font-family:inherit;white-space:nowrap}
+.tab-btn.active{color:#fff;border-bottom-color:#5cb8e4;background:rgba(255,255,255,.09)}
+.tab-panel{display:none;padding:12px;max-width:980px;margin:0 auto}
+.tab-panel.active{display:block}
 
-  .row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .row .field { flex: 1; min-width: 120px; }
-  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* カード */
+.card{background:var(--sur);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);padding:13px;margin-bottom:11px}
+.card-title{font-size:12px;font-weight:700;color:var(--pri);border-left:3px solid var(--pri);padding-left:7px;margin-bottom:11px}
 
-  /* ---- TRANSPORT TABLE ---- */
-  .tbl-wrap { overflow-x: auto; margin-bottom: 6px; }
-  table.transport { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
-  table.transport th {
-    background: var(--bg);
-    color: var(--text-sub);
-    font-weight: 600;
-    font-size: 11px;
-    letter-spacing: 0.05em;
-    padding: 6px 8px;
-    border: 1px solid var(--border);
-    text-align: left;
-    white-space: nowrap;
-  }
-  table.transport td { border: 1px solid var(--border-light); padding: 3px 4px; }
-  table.transport td input {
-    font-size: 13px;
-    font-family: inherit;
-    padding: 4px 7px;
-    border: none;
-    background: transparent;
-    width: 100%;
-    color: var(--text);
-  }
-  table.transport td input:focus {
-    outline: none;
-    background: var(--accent-bg);
-    border-radius: 3px;
-  }
-  .add-row-btn {
-    font-size: 12px;
-    color: var(--accent);
-    cursor: pointer;
-    background: none;
-    border: none;
-    font-family: inherit;
-    padding: 4px 2px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .add-row-btn:hover { text-decoration: underline; }
+/* フォーム */
+.frow{display:flex;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.fg{display:flex;flex-direction:column;gap:3px;flex:1;min-width:110px}
+.fg label{font-size:11px;color:var(--txs);font-weight:700}
+.fg input,.fg select,.fg textarea{border:1px solid var(--bdr);border-radius:5px;padding:6px 8px;font-size:13px;font-family:inherit;color:var(--tx);background:#fff;width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 2px var(--pri-l)}
+textarea{resize:vertical;min-height:60px}
 
-  /* ---- STATUS ITEMS ---- */
-  .status-list { display: flex; flex-direction: column; gap: 8px; }
-  .status-item { display: grid; grid-template-columns: 72px 1fr; gap: 8px; align-items: center; }
-  .status-lbl {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-sub);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .status-item input {
-    font-size: 13px;
-    font-family: inherit;
-    padding: 5px 9px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: #fafaf8;
-    color: var(--text);
-    width: 100%;
-  }
-  .status-item input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(29,111,164,0.12);
-    background: #fff;
-  }
+/* チップ */
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}
+.chip{padding:4px 10px;border-radius:20px;border:1px solid var(--bdr);background:#f7f9fc;font-size:12px;cursor:pointer;user-select:none;color:var(--txs)}
+.chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
 
-  /* ---- ACTIVITY CHIPS ---- */
-  .chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-  .chip {
-    font-size: 12px;
-    font-family: inherit;
-    padding: 5px 12px;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    cursor: pointer;
-    background: var(--bg);
-    color: var(--text-sub);
-    user-select: none;
-    transition: all 0.12s;
-  }
-  .chip:hover { border-color: var(--accent-border); color: var(--accent); }
-  .chip.on { background: var(--chip-sel-bg); border-color: var(--chip-sel-border); color: var(--chip-sel-text); font-weight: 500; }
+/* バイタルテーブル */
+.vwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.vtbl{width:100%;border-collapse:collapse;font-size:11px;min-width:1100px}
+.vtbl th{background:var(--pri);color:#fff;padding:7px 4px;text-align:center;font-weight:700;font-size:10px;position:sticky;top:0;z-index:10;white-space:nowrap}
+.vtbl th.nh{min-width:78px;text-align:left;padding-left:8px}
+.vtbl td{border-bottom:1px solid var(--bdr);padding:4px 3px;text-align:center;vertical-align:middle}
+.vtbl tr:nth-child(even) td{background:#f4f7fb}
+.vtbl tr:hover td{background:var(--pri-l)}
+.vtbl td.nc{font-weight:700;text-align:left;padding-left:8px;background:#eef3fb;color:var(--pri-d);white-space:nowrap}
+.vtbl td.mc{background:var(--acc-l)}
+.vtbl input[type=text],.vtbl input[type=number],.vtbl select{width:100%;border:1px solid #c8d8ea;border-radius:4px;padding:4px 3px;font-size:11px;text-align:center;background:#fff;font-family:inherit}
+.vtbl input[type=text]{text-align:left}
+.vtbl input:focus,.vtbl select:focus{outline:none;border-color:var(--pri);background:var(--pri-l)}
+.vtbl td.ntd{min-width:130px}
 
-  /* ---- BUTTONS ---- */
-  .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
-  .btn {
-    font-family: inherit;
-    font-size: 13px;
-    padding: 8px 20px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.12s;
-  }
-  .btn:hover { background: var(--bg); }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
-  .btn.primary:hover { opacity: 0.88; }
-  .btn.danger { color: var(--danger); border-color: #e8b8b8; }
-  .btn.danger:hover { background: #fdf0f0; }
+/* 個別カード */
+.ind-card{background:var(--sur);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);padding:13px;margin-bottom:11px}
+.ind-hdr{font-size:13px;font-weight:700;color:var(--pri);margin-bottom:10px}
+.saiken-box{background:var(--gold-l);border:1px solid #f0d080;border-radius:6px;padding:10px;margin-top:8px}
+.saiken-lbl{font-size:11px;color:var(--gold);font-weight:700;margin-bottom:6px}
 
-  /* ---- HISTORY ---- */
-  .hist-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    margin-bottom: 8px;
-    cursor: pointer;
-    background: #fafaf8;
-    transition: all 0.12s;
-  }
-  .hist-item:hover { border-color: var(--accent-border); background: var(--accent-bg); }
-  .hist-date { font-weight: 700; font-size: 14px; }
-  .hist-meta { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
-  .hist-del { font-size: 12px; color: var(--danger); cursor: pointer; background: none; border: none; font-family: inherit; padding: 4px 8px; border-radius: var(--radius-sm); }
-  .hist-del:hover { background: #fdf0f0; }
-  .empty-msg { font-size: 13px; color: var(--text-hint); text-align: center; padding: 2rem 0; }
+/* ボタン */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:5px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-pri{background:var(--pri);color:#fff}.btn-pri:hover{background:var(--pri-d)}
+.btn-acc{background:var(--acc);color:#fff}
+.btn-out{background:#fff;color:var(--pri);border:1px solid var(--pri)}.btn-out:hover{background:var(--pri-l)}
+.btn-grn{background:var(--grn);color:#fff}
+.btn-sm{padding:4px 9px;font-size:12px}
+.btn-red{background:var(--red-l);color:var(--red);border:1px solid #f5c6cb}
+.arow{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px;align-items:center}
 
-  /* ---- TOAST ---- */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(12px);
-    background: var(--text);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 24px;
-    font-size: 13px;
-    opacity: 0;
-    transition: all 0.25s;
-    pointer-events: none;
-    z-index: 999;
-    white-space: nowrap;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast.ok { background: var(--success); }
-  .toast.err { background: var(--danger); }
+/* 統計 */
+.stat-bar{display:flex;gap:12px;flex-wrap:wrap;padding:10px 14px;background:var(--pri-l);border-radius:var(--r);margin-bottom:11px;border:1px solid #bcd4f0}
+.si .sv{font-size:22px;font-weight:700;color:var(--pri)}
+.si .sl{font-size:10px;color:var(--txs);margin-top:2px}
 
-  /* ---- PRINT ---- */
-  /* ---- 確認欄 ---- */
-  .kakunin-wrap {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-  }
-  .hanko-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-  .hanko-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-sub);
-    letter-spacing: 0.05em;
-  }
-  .hanko-area {
-    width: 52px;
-    height: 52px;
-    border: 1.5px solid var(--border);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    background: #fafaf8;
-    transition: border-color 0.15s;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-  .hanko-area:hover { border-color: var(--accent-border); }
-  .hanko-area.signed { border-color: #c94040; border-width: 2px; }
-  .hanko-inner {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    color: #c94040;
-    border: 1px solid #c94040;
-    opacity: 0;
-    transition: opacity 0.2s;
-    text-align: center;
-    line-height: 1.2;
-  }
-  .hanko-area.signed .hanko-inner { opacity: 1; }
-  .hanko-placeholder {
-    font-size: 9px;
-    color: var(--text-hint);
-    text-align: center;
-    line-height: 1.4;
-  }
-  .hanko-area.signed .hanko-placeholder { display: none; }
-  .hanko-date {
-    font-size: 10px;
-    color: var(--text-hint);
-    min-height: 14px;
-  }
-  .hanko-clear {
-    font-size: 10px;
-    color: var(--danger);
-    cursor: pointer;
-    background: none;
-    border: none;
-    font-family: inherit;
-    padding: 1px 4px;
-    visibility: hidden;
-  }
-  .hanko-box.signed-box .hanko-clear { visibility: visible; }
+/* 職員タグ */
+.staff-list{display:flex;flex-wrap:wrap;gap:7px;padding:8px 0}
+.staff-tag{display:flex;align-items:center;gap:4px;background:var(--pri-l);border:1px solid #bcd4f0;border-radius:20px;padding:4px 12px;font-size:13px}
+.staff-tag button{background:none;border:none;cursor:pointer;color:var(--txs);font-size:16px;line-height:1;padding:0 2px}
+.add-bar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.add-bar input{border:1px solid var(--bdr);border-radius:5px;padding:6px 10px;font-size:13px;font-family:inherit;flex:1;min-width:130px}
+.add-bar input:focus{outline:none;border-color:var(--pri)}
+.user-item{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid var(--bdr)}
+.user-num{font-size:12px;color:var(--txs);min-width:22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(max-width:520px){.grid2{grid-template-columns:1fr}}
 
-  @media print {
-    @page { size: A4; margin: 10mm 12mm; }
-    .topbar, .btn-row, .add-row-btn, #pane-history { display: none !important; }
-    body { background: #fff; font-size: 11px; }
-    .main { padding: 0; max-width: 100%; }
-    .card { border: 0.5px solid #bbb; border-radius: 4px; padding: 5px 8px; margin-bottom: 4px; break-inside: avoid; }
-    .card-title { font-size: 9px; margin-bottom: 4px; padding-bottom: 3px; }
-    .field label { font-size: 9px; }
-    .field input, .field textarea, .status-item input {
-      font-size: 11px; padding: 2px 4px; border: 0.5px solid #ccc; background: #fff;
-    }
-    .field textarea { min-height: 36px; }
-    .grid3 { gap: 6px; }
-    .grid2 { gap: 6px; }
-    .row { gap: 6px; }
-    .status-list { gap: 4px; }
-    .status-item { grid-template-columns: 64px 1fr; gap: 4px; }
-    .status-lbl { font-size: 10px; }
-    table.transport { font-size: 10px; min-width: unset; }
-    table.transport th { font-size: 9px; padding: 3px 4px; }
-    table.transport td { padding: 1px 2px; }
-    table.transport td input { font-size: 10px; padding: 2px 4px; }
-    .chip { font-size: 10px; padding: 2px 7px; border-radius: 12px; }
-    .chip.on { border: 0.5px solid #999; background: #eee; color: #000; }
-    .hanko-area { width: 42px; height: 42px; }
-    .hanko-inner { width: 33px; height: 33px; font-size: 10px; }
-    .hanko-placeholder { display: none; }
-    .hanko-clear { display: none; }
-    .tbl-wrap { overflow: visible; }
-  }
+/* ===== 履歴タブ ===== */
+.hist-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:11px;background:var(--sur);border-radius:var(--r);padding:10px 13px;border:1px solid var(--bdr)}
+.hist-toolbar label{font-size:12px;color:var(--txs);font-weight:700}
+.hist-toolbar select,.hist-toolbar input{border:1px solid var(--bdr);border-radius:5px;padding:6px 9px;font-size:13px;font-family:inherit}
 
-  @media (max-width: 520px) {
-    .grid3 { grid-template-columns: 1fr 1fr; }
-    .main { padding: 0.75rem; }
-    .topbar { padding: 0 0.75rem; }
-  }
+/* 月カレンダー */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}
+.cal-head{text-align:center;font-size:11px;font-weight:700;color:var(--txs);padding:4px 0}
+.cal-day{min-height:48px;border-radius:6px;border:1px solid var(--bdr);background:#fff;padding:4px;cursor:pointer;transition:all .15s;position:relative}
+.cal-day:hover{border-color:var(--pri);background:var(--pri-l)}
+.cal-day.has-data{border-color:var(--acc);background:var(--acc-l)}
+.cal-day.has-data:hover{background:#b2eada}
+.cal-day.today{border-color:var(--pri);border-width:2px}
+.cal-day.selected{background:var(--pri);color:#fff;border-color:var(--pri)}
+.cal-day.selected .cal-dn{color:#fff}
+.cal-day.other-month{opacity:.35}
+.cal-dn{font-size:12px;font-weight:700}
+.cal-dot{width:6px;height:6px;background:var(--acc);border-radius:50%;margin-top:3px}
+.cal-day.selected .cal-dot{background:#fff}
+.cal-empty{min-height:48px}
+
+/* 履歴詳細 */
+.hist-detail{background:var(--sur);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:var(--sh);padding:14px}
+.hist-detail-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.hist-date-badge{background:var(--pri);color:#fff;border-radius:6px;padding:4px 12px;font-size:13px;font-weight:700}
+.hist-section{margin-bottom:12px}
+.hist-section h4{font-size:11px;font-weight:700;color:var(--pri);border-left:3px solid var(--pri);padding-left:6px;margin-bottom:6px}
+.hist-kv{display:flex;gap:6px;margin-bottom:4px;font-size:12px}
+.hist-kv .hk{color:var(--txs);min-width:90px;flex-shrink:0}
+.hist-kv .hv{color:var(--tx)}
+.hist-empty{text-align:center;padding:30px;color:var(--txs);font-size:13px}
+
+/* 月一覧テーブル */
+.hist-table{width:100%;border-collapse:collapse;font-size:12px}
+.hist-table th{background:var(--pri);color:#fff;padding:7px 8px;text-align:left;font-weight:700}
+.hist-table td{border-bottom:1px solid var(--bdr);padding:7px 8px}
+.hist-table tr:nth-child(even) td{background:#f4f7fb}
+.hist-table tr:hover td{background:var(--pri-l);cursor:pointer}
+.hist-table td.link{color:var(--pri);font-weight:700;text-decoration:underline;cursor:pointer}
+
+/* 保存状態バッジ */
+.save-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:8px}
+.save-badge.saved{background:#eafaf1;color:var(--grn)}
+.save-badge.unsaved{background:var(--warn-l);color:var(--warn)}
+.save-badge.saving{background:#eef3fb;color:var(--pri)}
+
+/* toast */
+.toast{position:fixed;bottom:20px;right:20px;background:#1a2535;color:#fff;padding:9px 16px;border-radius:6px;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:9999;opacity:0;transform:translateY(8px);transition:all .22s}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.err{background:var(--red)}
+
+@media print{
+  #pw-screen,.no-print{display:none!important}
+  .app-hdr{position:static;background:#fff;color:#000;border-bottom:2px solid #000}
+  .tabs{display:none}
+  .tab-panel{display:block!important;padding:0}
+  body{background:#fff}
+  .card,.ind-card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  .vtbl input,.vtbl select{border:none;background:transparent}
+}
 </style>
 </head>
 <body>
 
-<div id="pw-screen" style="position:fixed;inset:0;background:#1a3050;z-index:9999;display:flex;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:12px;padding:32px 28px;width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-    <div style="font-size:18px;font-weight:700;color:#1a3050;margin-bottom:6px;">みなはるの里</div>
-    <div style="font-size:12px;color:#888;margin-bottom:24px;">社会福祉法人 悠久福祉会</div>
-    <div style="font-size:13px;color:#555;margin-bottom:10px;font-weight:600;">パスワードを入力してください</div>
-    <input type="password" id="pw-input" placeholder="パスワード"
-      style="width:100%;padding:10px 14px;border:1px solid #ccc;border-radius:6px;font-size:16px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:8px;"
-      onkeydown="if(event.key==='Enter')checkPW()">
-    <div id="pw-error" style="color:#e74c3c;font-size:12px;height:16px;margin-bottom:8px;"></div>
-    <button onclick="checkPW()" style="width:100%;padding:11px;background:#2c5f8a;color:white;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;">ログイン</button>
+<!-- パスワード -->
+<div id="pw-screen">
+  <div class="pw-box">
+    <h2>みなはるの里</h2>
+    <p>社会福祉法人 悠久福祉会</p>
+    <div class="pw-err" id="pw-err"></div>
+    <input type="password" id="pw-input" placeholder="パスワード" onkeydown="if(event.key==='Enter')checkPW()">
+    <button onclick="checkPW()">ログイン</button>
   </div>
 </div>
 <script>
 (function(){
-  const PW = '2408';
-  const KEY = 'minaharu_auth';
-  if(sessionStorage.getItem(KEY)==='ok'){
+  if(sessionStorage.getItem('dsj_auth')==='ok'){
     document.getElementById('pw-screen').style.display='none';
-    return;
-  }
-  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+  } else { setTimeout(()=>document.getElementById('pw-input').focus(),120); }
 })();
 function checkPW(){
-  const val = document.getElementById('pw-input').value;
-  if(val === '2408'){
-    sessionStorage.setItem('minaharu_auth','ok');
+  if(document.getElementById('pw-input').value==='2408'){
+    sessionStorage.setItem('dsj_auth','ok');
     document.getElementById('pw-screen').style.display='none';
   } else {
-    document.getElementById('pw-error').textContent = 'パスワードが違います';
+    document.getElementById('pw-err').textContent='パスワードが違います';
     document.getElementById('pw-input').value='';
-    setTimeout(()=>document.getElementById('pw-error').textContent='',2000);
+    setTimeout(()=>document.getElementById('pw-err').textContent='',2000);
   }
 }
 </script>
 
+<header class="app-hdr no-print">
+  <h1>🏥 デイサービス 業務日誌</h1>
+  <div class="date-nav">
+    <button onclick="changeDate(-1)">◀</button>
+    <input type="date" id="main-date" onchange="onDateChange()">
+    <button onclick="changeDate(1)">▶</button>
+  </div>
+</header>
+<div class="tabs no-print">
+  <button class="tab-btn active" onclick="switchTab('journal',this)">📋 業務日誌</button>
+  <button class="tab-btn" onclick="switchTab('vitals',this)">❤️ バイタル一覧</button>
+  <button class="tab-btn" onclick="switchTab('individual',this)">👤 個別記録</button>
+  <button class="tab-btn" onclick="switchTab('history',this)">📅 履歴</button>
+  <button class="tab-btn" onclick="switchTab('staff',this)">👥 職員・利用者</button>
+</div>
 
-<div class="topbar">
-  <span class="topbar-title">業務日誌</span>
-  <div style="display:flex;gap:8px;align-items:center">
-    <button class="btn" onclick="window.print()" style="font-size:12px;padding:5px 12px"><i class="ti ti-printer"></i> 印刷</button>
-    <div class="tab-row">
-      <button class="tab active" id="tab-input" onclick="switchTab('input')">記入</button>
-      <button class="tab" id="tab-history" onclick="switchTab('history')">履歴</button>
+<!-- ========== 業務日誌 ========== -->
+<div class="tab-panel active" id="tab-journal">
+  <div class="arow">
+    <button class="btn btn-pri" onclick="saveToGAS()">💾 保存</button>
+    <button class="btn btn-out" onclick="window.print()">🖨️ 印刷</button>
+    <span class="save-badge unsaved" id="save-badge">未保存</span>
+  </div>
+  <div class="stat-bar">
+    <div class="si"><div class="sv" id="st-u">0</div><div class="sl">利用者数</div></div>
+    <div class="si"><div class="sv" id="st-s">0</div><div class="sl">職員数</div></div>
+    <div class="si"><div class="sv" id="st-b">0</div><div class="sl">入浴者</div></div>
+    <div class="si"><div class="sv" id="st-i">なし</div><div class="sl">ヒヤリハット</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">基本情報</div>
+    <div class="frow">
+      <div class="fg"><label>天気</label>
+        <select id="j-weather"><option>☀️ 晴れ</option><option>⛅ 曇り</option><option>🌧️ 雨</option><option>❄️ 雪</option><option>🌤️ 晴れのち曇り</option></select>
+      </div>
+      <div class="fg"><label>利用者数（自動）</label><input type="number" id="j-ucount" readonly style="background:#f4f7fb;color:var(--txs)"></div>
+      <div class="fg"><label>職員数（自動）</label><input type="number" id="j-scount" readonly style="background:#f4f7fb;color:var(--txs)"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>送迎（午前）</label><input type="text" id="j-tr-am" placeholder="担当者名"></div>
+      <div class="fg"><label>送迎（午後）</label><input type="text" id="j-tr-pm" placeholder="担当者名"></div>
+      <div class="fg"><label>看護師</label><input type="text" id="j-nurse" placeholder="担当者名"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">午前の活動・レク</div>
+    <div class="chips" id="chips-am"></div>
+    <div class="fg"><label>補足</label><textarea id="j-am-free" placeholder="補足を入力"></textarea></div>
+  </div>
+  <div class="card">
+    <div class="card-title">午後の活動・レク</div>
+    <div class="chips" id="chips-pm"></div>
+    <div class="fg"><label>補足</label><textarea id="j-pm-free" placeholder="補足を入力"></textarea></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">食事・おやつ</div>
+    <div class="grid2">
+      <div class="fg"><label>昼食メニュー</label><textarea id="j-lunch" placeholder="例: ご飯、味噌汁、焼き魚"></textarea></div>
+      <div class="fg"><label>おやつ</label><textarea id="j-snack" placeholder="例: どら焼き、麦茶"></textarea></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">全体の様子・特記</div>
+    <div class="fg"><textarea id="j-atm" placeholder="例: 全体的に穏やかに過ごせた。午後のカラオケで盛り上がった。"></textarea></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">申し送り・連絡事項</div>
+    <div class="grid2">
+      <div class="fg"><label>ご家族・ご本人への連絡</label><textarea id="j-family"></textarea></div>
+      <div class="fg"><label>医療機関・ケアマネへの報告</label><textarea id="j-cm"></textarea></div>
+      <div class="fg"><label>次回への申し送り</label><textarea id="j-handover"></textarea></div>
+      <div class="fg"><label>ヒヤリハット・事故報告</label><textarea id="j-incident" placeholder="なし / 内容を記入"></textarea></div>
     </div>
   </div>
 </div>
 
-<div class="main">
-
-  <!-- ===== 入力ペイン ===== -->
-  <div id="pane-input">
-
-    <!-- 基本情報 -->
-    <div class="card">
-      <div class="card-title">基本情報</div>
-      <div class="row">
-        <div class="field" style="flex:1.2;min-width:150px">
-          <label>日付</label>
-          <input type="date" id="f-date">
-        </div>
-        <div class="field" style="flex:0.8;min-width:100px">
-          <label>曜日</label>
-          <input type="text" id="f-youbi" readonly>
-        </div>
-        <div class="field" style="flex:2;min-width:160px">
-          <label>記入者</label>
-          <input type="text" id="f-writer" placeholder="例：三ッ股 久美子">
-        </div>
-      </div>
+<!-- ========== バイタル一覧 ========== -->
+<div class="tab-panel" id="tab-vitals">
+  <div class="arow">
+    <button class="btn btn-pri" onclick="saveToGAS()">💾 保存</button>
+    <button class="btn btn-out" onclick="window.print()">🖨️ 印刷</button>
+    <button class="btn btn-out btn-sm" onclick="clearVitals()">🔄 リセット</button>
+  </div>
+  <div class="card">
+    <div class="card-title">バイタル・ケア状況 一覧</div>
+    <p style="font-size:11px;color:var(--txs);margin-bottom:9px">体温37.5℃以上は赤字表示。</p>
+    <div class="vwrap">
+      <table class="vtbl">
+        <thead>
+          <tr>
+            <th class="nh">利用者名</th>
+            <th>利用<br>開始</th><th>利用<br>終了</th><th>往診等</th>
+            <th>体温℃</th><th>血圧</th><th>脈拍</th>
+            <th style="background:var(--gold)">再検<br>体温</th>
+            <th style="background:var(--gold)">再検<br>血圧</th>
+            <th style="background:var(--gold)">再検<br>脈拍</th>
+            <th>入浴</th><th>体操AM</th><th>体操PM</th>
+            <th class="mc">主食</th><th class="mc">副食</th>
+            <th>内服薬</th><th>外用薬</th><th>排便</th>
+            <th class="ntd">様子・特記</th><th>記入者</th>
+          </tr>
+        </thead>
+        <tbody id="vtbody"></tbody>
+      </table>
     </div>
+  </div>
+</div>
 
-    <!-- 人員数 -->
-    <div class="card">
-      <div class="card-title">通所者人員数</div>
-      <div class="grid3">
-        <div class="field"><label>予定数（名）</label><input type="number" id="f-yotei" min="0" placeholder="0"></div>
-        <div class="field"><label>利用実数（名）</label><input type="number" id="f-jissuu" min="0" placeholder="0"></div>
-        <div class="field"><label>利用中止者（名）</label><input type="number" id="f-chushi" min="0" placeholder="0"></div>
-      </div>
-    </div>
+<!-- ========== 個別記録 ========== -->
+<div class="tab-panel" id="tab-individual">
+  <div class="arow">
+    <button class="btn btn-pri" onclick="saveToGAS()">💾 保存</button>
+    <button class="btn btn-out" onclick="window.print()">🖨️ 印刷</button>
+  </div>
+  <div id="ind-area"><div class="card" style="color:var(--txs);font-size:13px">「職員・利用者」タブで利用者を登録してください。</div></div>
+</div>
 
-    <!-- 勤務者 -->
-    <div class="card">
-      <div class="card-title">勤務者人員数</div>
-      <div class="grid3">
-        <div class="field"><label>相談員</label><input type="text" id="f-sodan" placeholder="氏名"></div>
-        <div class="field"><label>看護師</label><input type="text" id="f-kango" placeholder="氏名"></div>
-        <div class="field"><label>介護職</label><input type="text" id="f-kaigo" placeholder="氏名（複数可）"></div>
-      </div>
-    </div>
-
-    <!-- 送迎・迎え -->
-    <div class="card">
-      <div class="card-title">送迎 — 迎え</div>
-      <div class="tbl-wrap">
-        <table class="transport">
-          <thead><tr><th style="width:16%">車種</th><th style="width:18%">運転者</th><th style="width:18%">介護者</th><th>利用者</th></tr></thead>
-          <tbody id="mukae-body">
-            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
-            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <button class="add-row-btn" onclick="addRow('mukae-body')"><i class="ti ti-plus"></i> 行を追加</button>
-    </div>
-
-    <!-- 送迎・送り -->
-    <div class="card">
-      <div class="card-title">送迎 — 送り</div>
-      <div class="tbl-wrap">
-        <table class="transport">
-          <thead><tr><th style="width:16%">車種</th><th style="width:18%">運転者</th><th style="width:18%">介護者</th><th>利用者</th></tr></thead>
-          <tbody id="okuri-body">
-            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
-            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <button class="add-row-btn" onclick="addRow('okuri-body')"><i class="ti ti-plus"></i> 行を追加</button>
-    </div>
-
-    <!-- 利用者状況 -->
-    <div class="card">
-      <div class="card-title">利用者状況</div>
-      <div class="status-list">
-        <div class="status-item"><span class="status-lbl">ショートステイ</span><input type="text" id="f-short" placeholder="氏名・理由など"></div>
-        <div class="status-item"><span class="status-lbl">体調不良</span><input type="text" id="f-taichou" placeholder="氏名・内容など"></div>
-        <div class="status-item"><span class="status-lbl">拒否</span><input type="text" id="f-kyohi" placeholder="氏名など"></div>
-        <div class="status-item"><span class="status-lbl">入院</span><input type="text" id="f-nyuin" placeholder="氏名など"></div>
-        <div class="status-item"><span class="status-lbl">私事</span><input type="text" id="f-shiji" placeholder="氏名・内容など"></div>
-        <div class="status-item"><span class="status-lbl">病院受診</span><input type="text" id="f-jushin" placeholder="氏名・受診先など"></div>
-      </div>
-    </div>
-
-    <!-- 活動内容 -->
-    <div class="card">
-      <div class="card-title">活動内容</div>
-      <div class="chip-wrap" id="chip-wrap">
-        <span class="chip" onclick="toggleChip(this)">機能訓練</span>
-        <span class="chip" onclick="toggleChip(this)">レクリエーション</span>
-        <span class="chip" onclick="toggleChip(this)">カラオケ</span>
-        <span class="chip" onclick="toggleChip(this)">パズル</span>
-        <span class="chip" onclick="toggleChip(this)">ジェンガ</span>
-        <span class="chip" onclick="toggleChip(this)">すごろく</span>
-        <span class="chip" onclick="toggleChip(this)">オセロゲーム</span>
-        <span class="chip" onclick="toggleChip(this)">トランプ</span>
-        <span class="chip" onclick="toggleChip(this)">人生ゲーム</span>
-        <span class="chip" onclick="toggleChip(this)">クロスワード</span>
-        <span class="chip" onclick="toggleChip(this)">水彩画</span>
-        <span class="chip" onclick="toggleChip(this)">ぬり絵</span>
-        <span class="chip" onclick="toggleChip(this)">計算</span>
-        <span class="chip" onclick="toggleChip(this)">漢字</span>
-        <span class="chip" onclick="toggleChip(this)">間違い探し</span>
-        <span class="chip" onclick="toggleChip(this)">点つなぎ</span>
-        <span class="chip" onclick="toggleChip(this)">手工芸</span>
-        <span class="chip" onclick="toggleChip(this)">脳トレ</span>
-        <span class="chip" onclick="toggleChip(this)">おやつ作り</span>
-      </div>
-      <div class="field">
-        <label>その他の活動</label>
-        <input type="text" id="f-act-other" placeholder="上記以外があれば入力">
-      </div>
-    </div>
-
-    <!-- 特記事項 -->
-    <div class="card">
-      <div class="card-title">特記事項</div>
-      <div class="grid2">
-        <div class="field"><label>計画時短</label><textarea id="f-keikaku" placeholder="例：屈松様 9:00〜16:00"></textarea></div>
-        <div class="field"><label>往診</label><textarea id="f-oushin" placeholder="内容を入力"></textarea></div>
-        <div class="field"><label>その他</label><textarea id="f-other" placeholder="例：谷木様 6/8(月) だいかく入院予定"></textarea></div>
-        <div class="field"><label>備考</label><textarea id="f-biko" placeholder="自由記入"></textarea></div>
-      </div>
-    </div>
-
-    <!-- 確認欄 -->
-    <div class="card">
-      <div class="card-title">確認</div>
-      <div class="kakunin-wrap">
-        <div class="hanko-box" id="box-kacho">
-          <span class="hanko-label">課長</span>
-          <div class="hanko-area" id="hanko-kacho" onclick="stampHanko('kacho')">
-            <div class="hanko-inner" id="hanko-kacho-inner"></div>
-            <div class="hanko-placeholder">タップで<br>押印</div>
-          </div>
-          <span class="hanko-date" id="hanko-kacho-date"></span>
-          <button class="hanko-clear" onclick="clearHanko('kacho')">取消</button>
-        </div>
-        <div class="hanko-box" id="box-kanrisha">
-          <span class="hanko-label">管理者</span>
-          <div class="hanko-area" id="hanko-kanrisha" onclick="stampHanko('kanrisha')">
-            <div class="hanko-inner" id="hanko-kanrisha-inner"></div>
-            <div class="hanko-placeholder">タップで<br>押印</div>
-          </div>
-          <span class="hanko-date" id="hanko-kanrisha-date"></span>
-          <button class="hanko-clear" onclick="clearHanko('kanrisha')">取消</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn danger" onclick="clearForm()"><i class="ti ti-trash"></i> クリア</button>
-      <button class="btn primary" onclick="saveEntry()"><i class="ti ti-device-floppy"></i> 保存</button>
-    </div>
-
+<!-- ========== 履歴 ========== -->
+<div class="tab-panel" id="tab-history">
+  <div class="hist-toolbar">
+    <label>表示年月：</label>
+    <select id="hist-year" onchange="loadHistoryMonth()"></select>
+    <select id="hist-month" onchange="loadHistoryMonth()">
+      <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+      <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+      <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+      <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+    </select>
+    <button class="btn btn-out btn-sm" onclick="loadHistoryMonth()">🔄 更新</button>
+    <span id="hist-status" style="font-size:12px;color:var(--txs)"></span>
   </div>
 
-  <!-- ===== 履歴ペイン ===== -->
-  <div id="pane-history" style="display:none">
-    <div class="card">
-      <div class="card-title">保存済み日誌</div>
-      <div id="history-list"></div>
+  <!-- カレンダー -->
+  <div class="card">
+    <div class="card-title">月間カレンダー <span style="font-size:11px;color:var(--txs);font-weight:400">●記録あり　クリックで詳細</span></div>
+    <div class="cal-grid" id="cal-head"></div>
+    <div class="cal-grid" id="cal-body"></div>
+  </div>
+
+  <!-- 月一覧 -->
+  <div class="card">
+    <div class="card-title">月間一覧</div>
+    <div style="overflow-x:auto">
+      <table class="hist-table" id="hist-table">
+        <thead><tr>
+          <th>日付</th><th>天気</th><th>利用者</th><th>職員</th>
+          <th>午前活動</th><th>午後活動</th><th>申し送り</th><th>ヒヤリハット</th>
+        </tr></thead>
+        <tbody id="hist-tbody"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--txs)">月を選択してください</td></tr></tbody>
+      </table>
     </div>
   </div>
 
+  <!-- 詳細パネル -->
+  <div id="hist-detail-panel" style="display:none">
+    <div class="hist-detail">
+      <div class="hist-detail-hdr">
+        <span class="hist-date-badge" id="hist-detail-date"></span>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-grn btn-sm" onclick="loadDateToForm()">📝 この日を編集</button>
+          <button class="btn btn-out btn-sm" onclick="document.getElementById('hist-detail-panel').style.display='none'">✕ 閉じる</button>
+        </div>
+      </div>
+      <div id="hist-detail-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 職員・利用者 ========== -->
+<div class="tab-panel" id="tab-staff">
+  <div class="card">
+    <div class="card-title">本日の出勤職員</div>
+    <div class="add-bar">
+      <input type="text" id="new-staff" placeholder="職員名（例: 田中 美咲）">
+      <button class="btn btn-pri btn-sm" onclick="addStaff()">＋ 追加</button>
+    </div>
+    <div class="staff-list" id="staff-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">利用者登録</div>
+    <div class="add-bar">
+      <input type="text" id="new-user" placeholder="利用者氏名（例: 山田 花子）">
+      <button class="btn btn-acc btn-sm" onclick="addUser()">＋ 追加</button>
+    </div>
+    <div id="user-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">サンプルデータ</div>
+    <div class="arow">
+      <button class="btn btn-out btn-sm" onclick="loadSampleUsers()">👤 サンプル利用者</button>
+      <button class="btn btn-out btn-sm" onclick="loadSampleStaff()">👥 サンプル職員</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ============================================================
-// ★ここにGoogle Apps ScriptのウェブアプリURLを貼り付けてください★
-// 設定手順はセットアップ手順書.txtを参照
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1zHlVcBn96IB9_YLsmCr3r6jpPpD9DJTNVDsp-dTi3IoNtE4SRawnXZ-ODukFQVhl/exec';
-// ============================================================
+// ===================== 設定 =====================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
 
-const YOUBI_LABELS = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
-const YOUBI_COLORS = ['#c94040','#1a1917','#1a1917','#1a1917','#1a1917','#1a1917','#1d6fa4'];
+const ACTIVITIES=['機能訓練','レクリエーション','カラオケ','パズル','ジェンガ','すごろく','オセロゲーム','トランプ','人生ゲーム','クロスワード','水彩画','ぬり絵','計算','漢字','間違い探し','点つなぎ','手工芸','脳トレ','おやつ作り','体操','散歩','音楽鑑賞'];
+const AM_ACT=['ラジオ体操','脳トレ','手芸・工作','音楽療法','書道・習字','読み聞かせ','折り紙','回想法','口腔体操','リハビリ体操','機能訓練','散歩'];
+const PM_ACT=['カラオケ','ぬり絵・水彩画','映画鑑賞','ゲーム大会','園芸','おやつ作り','体操','手工芸','音楽鑑賞','創作活動','クイズ','将棋・囲碁'];
+const MEAL_O=['','10割','9割','8割','7割','6割','5割','4割','3割','2割','1割','0割'];
+const PARTI_O=['','参加','一部参加','不参加','体調不良'];
 
-// 初期化
-(function init(){
-  const today = new Date();
-  const s = today.toISOString().split('T')[0];
-  document.getElementById('f-date').value = s;
-  updateYoubi(s);
-  document.getElementById('f-date').addEventListener('change', function(){ updateYoubi(this.value); });
-})();
+// ===================== データ =====================
+let D={journal:{},users:[],staff:[],vitals:{},individual:{}};
+let currentDate = new Date();
+let historyCache = []; // 月履歴キャッシュ
+let selectedHistDate = null;
 
-function updateYoubi(v){
-  if(!v) return;
-  const d = new Date(v + 'T00:00:00');
-  const el = document.getElementById('f-youbi');
-  el.value = YOUBI_LABELS[d.getDay()];
-  el.style.color = YOUBI_COLORS[d.getDay()];
+async function gas(params){
+  const url = GAS_URL+'?'+new URLSearchParams(params).toString();
+  const res = await fetch(url);
+  return res.json();
 }
 
-function addRow(tbodyId){
-  const tb = document.getElementById(tbodyId);
-  const tr = document.createElement('tr');
-  tr.innerHTML = '<td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>';
-  tb.appendChild(tr);
+// ===================== 日付管理 =====================
+function getDateStr(){return document.getElementById('main-date').value;}
+function setDateStr(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  document.getElementById('main-date').value=`${y}-${m}-${dd}`;
+  document.getElementById('hdate').textContent=fmtJP(`${y}-${m}-${dd}`);
+}
+function changeDate(n){
+  currentDate.setDate(currentDate.getDate()+n);
+  setDateStr(currentDate);
+  loadFromGAS();
+}
+function onDateChange(){
+  currentDate=new Date(document.getElementById('main-date').value+'T00:00:00');
+  loadFromGAS();
 }
 
-function toggleChip(el){ el.classList.toggle('on'); }
-
-function gv(id){ return document.getElementById(id).value; }
-function sv(id, v){ const el = document.getElementById(id); if(el) el.value = v || ''; }
-
-function getTableData(tbodyId){
-  const rows = [];
-  document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{
-    const cells = [];
-    tr.querySelectorAll('input').forEach(inp => cells.push(inp.value));
-    rows.push(cells);
-  });
-  return rows;
-}
-
-function setTableData(tbodyId, rows){
-  const tb = document.getElementById(tbodyId);
-  tb.innerHTML = '';
-  (rows||[]).forEach(cells=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>';
-    const inputs = tr.querySelectorAll('input');
-    (cells||[]).forEach((v,i)=>{ if(inputs[i]) inputs[i].value = v; });
-    tb.appendChild(tr);
-  });
-  if(!rows || rows.length === 0){
-    addRow(tbodyId); addRow(tbodyId);
-  }
-}
-
-function getSelectedChips(){
-  return Array.from(document.querySelectorAll('.chip.on')).map(el=>el.textContent);
-}
-
-function setSelectedChips(arr){
-  document.querySelectorAll('.chip').forEach(el=>{
-    el.classList.toggle('on', (arr||[]).includes(el.textContent));
-  });
-}
-
-// ---- GAS通信 ----
-async function gasRequest(payload){
-  if(!GAS_URL){
-    showToast('GAS URLが未設定です','err');
-    throw new Error('GAS_URL未設定');
-  }
-  const params = new URLSearchParams();
-  for(const key in payload){
-    params.append(key, typeof payload[key] === 'object' ? JSON.stringify(payload[key]) : payload[key]);
-  }
-  const res = await fetch(GAS_URL + '?' + params.toString());
-  return await res.json();
-}
-
-async function loadAll(){
+// ===================== GAS保存 =====================
+async function saveToGAS(){
+  setSaveBadge('saving','保存中...');
+  collectFormToD();
+  localStorage.setItem('dsj_users', JSON.stringify({users:D.users,staff:D.staff}));
   try{
-    showToast('読み込み中…');
-    const result = await gasRequest({ action: 'getAll' });
-    return result.data || [];
-  } catch(e){
-    showToast('読み込みに失敗しました','err');
-    return [];
+    const payload = buildPayload();
+    // 既存GASの action:'save' + sheet:'業務日誌' を使用
+    await gas({action:'save', sheet:'業務日誌', data:JSON.stringify(payload)});
+    setSaveBadge('saved','保存済 ✓');
+    updateStats();
+    showToast('✅ 保存しました');
+  }catch(e){
+    setSaveBadge('unsaved','保存失敗');
+    showToast('保存エラー: '+e.message,true);
   }
 }
 
-// 押印状態（メモリ上）
-const hankoState = { kacho: null, kanrisha: null };
-
-function stampHanko(role){
-  if(hankoState[role]){ return; }
-  const name = role === 'kacho' ? '牧' : '三ツ股';
-  const now = new Date();
-  const dateStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  hankoState[role] = { name, date: dateStr };
-  applyHanko(role);
-}
-
-function applyHanko(role){
-  const s = hankoState[role];
-  const area = document.getElementById('hanko-'+role);
-  const inner = document.getElementById('hanko-'+role+'-inner');
-  const dateEl = document.getElementById('hanko-'+role+'-date');
-  const box = document.getElementById('box-'+role);
-  if(s){
-    const chars = s.name.replace(/\s/g,'');
-    inner.textContent = chars.length <= 2 ? chars : chars.slice(0,2)+'\n'+chars.slice(2,4);
-    inner.style.whiteSpace = 'pre';
-    area.classList.add('signed');
-    dateEl.textContent = s.date;
-    box.classList.add('signed-box');
-  } else {
-    inner.textContent = '';
-    area.classList.remove('signed');
-    dateEl.textContent = '';
-    box.classList.remove('signed-box');
-  }
-}
-
-function clearHanko(role){
-  hankoState[role] = null;
-  applyHanko(role);
-}
-
-async function saveEntry(){
-  const date = gv('f-date');
-  if(!date){ showToast('日付を入力してください','err'); return; }
-  const data = {
-    date, writer: gv('f-writer'), youbi: gv('f-youbi'),
-    yotei: gv('f-yotei'), jissuu: gv('f-jissuu'), chushi: gv('f-chushi'),
-    sodan: gv('f-sodan'), kango: gv('f-kango'), kaigo: gv('f-kaigo'),
-    mukae: getTableData('mukae-body'), okuri: getTableData('okuri-body'),
-    short: gv('f-short'), taichou: gv('f-taichou'), kyohi: gv('f-kyohi'),
-    nyuin: gv('f-nyuin'), shiji: gv('f-shiji'), jushin: gv('f-jushin'),
-    activities: getSelectedChips(), actOther: gv('f-act-other'),
-    keikaku: gv('f-keikaku'), oushin: gv('f-oushin'), other: gv('f-other'), biko: gv('f-biko'),
-    hanko: { kacho: hankoState.kacho, kanrisha: hankoState.kanrisha },
-    savedAt: new Date().toISOString()
+function buildPayload(){
+  const date = getDateStr();
+  return {
+    date,
+    weather: val('j-weather'),
+    ucount: D.users.length,
+    scount: D.staff.length,
+    tr_am: val('j-tr-am'), tr_pm: val('j-tr-pm'), nurse: val('j-nurse'),
+    am_chips: D.journal.am_chips ? D.journal.am_chips.join('・') : '',
+    am_free: val('j-am-free'),
+    pm_chips: D.journal.pm_chips ? D.journal.pm_chips.join('・') : '',
+    pm_free: val('j-pm-free'),
+    lunch: val('j-lunch'), snack: val('j-snack'),
+    atm: val('j-atm'),
+    family: val('j-family'), cm: val('j-cm'),
+    handover: val('j-handover'), incident: val('j-incident'),
+    staff_names: D.staff.map(s=>s.name).join('、'),
+    vitals: JSON.stringify(D.vitals),
+    individual: JSON.stringify(D.individual)
   };
+}
+
+// ===================== GAS読込 =====================
+async function loadFromGAS(){
+  setSaveBadge('saving','読込中...');
+  clearForm();
+  const date = getDateStr();
   try{
-    showToast('保存中…');
-    await gasRequest({ action: 'save', data });
-    showToast('保存しました','ok');
-  } catch(e){
-    showToast('保存に失敗しました','err');
+    const res = await gas({action:'getOne', sheet:'業務日誌', date});
+    if(res.data){
+      fillFormFromGAS(res.data);
+      setSaveBadge('saved','保存済 ✓');
+    } else {
+      setSaveBadge('unsaved','新規（未保存）');
+    }
+  }catch(e){
+    setSaveBadge('unsaved','読込エラー');
+    showToast('読込エラー',true);
   }
+  renderVitalTable(); renderIndividual(); updateStats();
 }
 
-async function loadEntry(date){
+function fillFormFromGAS(r){
+  setVal('j-weather', r.weather);
+  setVal('j-tr-am', r.tr_am); setVal('j-tr-pm', r.tr_pm); setVal('j-nurse', r.nurse);
+  setVal('j-am-free', r.am_free); setVal('j-pm-free', r.pm_free);
+  setVal('j-lunch', r.lunch); setVal('j-snack', r.snack);
+  setVal('j-atm', r.atm);
+  setVal('j-family', r.family); setVal('j-cm', r.cm);
+  setVal('j-handover', r.handover); setVal('j-incident', r.incident);
+  D.journal.am_chips = r.am_chips ? r.am_chips.split('・') : [];
+  D.journal.pm_chips = r.pm_chips ? r.pm_chips.split('・') : [];
+  buildChips('am', D.journal.am_chips);
+  buildChips('pm', D.journal.pm_chips);
+  if(r.vitals) try{D.vitals=JSON.parse(r.vitals);}catch(e){}
+  if(r.individual) try{D.individual=JSON.parse(r.individual);}catch(e){}
+}
+
+function collectFormToD(){
+  D.journal.am_chips = getSelChips('chips-am');
+  D.journal.pm_chips = getSelChips('chips-pm');
+  // バイタル
+  document.querySelectorAll('#vtbody tr[data-uid]').forEach(row=>{
+    const uid=row.dataset.uid; const ins=row.querySelectorAll('input,select');
+    D.vitals[uid]={jikan_s:ins[0].value,jikan_e:ins[1].value,oushin:ins[2].value,
+      taion:ins[3].value,ketsuatsu:ins[4].value,myaku:ins[5].value,
+      r_taion:ins[6].value,r_ketsu:ins[7].value,r_myaku:ins[8].value,
+      nyuyoku:ins[9].checked,taiso_am:ins[10].checked,taiso_pm:ins[11].checked,
+      shokuji_main:ins[12].value,shokuji_sub:ins[13].value,
+      naifuku:ins[14].value,gaiyou:ins[15].value,haiben:ins[16].value,
+      yousu:ins[17].value,writer:ins[18].value};
+  });
+  // 個別
+  document.querySelectorAll('.ind-card[data-uid]').forEach(card=>{
+    const uid=card.dataset.uid;
+    const chips=Array.from(card.querySelectorAll('.i-chip.on')).map(c=>c.textContent);
+    const other=card.querySelector('.i-other');
+    D.individual[uid]={
+      am_parti:card.querySelector('.i-am-parti')?.value||'',
+      pm_parti:card.querySelector('.i-pm-parti')?.value||'',
+      cond:card.querySelector('.i-cond')?.value||'',
+      note:card.querySelector('.i-note')?.value||'',
+      activity:chips.join('・')+(other?.value?'・'+other.value:''),
+      writer:card.querySelector('.i-writer')?.value||'',
+      r_taion:card.querySelector('.i-r-taion')?.value||'',
+      r_ketsu:card.querySelector('.i-r-ketsu')?.value||'',
+      r_myaku:card.querySelector('.i-r-myaku')?.value||''
+    };
+  });
+}
+
+// ===================== 履歴 =====================
+// GASのgetAllは全件返す（降順）→ 月フィルターはHTML側で実施
+// GASはB列のJSONをパースして返すので fillFormFromGAS でそのまま使える
+async function loadHistoryMonth(){
+  const y=document.getElementById('hist-year').value;
+  const m=document.getElementById('hist-month').value;
+  document.getElementById('hist-status').textContent='読込中...';
+  document.getElementById('hist-detail-panel').style.display='none';
   try{
-    showToast('読み込み中…');
-    const result = await gasRequest({ action: 'getOne', date });
-    const e = result.data;
-    if(!e){ showToast('データが見つかりません','err'); return; }
-    sv('f-date', e.date); sv('f-writer', e.writer);
-    updateYoubi(e.date);
-    sv('f-yotei', e.yotei); sv('f-jissuu', e.jissuu); sv('f-chushi', e.chushi);
-    sv('f-sodan', e.sodan); sv('f-kango', e.kango); sv('f-kaigo', e.kaigo);
-    setTableData('mukae-body', e.mukae); setTableData('okuri-body', e.okuri);
-    sv('f-short', e.short); sv('f-taichou', e.taichou); sv('f-kyohi', e.kyohi);
-    sv('f-nyuin', e.nyuin); sv('f-shiji', e.shiji); sv('f-jushin', e.jushin);
-    setSelectedChips(e.activities); sv('f-act-other', e.actOther);
-    sv('f-keikaku', e.keikaku); sv('f-oushin', e.oushin); sv('f-other', e.other); sv('f-biko', e.biko);
-    hankoState.kacho = e.hanko ? e.hanko.kacho : null;
-    hankoState.kanrisha = e.hanko ? e.hanko.kanrisha : null;
-    applyHanko('kacho'); applyHanko('kanrisha');
-    switchTab('input');
-    showToast(e.date + ' の日誌を読み込みました','ok');
-  } catch(e){
-    showToast('読み込みに失敗しました','err');
+    const res=await gas({action:'getAll', sheet:'業務日誌'});
+    const all=res.data||[];
+    // 5年以上前のデータを除外、選択月でフィルター
+    const prefix=`${y}-${String(m).padStart(2,'0')}`;
+    historyCache=all.filter(r=>r.date&&r.date.startsWith(prefix));
+    document.getElementById('hist-status').textContent=`${historyCache.length}件`;
+    renderCalendar(parseInt(y),parseInt(m));
+    renderHistTable();
+  }catch(e){
+    document.getElementById('hist-status').textContent='読込エラー';
+    showToast('履歴読込エラー',true);
   }
 }
 
-async function deleteEntry(date){
-  if(!confirm('この日誌を削除しますか？')) return;
-  try{
-    await gasRequest({ action: 'delete', date });
-    renderHistory();
-    showToast('削除しました');
-  } catch(e){
-    showToast('削除に失敗しました','err');
+function renderCalendar(year,month){
+  const days=['日','月','火','水','木','金','土'];
+  const headEl=document.getElementById('cal-head');
+  headEl.innerHTML=days.map(d=>`<div class="cal-head">${d}</div>`).join('');
+  const bodyEl=document.getElementById('cal-body');
+  const first=new Date(year,month-1,1).getDay();
+  const last=new Date(year,month,0).getDate();
+  const today=new Date().toISOString().slice(0,10);
+  const hasDates=new Set(historyCache.map(r=>r.date));
+  let html='';
+  for(let i=0;i<first;i++) html+=`<div class="cal-empty"></div>`;
+  for(let d=1;d<=last;d++){
+    const ds=`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const has=hasDates.has(ds);
+    const isT=ds===today;
+    const isSel=ds===selectedHistDate;
+    html+=`<div class="cal-day${has?' has-data':''}${isT?' today':''}${isSel?' selected':''}" onclick="showHistDetail('${ds}')">
+      <div class="cal-dn">${d}</div>
+      ${has?'<div class="cal-dot"></div>':''}
+    </div>`;
   }
+  bodyEl.innerHTML=html;
 }
 
-function clearForm(){
-  if(!confirm('入力内容をクリアしますか？')) return;
-  ['f-writer','f-yotei','f-jissuu','f-chushi','f-sodan','f-kango','f-kaigo',
-   'f-short','f-taichou','f-kyohi','f-nyuin','f-shiji','f-jushin','f-act-other',
-   'f-keikaku','f-oushin','f-other','f-biko'].forEach(id=>sv(id,''));
-  setTableData('mukae-body', null); setTableData('okuri-body', null);
-  document.querySelectorAll('.chip').forEach(el=>el.classList.remove('on'));
-  hankoState.kacho = null; hankoState.kanrisha = null;
-  applyHanko('kacho'); applyHanko('kanrisha');
-  const today = new Date().toISOString().split('T')[0];
-  sv('f-date', today); updateYoubi(today);
+function renderHistTable(){
+  const tbody=document.getElementById('hist-tbody');
+  if(!historyCache.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--txs)">この月の記録はありません</td></tr>';return;}
+  tbody.innerHTML=historyCache.map(r=>`<tr onclick="showHistDetail('${r.date}')">
+    <td class="link">${fmtJP(r.date)}</td>
+    <td>${r.weather||'―'}</td>
+    <td>${r.ucount||'―'}</td>
+    <td>${r.scount||'―'}</td>
+    <td style="font-size:11px">${r.am_chips||'―'}</td>
+    <td style="font-size:11px">${r.pm_chips||'―'}</td>
+    <td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.handover||'―'}</td>
+    <td style="color:${r.incident&&r.incident!=='なし'?'var(--red)':'inherit'}">${r.incident||'なし'}</td>
+  </tr>`).join('');
 }
 
-async function renderHistory(){
-  const all = await loadAll();
-  const el = document.getElementById('history-list');
-  if(!all.length){
-    el.innerHTML = '<div class="empty-msg">保存された日誌はありません</div>';
-    return;
-  }
-  el.innerHTML = all.map(e=>`
-    <div class="hist-item" onclick="loadEntry('${e.date}')">
-      <div>
-        <div class="hist-date">${e.date}（${e.youbi||''}）</div>
-        <div class="hist-meta">記入者：${e.writer||'—'} ／ 実数：${e.jissuu||'—'}名 ／ 予定：${e.yotei||'—'}名</div>
-      </div>
-      <button class="hist-del" onclick="event.stopPropagation();deleteEntry('${e.date}')"><i class="ti ti-trash"></i> 削除</button>
+function showHistDetail(date){
+  selectedHistDate=date;
+  const r=historyCache.find(x=>x.date===date);
+  // カレンダー再描画で選択状態
+  const y=parseInt(document.getElementById('hist-year').value);
+  const m=parseInt(document.getElementById('hist-month').value);
+  renderCalendar(y,m);
+
+  const panel=document.getElementById('hist-detail-panel');
+  const dateEl=document.getElementById('hist-detail-date');
+  const bodyEl=document.getElementById('hist-detail-body');
+  dateEl.textContent=fmtJP(date);
+
+  if(!r){bodyEl.innerHTML='<div class="hist-empty">この日の記録はありません</div>';panel.style.display='block';panel.scrollIntoView({behavior:'smooth'});return;}
+
+  const kv=(k,v)=>`<div class="hist-kv"><span class="hk">${k}</span><span class="hv">${v||'―'}</span></div>`;
+  bodyEl.innerHTML=`
+    <div class="hist-section">
+      <h4>基本情報</h4>
+      ${kv('天気',r.weather)}${kv('利用者数',r.ucount+'名')}${kv('職員数',r.scount+'名')}
+      ${kv('出勤職員',r.staff_names)}
+      ${kv('送迎（午前）',r.tr_am)}${kv('送迎（午後）',r.tr_pm)}${kv('看護師',r.nurse)}
     </div>
-  `).join('');
+    <div class="hist-section">
+      <h4>活動</h4>
+      ${kv('午前',r.am_chips+(r.am_free?' / '+r.am_free:''))}
+      ${kv('午後',r.pm_chips+(r.pm_free?' / '+r.pm_free:''))}
+    </div>
+    <div class="hist-section">
+      <h4>食事</h4>
+      ${kv('昼食',r.lunch)}${kv('おやつ',r.snack)}
+    </div>
+    <div class="hist-section">
+      <h4>全体の様子</h4>
+      <div style="font-size:13px;line-height:1.6;white-space:pre-wrap">${r.atm||'―'}</div>
+    </div>
+    <div class="hist-section">
+      <h4>申し送り</h4>
+      ${kv('家族連絡',r.family)}${kv('ケアマネ報告',r.cm)}
+      ${kv('次回申し送り',r.handover)}
+      <div class="hist-kv"><span class="hk">ヒヤリハット</span><span class="hv" style="color:${r.incident&&r.incident!=='なし'?'var(--red)':'inherit'}">${r.incident||'なし'}</span></div>
+    </div>`;
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth'});
 }
 
-function switchTab(t){
-  document.getElementById('pane-input').style.display = t==='input' ? 'block' : 'none';
-  document.getElementById('pane-history').style.display = t==='history' ? 'block' : 'none';
-  document.getElementById('tab-input').className = 'tab' + (t==='input' ? ' active' : '');
-  document.getElementById('tab-history').className = 'tab' + (t==='history' ? ' active' : '');
-  if(t==='history') renderHistory();
+function loadDateToForm(){
+  if(!selectedHistDate)return;
+  currentDate=new Date(selectedHistDate+'T00:00:00');
+  setDateStr(currentDate);
+  switchTab('journal',document.querySelectorAll('.tab-btn')[0]);
+  loadFromGAS();
 }
 
-function showToast(msg, type=''){
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show' + (type ? ' '+type : '');
-  clearTimeout(el._t);
-  el._t = setTimeout(()=>el.className='toast', 2600);
+function initHistYearSelect(){
+  const now=new Date();
+  const y=now.getFullYear();
+  const sel=document.getElementById('hist-year');
+  sel.innerHTML='';
+  for(let i=y;i>=y-4;i--){
+    const o=document.createElement('option');
+    o.value=i; o.textContent=i+'年'; sel.appendChild(o);
+  }
+  document.getElementById('hist-month').value=now.getMonth()+1;
 }
+
+// ===================== チップ =====================
+function buildChips(slot,selected){
+  const list=slot==='am'?AM_ACT:PM_ACT;
+  document.getElementById('chips-'+slot).innerHTML=list.map(a=>`<span class="chip${selected.includes(a)?' on':''}" onclick="this.classList.toggle('on')">${a}</span>`).join('');
+}
+function getSelChips(id){return Array.from(document.querySelectorAll('#'+id+' .chip.on')).map(c=>c.textContent);}
+
+// ===================== 職員・利用者 =====================
+function loadLocal(){
+  const s=localStorage.getItem('dsj_users');
+  if(s) try{const p=JSON.parse(s);D.users=p.users||[];D.staff=p.staff||[];}catch(e){}
+}
+function addStaff(){
+  const n=document.getElementById('new-staff').value.trim();if(!n)return;
+  D.staff.push({sid:'s'+Date.now(),name:n});
+  document.getElementById('new-staff').value='';
+  saveLocal(); renderStaff(); updateStats(); showToast('👥 '+n+' を追加');
+}
+function removeStaff(sid){D.staff=D.staff.filter(s=>s.sid!==sid);saveLocal();renderStaff();updateStats();}
+function renderStaff(){
+  const el=document.getElementById('staff-list');
+  if(!D.staff.length){el.innerHTML='<span style="font-size:13px;color:var(--txs)">職員が登録されていません</span>';
+    document.getElementById('j-scount').value=0;return;}
+  el.innerHTML=D.staff.map(s=>`<div class="staff-tag"><span>${s.name}</span><button onclick="removeStaff('${s.sid}')" title="削除">×</button></div>`).join('');
+  document.getElementById('j-scount').value=D.staff.length;
+}
+function addUser(){
+  const n=document.getElementById('new-user').value.trim();if(!n)return;
+  D.users.push({uid:'u'+Date.now(),name:n});
+  document.getElementById('new-user').value='';
+  saveLocal(); renderUsers(); renderVitalTable(); renderIndividual(); updateStats(); showToast('👤 '+n+' を追加');
+}
+function removeUser(uid){
+  if(!confirm('この利用者を削除しますか？'))return;
+  D.users=D.users.filter(u=>u.uid!==uid);
+  delete D.vitals[uid];delete D.individual[uid];
+  saveLocal(); renderUsers(); renderVitalTable(); renderIndividual(); updateStats();
+}
+function renderUsers(){
+  const el=document.getElementById('user-list');
+  if(!D.users.length){el.innerHTML='<p style="font-size:13px;color:var(--txs)">登録されていません</p>';
+    document.getElementById('j-ucount').value=0;return;}
+  el.innerHTML=D.users.map((u,i)=>`<div class="user-item"><span class="user-num">${i+1}</span><span style="flex:1;font-weight:600">${u.name}</span><button class="btn btn-sm btn-red" onclick="removeUser('${u.uid}')">削除</button></div>`).join('');
+  document.getElementById('j-ucount').value=D.users.length;
+}
+function saveLocal(){localStorage.setItem('dsj_users',JSON.stringify({users:D.users,staff:D.staff}));}
+function loadSampleStaff(){['田中 美咲','鈴木 健太','山本 京子','佐々木 隆'].forEach(n=>{if(!D.staff.find(s=>s.name===n))D.staff.push({sid:'s'+Date.now()+Math.random(),name:n});});saveLocal();renderStaff();updateStats();showToast('サンプル職員を追加');}
+function loadSampleUsers(){['山田 花子','鈴木 一郎','田中 幸子','佐藤 義雄','伊藤 みよ','中村 清'].forEach(n=>{if(!D.users.find(u=>u.name===n))D.users.push({uid:'u'+Date.now()+Math.random(),name:n});});saveLocal();renderUsers();renderVitalTable();renderIndividual();updateStats();showToast('サンプル利用者を追加');}
+
+// ===================== バイタルテーブル =====================
+function renderVitalTable(){
+  const tbody=document.getElementById('vtbody');
+  if(!D.users.length){tbody.innerHTML='<tr><td colspan="20" style="text-align:center;padding:16px;color:var(--txs)">利用者を登録してください</td></tr>';return;}
+  tbody.innerHTML=D.users.map(u=>{
+    const v=D.vitals[u.uid]||{};
+    const mO=MEAL_O.map(o=>`<option${v.shokuji_main===o?' selected':''}>${o}</option>`).join('');
+    const msO=MEAL_O.map(o=>`<option${v.shokuji_sub===o?' selected':''}>${o}</option>`).join('');
+    return `<tr data-uid="${u.uid}">
+      <td class="nc">${u.name}</td>
+      <td><input type="text" value="${v.jikan_s||''}" placeholder="9:00" style="width:46px"></td>
+      <td><input type="text" value="${v.jikan_e||''}" placeholder="16:00" style="width:46px"></td>
+      <td><input type="text" value="${v.oushin||''}" placeholder="往診等"></td>
+      <td><input type="number" value="${v.taion||''}" placeholder="36.5" step="0.1" min="34" max="42" oninput="chkT(this)"></td>
+      <td><input type="text" value="${v.ketsuatsu||''}" placeholder="120/80"></td>
+      <td><input type="number" value="${v.myaku||''}" placeholder="72"></td>
+      <td style="background:var(--gold-l)"><input type="number" value="${v.r_taion||''}" placeholder="―" step="0.1" style="background:var(--gold-l)"></td>
+      <td style="background:var(--gold-l)"><input type="text" value="${v.r_ketsu||''}" placeholder="―" style="background:var(--gold-l)"></td>
+      <td style="background:var(--gold-l)"><input type="number" value="${v.r_myaku||''}" placeholder="―" style="background:var(--gold-l)"></td>
+      <td><input type="checkbox" ${v.nyuyoku?'checked':''} style="width:18px;height:18px;accent-color:var(--pri)"></td>
+      <td><input type="checkbox" ${v.taiso_am?'checked':''} style="width:18px;height:18px;accent-color:var(--pri)"></td>
+      <td><input type="checkbox" ${v.taiso_pm?'checked':''} style="width:18px;height:18px;accent-color:var(--pri)"></td>
+      <td class="mc"><select>${mO}</select></td>
+      <td class="mc"><select>${msO}</select></td>
+      <td><input type="text" value="${v.naifuku||''}" placeholder="服薬確認済等"></td>
+      <td><input type="text" value="${v.gaiyou||''}" placeholder="軟膏塗布等"></td>
+      <td><input type="text" value="${v.haiben||''}" placeholder="AM等"></td>
+      <td class="ntd"><input type="text" value="${v.yousu||''}" placeholder="一日の様子"></td>
+      <td><input type="text" value="${v.writer||''}" placeholder="記入者"></td>
+    </tr>`;
+  }).join('');
+}
+function chkT(inp){const v=parseFloat(inp.value);inp.style.color=v>=37.5?'var(--red)':'';inp.style.fontWeight=v>=37.5?'700':'';}
+function clearVitals(){if(!confirm('リセットしますか？'))return;D.vitals={};renderVitalTable();showToast('🔄 リセット');}
+
+// ===================== 個別記録 =====================
+function renderIndividual(){
+  const el=document.getElementById('ind-area');
+  if(!D.users.length){el.innerHTML='<div class="card" style="color:var(--txs);font-size:13px">利用者を登録してください。</div>';return;}
+  el.innerHTML=D.users.map(u=>{
+    const iv=D.individual[u.uid]||{};
+    const actArr=iv.activity?iv.activity.split('・'):[];
+    const amOpts=PARTI_O.map(o=>`<option${iv.am_parti===o?' selected':''}>${o}</option>`).join('');
+    const pmOpts=PARTI_O.map(o=>`<option${iv.pm_parti===o?' selected':''}>${o}</option>`).join('');
+    const chips=ACTIVITIES.map(a=>`<span class="chip i-chip${actArr.includes(a)?' on':''}" onclick="this.classList.toggle('on')">${a}</span>`).join('');
+    const otherVal=actArr.filter(a=>!ACTIVITIES.includes(a)).join('・');
+    return `<div class="ind-card" data-uid="${u.uid}">
+      <div class="ind-hdr">👤 ${u.name}</div>
+      <div class="frow">
+        <div class="fg" style="min-width:120px"><label>午前 活動参加</label><select class="i-am-parti">${amOpts}</select></div>
+        <div class="fg" style="min-width:120px"><label>午後 活動参加</label><select class="i-pm-parti">${pmOpts}</select></div>
+        <div class="fg" style="min-width:140px"><label>体調・様子</label><input type="text" class="i-cond" value="${iv.cond||''}" placeholder="例: 終日穏やか"></div>
+        <div class="fg" style="min-width:90px"><label>記入者</label><input type="text" class="i-writer" value="${iv.writer||''}" placeholder="氏名"></div>
+      </div>
+      <div class="fg" style="margin-bottom:8px"><label>アクティビティ</label>
+        <div class="chips" style="margin-top:4px">${chips}</div>
+        <input type="text" class="i-other" value="${otherVal}" placeholder="その他（自由入力）" style="margin-top:4px">
+      </div>
+      <div class="fg" style="margin-bottom:8px"><label>個別特記事項</label>
+        <textarea class="i-note" placeholder="様子・家族連絡等">${iv.note||''}</textarea>
+      </div>
+      <div class="saiken-box">
+        <div class="saiken-lbl">🔄 再検バイタル</div>
+        <div class="frow">
+          <div class="fg" style="min-width:90px"><label>再検 体温 ℃</label><input type="number" class="i-r-taion" value="${iv.r_taion||''}" placeholder="―" step="0.1"></div>
+          <div class="fg" style="min-width:110px"><label>再検 血圧 mmHg</label><input type="text" class="i-r-ketsu" value="${iv.r_ketsu||''}" placeholder="―"></div>
+          <div class="fg" style="min-width:90px"><label>再検 脈拍 /分</label><input type="number" class="i-r-myaku" value="${iv.r_myaku||''}" placeholder="―"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===================== 統計・UI =====================
+function updateStats(){
+  document.getElementById('st-u').textContent=D.users.length;
+  document.getElementById('st-s').textContent=D.staff.length;
+  document.getElementById('j-ucount').value=D.users.length;
+  document.getElementById('j-scount').value=D.staff.length;
+  const bath=Object.values(D.vitals).filter(v=>v.nyuyoku).length;
+  document.getElementById('st-b').textContent=bath;
+  const inc=document.getElementById('j-incident');
+  document.getElementById('st-i').textContent=(inc&&inc.value.trim()&&inc.value.trim()!=='なし')?'あり⚠️':'なし';
+}
+function setSaveBadge(state,text){
+  const b=document.getElementById('save-badge');
+  b.textContent=text; b.className='save-badge '+state;
+}
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='history') initHistYearSelect();
+}
+function val(id){const el=document.getElementById(id);return el?el.value:'';}
+function setVal(id,v){const el=document.getElementById(id);if(el&&v!=null)el.value=v;}
+function clearForm(){
+  ['j-weather','j-tr-am','j-tr-pm','j-nurse','j-am-free','j-pm-free','j-lunch','j-snack','j-atm','j-family','j-cm','j-handover','j-incident'].forEach(id=>setVal(id,''));
+  buildChips('am',[]);buildChips('pm',[]);
+  D.vitals={};D.individual={};
+}
+function fmtJP(d){const dt=new Date(d),days=['日','月','火','水','木','金','土'];return `${dt.getFullYear()}年${dt.getMonth()+1}月${dt.getDate()}日（${days[dt.getDay()]}）`;}
+function showToast(msg,isErr=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(isErr?' err':'');setTimeout(()=>t.className='toast',2300);}
+
+// ===================== 初期化 =====================
+function init(){
+  const today=new Date();
+  setDateStr(today);
+  loadLocal();
+  renderStaff(); renderUsers();
+  buildChips('am',[]); buildChips('pm',[]);
+  loadFromGAS();
+}
+init();
 </script>
 </body>
 </html>
