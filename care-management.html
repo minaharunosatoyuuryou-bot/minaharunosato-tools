@@ -95,7 +95,6 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
 .adl-table textarea{min-height:26px;font-size:11px;}
 .month-row{display:flex;align-items:center;gap:6px;font-size:12px;}
 .month-row label{font-weight:700;color:var(--navy);white-space:nowrap;}
-/* AI写真スキャン */
 .ai-scan-bar{background:linear-gradient(135deg,#1a3050,#2c5f8a);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .ai-scan-bar .ai-title{color:white;font-weight:700;font-size:13px;}
 .ai-scan-bar .ai-sub{color:rgba(255,255,255,0.7);font-size:11px;margin-top:2px;}
@@ -106,7 +105,6 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
 .ai-preview{background:white;border-radius:8px;padding:10px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.1);display:none;}
 .ai-preview img{max-width:200px;max-height:150px;border-radius:6px;object-fit:cover;}
 .ai-status{font-size:12px;color:var(--muted);margin-top:6px;}
-/* 写真ギャラリー（ローカル保存） */
 .photo-section{padding:10px 12px;}
 .photo-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
 .photo-thumb{position:relative;width:120px;height:100px;border-radius:6px;overflow:hidden;border:2px solid var(--mgray);background:var(--gray);flex-shrink:0;}
@@ -116,7 +114,6 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
 .del-photo{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .photo-add{width:120px;height:100px;border:2px dashed var(--mgray);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:11px;gap:5px;background:white;}
 .photo-add:hover{border-color:var(--accent);color:var(--accent);}
-/* モーダル */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px 0;}
 .modal-bg.hidden{display:none;}
 .modal{background:white;border-radius:10px;padding:20px 24px;width:400px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);}
@@ -255,7 +252,7 @@ function checkPW(){
         </div>
       </div>
 
-      <!-- ===== アセスメント ===== -->
+      <!-- アセスメント -->
       <div id="doc-assess">
         <div class="print-title">アセスメント（課題分析）</div>
         <div class="sec">
@@ -310,18 +307,17 @@ function checkPW(){
         </div>
       </div>
 
-      <!-- ===== サービス担当者会議録 ===== -->
+      <!-- サービス担当者会議録 -->
       <div id="doc-service" style="display:none;">
         <div class="print-title">サービス担当者会議録</div>
 
-        <!-- AI写真スキャンバー -->
         <div class="ai-scan-bar">
           <div style="flex:1;">
             <div class="ai-title">📸 ケアプラン写真読み取り（AI）</div>
             <div class="ai-sub">ケアプランを撮影した写真をアップロードすると、AIが内容を読み取って自動入力します</div>
           </div>
-          <input type="file" id="ai-file-input" accept="image/*" onchange="scanCareplan(event)">
-          <button class="ai-btn" id="ai-scan-btn" onclick="document.getElementById('ai-file-input').click()">📷 写真を選択</button>
+          <input type="file" id="ai-file-input" accept="image/*" capture="environment" onchange="scanCareplan(event)">
+          <button class="ai-btn" id="ai-scan-btn" onclick="document.getElementById('ai-file-input').click()">📷 写真を選択・撮影</button>
         </div>
         <div class="ai-preview" id="ai-preview">
           <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
@@ -359,7 +355,7 @@ function checkPW(){
         </div>
       </div>
 
-      <!-- ===== 月次ケアマネ報告書 ===== -->
+      <!-- 月次ケアマネ報告書 -->
       <div id="doc-monthly" style="display:none;">
         <div class="print-title">月次ケアマネ状態報告書</div>
         <div class="sec">
@@ -409,7 +405,7 @@ function checkPW(){
         </div>
       </div>
 
-      <!-- ===== 定期巡回報告書（悠巡） ===== -->
+      <!-- 定期巡回報告書（悠巡） -->
       <div id="doc-teiki" style="display:none;">
         <div class="print-title">定期巡回・随時対応型訪問介護看護 月次報告書（悠巡）</div>
         <div class="sec">
@@ -445,13 +441,13 @@ function checkPW(){
         </div>
       </div>
 
-      <!-- ===== 写真タブ（ローカル保存） ===== -->
+      <!-- 写真タブ -->
       <div id="doc-photo" style="display:none;">
         <div class="print-title">写真記録（褥瘡・状態確認）</div>
         <div class="sec">
           <div class="sh sh-s">■ 写真記録（このデバイスのみに保存）</div>
           <div class="photo-section">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">⚠️ 写真はこのデバイス内のみに保存されます。GASへの送信はしません。印刷時も出力されます。</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">⚠️ 写真はこのデバイス内のみに保存されます。GASへの送信はしません。</div>
             <div class="photo-grid" id="photo-grid">
               <div class="photo-add" onclick="document.getElementById('photo-file-input').click()">
                 <span style="font-size:24px;">📷</span>
@@ -712,17 +708,14 @@ async function saveData(silent=false){
   const d=collectData();
   const mnMonth=document.getElementById('report_month').value;
   const tkMonth=document.getElementById('teiki_report_month').value;
-  // 基本データ（アセスメント・担当者会議）
   const baseData={};
   [...AS_TEXT,...AS_CHECK,...SV_TEXT,...SV_CHECK,...PH_TEXT].forEach(id=>{baseData[id]=d[id];});
   baseData.as_adl=d.as_adl;
   await gasReq({action:'saveRecord',sheet:'ケア管理_記録',id:String(currentId)+'_base',data:baseData});
-  // 月次データ
   const mnData={};
   [...MN_TEXT,...MN_CHECK].forEach(id=>{mnData[id]=d[id];});
   mnData.mn_adl=d.mn_adl;
   await gasReq({action:'saveRecord',sheet:'ケア管理_記録',id:String(currentId)+'_mn_'+mnMonth,data:mnData});
-  // 定期巡回データ
   const tkData={};
   [...TK_TEXT,...TK_CHECK].forEach(id=>{tkData[id]=d[id];});
   await gasReq({action:'saveRecord',sheet:'ケア管理_記録',id:String(currentId)+'_tk_'+tkMonth,data:tkData});
@@ -730,7 +723,7 @@ async function saveData(silent=false){
   renderList();
 }
 
-// ===== AI写真スキャン =====
+// ===== AI写真スキャン（iPad対応・画像圧縮版） =====
 async function scanCareplan(event){
   const file=event.target.files[0];
   if(!file) return;
@@ -739,18 +732,50 @@ async function scanCareplan(event){
   const preview=document.getElementById('ai-preview');
   const previewImg=document.getElementById('ai-preview-img');
   const status=document.getElementById('ai-status');
+  status.style.color='var(--muted)';
   preview.style.display='block';
-  // プレビュー表示
-  const reader=new FileReader();
-  reader.onload=async(e)=>{
-    previewImg.src=e.target.result;
-    const base64=e.target.result.split(',')[1];
-    const mediaType=file.type||'image/jpeg';
+
+  try{
+    // ① FileReaderで読み込み
+    const dataUrl = await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=e=>resolve(e.target.result);
+      reader.onerror=()=>reject(new Error('ファイルの読み込みに失敗しました'));
+      reader.readAsDataURL(file);
+    });
+
+    previewImg.src=dataUrl;
+
+    // ② Canvasで圧縮（iPadの写真は大きすぎるため長辺1280pxに縮小）
+    status.textContent='画像を最適化中...';
+    const base64Compressed = await new Promise((resolve,reject)=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1280;
+        let w=img.width, h=img.height;
+        if(w>MAX||h>MAX){
+          if(w>h){h=Math.round(h*MAX/w);w=MAX;}
+          else{w=Math.round(w*MAX/h);h=MAX;}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        const compressed=canvas.toDataURL('image/jpeg',0.75);
+        resolve(compressed.split(',')[1]);
+      };
+      img.onerror=()=>reject(new Error('画像の展開に失敗しました'));
+      img.src=dataUrl;
+    });
+
+    // ③ Gemini APIに送信（タイムアウト30秒）
     status.textContent='AIがケアプランを読み取り中...';
-    try{
-      const body={
-        contents:[{parts:[
-          {text:`このケアプランの画像から以下の情報を読み取ってJSON形式で返してください。読み取れない項目は空文字にしてください。
+    const controller=new AbortController();
+    const timeoutId=setTimeout(()=>controller.abort(),30000);
+
+    const body={
+      contents:[{parts:[
+        {text:`このケアプランの画像から以下の情報を読み取ってJSON形式で返してください。読み取れない項目は空文字にしてください。
 {
   "sv_plan": "ケアプランの目標・サービス内容",
   "sv_status": "利用者の現在の状況",
@@ -761,31 +786,71 @@ async function scanCareplan(event){
   "as_wish_family": "家族の意向・希望"
 }
 JSONのみ返してください。マークダウンのコードブロックは不要です。`},
-          {inline_data:{mime_type:mediaType,data:base64}}
-        ]}]
-      };
-      const res=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-      const data=await res.json();
-      const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
-      let parsed={};
-      try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim());}catch(e){}
-      let count=0;
-      Object.entries(parsed).forEach(([key,val])=>{
-        if(val){
-          const el=document.getElementById(key);
-          if(el){el.value=val;count++;}
-        }
+        {inline_data:{mime_type:'image/jpeg',data:base64Compressed}}
+      ]}]
+    };
+
+    let res;
+    try{
+      res=await fetch(GEMINI_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body),
+        signal:controller.signal
       });
-      status.textContent=count>0?`✓ ${count}項目を自動入力しました`:'読み取れる情報がありませんでした';
-      status.style.color=count>0?'#27ae60':'#e74c3c';
-    }catch(err){
-      status.textContent='読み取りエラーが発生しました';
+    }catch(fetchErr){
+      clearTimeout(timeoutId);
+      if(fetchErr.name==='AbortError'){
+        status.textContent='⚠️ タイムアウトしました（30秒）。通信環境を確認してください。';
+      }else{
+        status.textContent='⚠️ 通信エラー：インターネット接続を確認してください。';
+      }
       status.style.color='#e74c3c';
+      btn.disabled=false;btn.textContent='📷 写真を選択・撮影';
+      event.target.value='';
+      return;
     }
-    btn.disabled=false;btn.textContent='📷 写真を選択';
-    event.target.value='';
-  };
-  reader.readAsDataURL(file);
+    clearTimeout(timeoutId);
+
+    if(!res.ok){
+      let errMsg='APIエラー（コード：'+res.status+')';
+      try{const ej=await res.json();if(ej.error?.message)errMsg+='　'+ej.error.message;}catch(e){}
+      status.textContent='⚠️ '+errMsg;
+      status.style.color='#e74c3c';
+      btn.disabled=false;btn.textContent='📷 写真を選択・撮影';
+      event.target.value='';
+      return;
+    }
+
+    const data=await res.json();
+    const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
+    let parsed={};
+    try{
+      parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
+    }catch(e){
+      status.textContent='⚠️ 読み取り結果を解析できませんでした。もう一度試してください。';
+      status.style.color='#e74c3c';
+      btn.disabled=false;btn.textContent='📷 写真を選択・撮影';
+      event.target.value='';
+      return;
+    }
+
+    let count=0;
+    Object.entries(parsed).forEach(([key,val])=>{
+      if(val){const el=document.getElementById(key);if(el){el.value=val;count++;}}
+    });
+    status.textContent=count>0
+      ?`✓ ${count}項目を自動入力しました`
+      :'読み取れる情報がありませんでした（写真を明るく・真っすぐ撮り直してみてください）';
+    status.style.color=count>0?'#27ae60':'#e74c3c';
+
+  }catch(err){
+    status.textContent='⚠️ エラーが発生しました：'+err.message;
+    status.style.color='#e74c3c';
+  }
+
+  btn.disabled=false;btn.textContent='📷 写真を選択・撮影';
+  event.target.value='';
 }
 
 // ===== 写真ギャラリー（ローカル） =====
