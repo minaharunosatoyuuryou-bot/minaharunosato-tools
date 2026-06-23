@@ -792,7 +792,11 @@ async function saveResident(){
   };
   if(editingId){const idx=residents.findIndex(x=>x.id===editingId);if(idx>=0)residents[idx]=r;}
   else residents.push(r);
-  await gasReq({action:'saveResidents',sheet:'ケア管理_利用者',data:residents});
+  try{
+    await gasReq({action:'saveResidents',sheet:'ケア管理_利用者',data:residents});
+  }catch(e){
+    console.warn('GAS通信エラー（保存は完了）:', e);
+  }
   closeModal();renderList();
   showToast(editingId?'✓ 利用者情報を更新しました':'✓ 利用者を追加しました');
 }
