@@ -175,7 +175,13 @@ textarea{resize:vertical;min-height:60px}
   #pw-screen,.no-print{display:none!important}
   .app-hdr{position:static;background:#fff;color:#000;border-bottom:2px solid #000}
   .tabs{display:none}
-  .tab-panel{display:block!important;padding:0}
+  /* data-print-tab がないとき（通常印刷）は全タブ表示 */
+  body:not([data-print-tab]) .tab-panel{display:block!important;padding:0}
+  /* data-print-tab があるとき：全非表示→指定タブのみ表示 */
+  body[data-print-tab] .tab-panel{display:none!important}
+  body[data-print-tab="journal"] #tab-journal{display:block!important;padding:0}
+  body[data-print-tab="vitals"] #tab-vitals{display:block!important;padding:0}
+  body[data-print-tab="individual"] #tab-individual{display:block!important;padding:0}
   body{background:#fff;font-size:11px}
   .card,.ind-card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;margin-bottom:6px;padding:8px}
   .vtbl input,.vtbl select{border:none;background:transparent}
@@ -200,11 +206,7 @@ textarea{resize:vertical;min-height:60px}
   .saiken-box{border:1px solid #ccc;background:#fff}
   /* 保存バッジ非表示 */
   .save-badge{display:none}
-  /* 印刷対象タブ以外は非表示 */
-  [data-print-tab] .tab-panel { display:none !important; }
-  [data-print-tab="journal"] #tab-journal { display:block !important; }
-  [data-print-tab="vitals"] #tab-vitals { display:block !important; }
-  [data-print-tab="individual"] #tab-individual { display:block !important; }
+
 }
 </style>
 </head>
