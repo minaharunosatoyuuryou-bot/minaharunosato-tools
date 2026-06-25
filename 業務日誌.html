@@ -880,11 +880,11 @@ async function loadMaster(){
   renderUserSelChips();
   // GASからも読み込んでマージ（最新を優先）
   try{
-    const res = await gas({action:'getOne', sheet:'マスター', date:'master'});
-    if(res && res.data){
-      const d = res.data;
-      if(d.staff_list) { msStaff=d.staff_list.split('，').filter(Boolean); localStorage.setItem('dsj_ms_staff',JSON.stringify(msStaff)); }
-      if(d.user_list)  { msUsers=d.user_list.split('，').filter(Boolean);  localStorage.setItem('dsj_ms_users',JSON.stringify(msUsers)); }
+    const res = await gas({action:'getAll', sheet:'マスター'});
+    if(res && res.data && res.data.length){
+      const d = res.data.find(r=>r.date==='master') || res.data[0];
+      if(d && d.staff_list) { msStaff=d.staff_list.split('，').filter(Boolean); localStorage.setItem('dsj_ms_staff',JSON.stringify(msStaff)); }
+      if(d && d.user_list)  { msUsers=d.user_list.split('，').filter(Boolean);  localStorage.setItem('dsj_ms_users',JSON.stringify(msUsers)); }
       renderStaffSelChips();
       renderUserSelChips();
     }
