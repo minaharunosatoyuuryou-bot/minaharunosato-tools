@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -488,6 +489,16 @@ function checkPW(){
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
 
 async function gasReq(payload){
+  // saveResidents と saveRecord は POST で送信（データが大きいため）
+  if(payload.action==='saveResidents' || payload.action==='saveRecord'){
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  }
+  // それ以外はGET
   const url = GAS_URL + '?' + new URLSearchParams(
     Object.fromEntries(Object.entries(payload).map(([k,v])=>[k,typeof v==='object'?JSON.stringify(v):v]))
   ).toString();
