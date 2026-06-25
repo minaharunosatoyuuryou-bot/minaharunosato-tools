@@ -732,6 +732,7 @@ function addStaff(){
 function removeStaff(sid){D.staff=D.staff.filter(s=>s.sid!==sid);saveLocal();renderStaff();updateStats();}
 function renderStaff(){
   const el=document.getElementById('staff-list');
+  if(!el) return;
   if(!D.staff.length){el.innerHTML='<span style="font-size:13px;color:var(--txs)">職員が登録されていません</span>';
     document.getElementById('j-scount').value=0;return;}
   el.innerHTML=D.staff.map(s=>`<div class="staff-tag"><span>${s.name}</span><button onclick="removeStaff('${s.sid}')" title="削除">×</button></div>`).join('');
@@ -751,6 +752,7 @@ function removeUser(uid){
 }
 function renderUsers(){
   const el=document.getElementById('user-list');
+  if(!el) return;
   if(!D.users.length){el.innerHTML='<p style="font-size:13px;color:var(--txs)">登録されていません</p>';
     document.getElementById('j-ucount').value=0;return;}
   el.innerHTML=D.users.map((u,i)=>`<div class="user-item"><span class="user-num">${i+1}</span><span style="flex:1;font-weight:600">${u.name}</span><button class="btn btn-sm btn-red" onclick="removeUser('${u.uid}')">削除</button></div>`).join('');
@@ -865,7 +867,6 @@ function init(){
   const today=new Date();
   setDateStr(today);
   loadLocal();
-  renderStaff(); renderUsers();
   buildChips('am',[]); buildChips('pm',[]);
   loadFromGAS();
 }
