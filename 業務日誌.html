@@ -176,9 +176,30 @@ textarea{resize:vertical;min-height:60px}
   .app-hdr{position:static;background:#fff;color:#000;border-bottom:2px solid #000}
   .tabs{display:none}
   .tab-panel{display:block!important;padding:0}
-  body{background:#fff}
-  .card,.ind-card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  body{background:#fff;font-size:11px}
+  .card,.ind-card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;margin-bottom:6px;padding:8px}
   .vtbl input,.vtbl select{border:none;background:transparent}
+  /* 選択されていないチップは印刷しない */
+  .chip:not(.on){display:none!important}
+  .mchip:not(.on){display:none!important}
+  /* 選択済みチップをテキスト表示 */
+  .chip.on,.mchip.on{background:#fff!important;color:#000!important;border:1px solid #000!important;font-weight:700}
+  /* 統計バーは印刷する */
+  .stat-bar{border:1px solid #ccc;background:#fff}
+  .si .sv{font-size:16px}
+  /* バイタル表を印刷用に調整 */
+  .vwrap{overflow:visible}
+  .vtbl{min-width:unset;font-size:9px}
+  .vtbl th{font-size:9px;padding:4px 2px}
+  .vtbl td{padding:3px 2px}
+  /* 選択されていない利用者行は非表示 */
+  .arow .btn{display:none}
+  /* 入力フォームの枠を消す */
+  .fg input,.fg select,.fg textarea{border:none;padding:0;background:transparent}
+  /* 再検バイタルボックス */
+  .saiken-box{border:1px solid #ccc;background:#fff}
+  /* 保存バッジ非表示 */
+  .save-badge{display:none}
 }
 </style>
 </head>
@@ -233,7 +254,7 @@ function checkPW(){
 <div class="tab-panel active" id="tab-journal">
   <div class="arow">
     <button class="btn btn-pri" onclick="saveToGAS()">💾 保存</button>
-    <button class="btn btn-out" onclick="window.print()">🖨️ 印刷</button>
+    <button class="btn btn-out" onclick="printTab('journal')">🖨️ 印刷</button>
     <span class="save-badge unsaved" id="save-badge">未保存</span>
   </div>
   <div class="stat-bar">
@@ -296,7 +317,7 @@ function checkPW(){
 <div class="tab-panel" id="tab-vitals">
   <div class="arow">
     <button class="btn btn-pri" onclick="saveToGAS()">💾 保存</button>
-    <button class="btn btn-out" onclick="window.print()">🖨️ 印刷</button>
+    <button class="btn btn-out" onclick="printTab('vitals')">🖨️ 印刷</button>
     <button class="btn btn-out btn-sm" onclick="clearVitals()">🔄 リセット</button>
   </div>
   <div class="card">
@@ -333,7 +354,7 @@ function checkPW(){
 <div class="tab-panel" id="tab-individual">
   <div class="arow">
     <button class="btn btn-pri" onclick="saveToGAS()">💾 保存</button>
-    <button class="btn btn-out" onclick="window.print()">🖨️ 印刷</button>
+    <button class="btn btn-out" onclick="printTab('individual')">🖨️ 印刷</button>
   </div>
   <div id="ind-area"><div class="card" style="color:var(--txs);font-size:13px">「職員・利用者」タブで利用者を登録してください。</div></div>
 </div>
@@ -957,6 +978,24 @@ function applyUserSelection(){
 }
 
 // ===================== 起動 =====================
+
+// ===================== タブ別印刷 =====================
+function printTab(tabName){
+  // 一時的に対象タブだけ表示して印刷
+  const panels = document.querySelectorAll('.tab-panel');
+  const prevDisplay = [];
+  panels.forEach(p => {
+    prevDisplay.push(p.style.display);
+    p.style.display = 'none';
+  });
+  document.getElementById('tab-'+tabName).style.display = 'block';
+  window.print();
+  // 印刷後に元に戻す
+  panels.forEach((p,i) => { p.style.display = prevDisplay[i]; });
+  document.getElementById('tab-'+tabName).style.display = '';
+  // アクティブタブを再表示
+  document.querySelector('.tab-panel.active').style.display = 'block';
+}
 // ===== 起動 =====
 initAll();
 </script>
