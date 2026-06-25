@@ -457,11 +457,22 @@ let historyCache = []; // 月履歴キャッシュ
 let selectedHistDate = null;
 
 async function gas(params){
-  const url = GAS_URL+'?'+new URLSearchParams(params).toString();
   const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), 10000);
+  const timer = setTimeout(()=>controller.abort(), 15000);
   try{
-    const res = await fetch(url, {signal: controller.signal});
+    // dataが大きい場合はPOSTで送る
+    const qs = new URLSearchParams(params).toString();
+    let res;
+    if(qs.length > 2000){
+      res = await fetch(GAS_URL, {
+        method:'POST',
+        signal: controller.signal,
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body: qs
+      });
+    } else {
+      res = await fetch(GAS_URL+'?'+qs, {signal: controller.signal});
+    }
     clearTimeout(timer);
     return res.json();
   } catch(e) {
