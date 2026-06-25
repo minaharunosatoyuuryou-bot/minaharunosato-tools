@@ -730,14 +730,7 @@ function addStaff(){
   saveLocal(); renderStaff(); updateStats(); showToast('👥 '+n+' を追加');
 }
 function removeStaff(sid){D.staff=D.staff.filter(s=>s.sid!==sid);saveLocal();renderStaff();updateStats();}
-function renderStaff(){
-  const el=document.getElementById('staff-list');
-  if(!el) return;
-  if(!D.staff.length){el.innerHTML='<span style="font-size:13px;color:var(--txs)">職員が登録されていません</span>';
-    document.getElementById('j-scount').value=0;return;}
-  el.innerHTML=D.staff.map(s=>`<div class="staff-tag"><span>${s.name}</span><button onclick="removeStaff('${s.sid}')" title="削除">×</button></div>`).join('');
-  document.getElementById('j-scount').value=D.staff.length;
-}
+function renderStaff(){ const el=document.getElementById('staff-list'); if(!el) return; }
 function addUser(){
   const n=document.getElementById('new-user').value.trim();if(!n)return;
   D.users.push({uid:'u'+Date.now(),name:n});
@@ -750,14 +743,7 @@ function removeUser(uid){
   delete D.vitals[uid];delete D.individual[uid];
   saveLocal(); renderUsers(); renderVitalTable(); renderIndividual(); updateStats();
 }
-function renderUsers(){
-  const el=document.getElementById('user-list');
-  if(!el) return;
-  if(!D.users.length){el.innerHTML='<p style="font-size:13px;color:var(--txs)">登録されていません</p>';
-    document.getElementById('j-ucount').value=0;return;}
-  el.innerHTML=D.users.map((u,i)=>`<div class="user-item"><span class="user-num">${i+1}</span><span style="flex:1;font-weight:600">${u.name}</span><button class="btn btn-sm btn-red" onclick="removeUser('${u.uid}')">削除</button></div>`).join('');
-  document.getElementById('j-ucount').value=D.users.length;
-}
+function renderUsers(){ const el=document.getElementById('user-list'); if(!el) return; }
 function saveLocal(){localStorage.setItem('dsj_users',JSON.stringify({users:D.users,staff:D.staff}));}
 function loadSampleStaff(){['田中 美咲','鈴木 健太','山本 京子','佐々木 隆'].forEach(n=>{if(!D.staff.find(s=>s.name===n))D.staff.push({sid:'s'+Date.now()+Math.random(),name:n});});saveLocal();renderStaff();updateStats();showToast('サンプル職員を追加');}
 function loadSampleUsers(){['山田 花子','鈴木 一郎','田中 幸子','佐藤 義雄','伊藤 みよ','中村 清'].forEach(n=>{if(!D.users.find(u=>u.name===n))D.users.push({uid:'u'+Date.now()+Math.random(),name:n});});saveLocal();renderUsers();renderVitalTable();renderIndividual();updateStats();showToast('サンプル利用者を追加');}
