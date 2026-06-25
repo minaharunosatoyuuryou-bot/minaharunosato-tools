@@ -489,21 +489,22 @@ function checkPW(){
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
 
 async function gasReq(payload){
-  // saveResidents と saveRecord は POST で送信（データが大きいため）
-  if(payload.action==='saveResidents' || payload.action==='saveRecord'){
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
-    });
-    return res.json();
-  }
-  // それ以外はGET
   const url = GAS_URL + '?' + new URLSearchParams(
     Object.fromEntries(Object.entries(payload).map(([k,v])=>[k,typeof v==='object'?JSON.stringify(v):v]))
   ).toString();
   const res = await fetch(url);
   return res.json();
+}
+
+// 利用者リストを1人ずつ保存（URLの長さ制限を回避）
+async function saveResidentsSplit(sheetName, data){
+  // まずシートをクリア
+  await gasReq({action:'clearResidents', sheet:sheetName});
+  // 1人ずつ保存
+  for(const r of data){
+    await gasReq({action:'saveOneResident', sheet:sheetName, data:r});
+  }
+  return {status:'ok'};
 }
 
 let residents=[], discharged=[], currentId=null, editingId=null, currentSideTab='active', currentDocTab='assess';
@@ -804,7 +805,7 @@ async function saveResident(){
   if(editingId){const idx=residents.findIndex(x=>x.id===editingId);if(idx>=0)residents[idx]=r;}
   else residents.push(r);
   try{
-    await gasReq({action:'saveResidents',sheet:'ケア管理_利用者',data:residents});
+    await saveResidentsSplit('ケア管理_利用者', residents);
   }catch(e){
     console.warn('GAS通信エラー（保存は完了）:', e);
   }
@@ -818,7 +819,7 @@ async function deleteResident(){
   if(!confirm(`「${r?.name}」を削除しますか？`)) return;
   residents=residents.filter(x=>x.id!==editingId);
   try{
-    await gasReq({action:'saveResidents',sheet:'ケア管理_利用者',data:residents});
+    await saveResidentsSplit('ケア管理_利用者', residents);
   }catch(e){
     console.warn('GAS通信エラー（削除は完了）:', e);
   }
