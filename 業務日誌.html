@@ -226,7 +226,6 @@ function checkPW(){
   <button class="tab-btn" onclick="switchTab('vitals',this)">❤️ バイタル一覧</button>
   <button class="tab-btn" onclick="switchTab('individual',this)">👤 個別記録</button>
   <button class="tab-btn" onclick="switchTab('history',this)">📅 履歴</button>
-  <button class="tab-btn" onclick="switchTab('staff',this)">👥 職員・利用者</button>
   <button class="tab-btn" onclick="switchTab('master',this)">⚙️ マスター</button>
 </div>
 
@@ -410,33 +409,6 @@ function checkPW(){
   </div>
 </div>
 
-<!-- ========== 職員・利用者 ========== -->
-<div class="tab-panel" id="tab-staff">
-  <div class="card">
-    <div class="card-title">本日の出勤職員</div>
-    <div class="add-bar">
-      <input type="text" id="new-staff" placeholder="職員名（例: 田中 美咲）">
-      <button class="btn btn-pri btn-sm" onclick="addStaff()">＋ 追加</button>
-    </div>
-    <div class="staff-list" id="staff-list"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">利用者登録</div>
-    <div class="add-bar">
-      <input type="text" id="new-user" placeholder="利用者氏名（例: 山田 花子）">
-      <button class="btn btn-acc btn-sm" onclick="addUser()">＋ 追加</button>
-    </div>
-    <div id="user-list"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">サンプルデータ</div>
-    <div class="arow">
-      <button class="btn btn-out btn-sm" onclick="loadSampleUsers()">👤 サンプル利用者</button>
-      <button class="btn btn-out btn-sm" onclick="loadSampleStaff()">👥 サンプル職員</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -519,7 +491,7 @@ function buildPayload(){
     atm: val('j-atm'),
     family: val('j-family'), cm: val('j-cm'),
     handover: val('j-handover'), incident: val('j-incident'),
-    staff_names: D.staff.map(s=>s.name).join('、'),
+    staff_names: getSelStaff().join('、'),
     staff_sel: getSelStaff().join('、'),
     users_sel: getSelUsers().join('、'),
     vitals: JSON.stringify(D.vitals),
@@ -832,10 +804,12 @@ function renderIndividual(){
 
 // ===================== 統計・UI =====================
 function updateStats(){
-  document.getElementById('st-u').textContent=D.users.length;
-  document.getElementById('st-s').textContent=D.staff.length;
-  document.getElementById('j-ucount').value=D.users.length;
-  document.getElementById('j-scount').value=D.staff.length;
+  const staffCount=getSelStaff().length||msStaff.length;
+  const userCount=D.users.length||msUsers.length;
+  document.getElementById('st-u').textContent=userCount;
+  document.getElementById('st-s').textContent=staffCount;
+  document.getElementById('j-ucount').value=userCount;
+  document.getElementById('j-scount').value=staffCount;
   const bath=Object.values(D.vitals).filter(v=>v.nyuyoku).length;
   document.getElementById('st-b').textContent=bath;
   const inc=document.getElementById('j-incident');
