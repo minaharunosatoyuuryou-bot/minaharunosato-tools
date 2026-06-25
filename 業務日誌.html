@@ -852,6 +852,8 @@ function switchTab(name,btn){
   btn.classList.add('active');
   if(name==='history') initHistYearSelect();
   if(name==='master'){ renderMsStaffList(); renderMsUserList(); }
+  if(name==='journal'){ renderStaffSelChips(); }
+  if(name==='vitals'){ renderUserSelChips(); }
 }
 function val(id){const el=document.getElementById(id);return el?el.value:'';}
 function setVal(id,v){const el=document.getElementById(id);if(el&&v!=null)el.value=v;}
@@ -871,6 +873,10 @@ function init(){
   renderStaff(); renderUsers();
   buildChips('am',[]); buildChips('pm',[]);
   loadFromGAS();
+}
+function initAll(){
+  loadMaster();
+  init();
 }
 
 
@@ -978,8 +984,7 @@ function applyUserSelection(){
 
 // ===================== 起動 =====================
 // ===== 起動 =====
-loadMaster();
-init();
+initAll();
 </script>
 </body>
 </html>
