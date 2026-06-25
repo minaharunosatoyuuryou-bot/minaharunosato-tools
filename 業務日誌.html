@@ -872,8 +872,7 @@ function init(){
   buildChips('am',[]); buildChips('pm',[]);
   loadFromGAS();
 }
-loadMaster();
-init();
+
 
 // ===================== マスター管理 =====================
 
@@ -977,6 +976,9 @@ function applyUserSelection(){
   showToast('✅ 利用者を反映しました');
 }
 
+// ===================== 起動 =====================
+loadMaster();
+init();
 </script>
 </body>
 </html>
