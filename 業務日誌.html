@@ -264,12 +264,12 @@ function checkPW(){
   </div>
 
   <div class="card">
-    <div class="card-title">午前の活動・レク</div>
+    <div class="card-title">午前の活動・レク <span style="font-size:11px;font-weight:400;color:var(--txs)">※全利用者に共通反映</span></div>
     <div class="chips" id="chips-am"></div>
     <div class="fg"><label>補足</label><textarea id="j-am-free" placeholder="補足を入力"></textarea></div>
   </div>
   <div class="card">
-    <div class="card-title">午後の活動・レク</div>
+    <div class="card-title">午後の活動・レク <span style="font-size:11px;font-weight:400;color:var(--txs)">※全利用者に共通反映</span></div>
     <div class="chips" id="chips-pm"></div>
     <div class="fg"><label>補足</label><textarea id="j-pm-free" placeholder="補足を入力"></textarea></div>
   </div>
@@ -319,7 +319,6 @@ function checkPW(){
             <th style="background:var(--gold)">再検<br>血圧</th>
             <th style="background:var(--gold)">再検<br>脈拍</th>
             <th>入浴</th><th>体操AM</th><th>体操PM</th>
-            <th class="mc">主食</th><th class="mc">副食</th>
             <th>内服薬</th><th>外用薬</th><th>排便</th>
             <th class="ntd">様子・特記</th><th>記入者</th>
           </tr>
@@ -446,11 +445,11 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLo
 const ACTIVITIES=['機能訓練','レクリエーション','カラオケ','パズル','ジェンガ','すごろく','オセロゲーム','トランプ','人生ゲーム','クロスワード','水彩画','ぬり絵','計算','漢字','間違い探し','点つなぎ','手工芸','脳トレ','おやつ作り','体操','散歩','音楽鑑賞'];
 const AM_ACT=['ラジオ体操','脳トレ','手芸・工作','音楽療法','書道・習字','読み聞かせ','折り紙','回想法','口腔体操','リハビリ体操','機能訓練','散歩'];
 const PM_ACT=['カラオケ','ぬり絵・水彩画','映画鑑賞','ゲーム大会','園芸','おやつ作り','体操','手工芸','音楽鑑賞','創作活動','クイズ','将棋・囲碁'];
-const MEAL_O=['','10割','9割','8割','7割','6割','5割','4割','3割','2割','1割','0割'];
 const PARTI_O=['','参加','一部参加','不参加','体調不良'];
 
 // ===================== データ =====================
 let D={journal:{},users:[],staff:[],vitals:{},individual:{}};
+let msStaff=[], msUsers=[];
 let currentDate = new Date();
 let historyCache = []; // 月履歴キャッシュ
 let selectedHistDate = null;
@@ -566,21 +565,17 @@ function collectFormToD(){
       taion:ins[3].value,ketsuatsu:ins[4].value,myaku:ins[5].value,
       r_taion:ins[6].value,r_ketsu:ins[7].value,r_myaku:ins[8].value,
       nyuyoku:ins[9].checked,taiso_am:ins[10].checked,taiso_pm:ins[11].checked,
-      shokuji_main:ins[12].value,shokuji_sub:ins[13].value,
-      naifuku:ins[14].value,gaiyou:ins[15].value,haiben:ins[16].value,
-      yousu:ins[17].value,writer:ins[18].value};
+      naifuku:ins[12].value,gaiyou:ins[13].value,haiben:ins[14].value,
+      yousu:ins[15].value,writer:ins[16].value};
   });
   // 個別
   document.querySelectorAll('.ind-card[data-uid]').forEach(card=>{
     const uid=card.dataset.uid;
-    const chips=Array.from(card.querySelectorAll('.i-chip.on')).map(c=>c.textContent);
-    const other=card.querySelector('.i-other');
     D.individual[uid]={
       am_parti:card.querySelector('.i-am-parti')?.value||'',
       pm_parti:card.querySelector('.i-pm-parti')?.value||'',
       cond:card.querySelector('.i-cond')?.value||'',
       note:card.querySelector('.i-note')?.value||'',
-      activity:chips.join('・')+(other?.value?'・'+other.value:''),
       writer:card.querySelector('.i-writer')?.value||'',
       r_taion:card.querySelector('.i-r-taion')?.value||'',
       r_ketsu:card.querySelector('.i-r-ketsu')?.value||'',
@@ -769,8 +764,6 @@ function renderVitalTable(){
   if(!D.users.length){tbody.innerHTML='<tr><td colspan="20" style="text-align:center;padding:16px;color:var(--txs)">利用者を登録してください</td></tr>';return;}
   tbody.innerHTML=D.users.map(u=>{
     const v=D.vitals[u.uid]||{};
-    const mO=MEAL_O.map(o=>`<option${v.shokuji_main===o?' selected':''}>${o}</option>`).join('');
-    const msO=MEAL_O.map(o=>`<option${v.shokuji_sub===o?' selected':''}>${o}</option>`).join('');
     return `<tr data-uid="${u.uid}">
       <td class="nc">${u.name}</td>
       <td><input type="text" value="${v.jikan_s||''}" placeholder="9:00" style="width:46px"></td>
@@ -785,8 +778,6 @@ function renderVitalTable(){
       <td><input type="checkbox" ${v.nyuyoku?'checked':''} style="width:18px;height:18px;accent-color:var(--pri)"></td>
       <td><input type="checkbox" ${v.taiso_am?'checked':''} style="width:18px;height:18px;accent-color:var(--pri)"></td>
       <td><input type="checkbox" ${v.taiso_pm?'checked':''} style="width:18px;height:18px;accent-color:var(--pri)"></td>
-      <td class="mc"><select>${mO}</select></td>
-      <td class="mc"><select>${msO}</select></td>
       <td><input type="text" value="${v.naifuku||''}" placeholder="服薬確認済等"></td>
       <td><input type="text" value="${v.gaiyou||''}" placeholder="軟膏塗布等"></td>
       <td><input type="text" value="${v.haiben||''}" placeholder="AM等"></td>
@@ -804,11 +795,8 @@ function renderIndividual(){
   if(!D.users.length){el.innerHTML='<div class="card" style="color:var(--txs);font-size:13px">利用者を登録してください。</div>';return;}
   el.innerHTML=D.users.map(u=>{
     const iv=D.individual[u.uid]||{};
-    const actArr=iv.activity?iv.activity.split('・'):[];
     const amOpts=PARTI_O.map(o=>`<option${iv.am_parti===o?' selected':''}>${o}</option>`).join('');
     const pmOpts=PARTI_O.map(o=>`<option${iv.pm_parti===o?' selected':''}>${o}</option>`).join('');
-    const chips=ACTIVITIES.map(a=>`<span class="chip i-chip${actArr.includes(a)?' on':''}" onclick="this.classList.toggle('on')">${a}</span>`).join('');
-    const otherVal=actArr.filter(a=>!ACTIVITIES.includes(a)).join('・');
     return `<div class="ind-card" data-uid="${u.uid}">
       <div class="ind-hdr">👤 ${u.name}</div>
       <div class="frow">
@@ -817,10 +805,7 @@ function renderIndividual(){
         <div class="fg" style="min-width:140px"><label>体調・様子</label><input type="text" class="i-cond" value="${iv.cond||''}" placeholder="例: 終日穏やか"></div>
         <div class="fg" style="min-width:90px"><label>記入者</label><input type="text" class="i-writer" value="${iv.writer||''}" placeholder="氏名"></div>
       </div>
-      <div class="fg" style="margin-bottom:8px"><label>アクティビティ</label>
-        <div class="chips" style="margin-top:4px">${chips}</div>
-        <input type="text" class="i-other" value="${otherVal}" placeholder="その他（自由入力）" style="margin-top:4px">
-      </div>
+
       <div class="fg" style="margin-bottom:8px"><label>個別特記事項</label>
         <textarea class="i-note" placeholder="様子・家族連絡等">${iv.note||''}</textarea>
       </div>
@@ -882,7 +867,6 @@ init();
 loadMaster();
 
 // ===================== マスター管理 =====================
-let msStaff=[], msUsers=[];
 
 function loadMaster(){
   try{msStaff=JSON.parse(localStorage.getItem('dsj_ms_staff')||'[]');}catch(e){msStaff=[];}
