@@ -200,6 +200,11 @@ textarea{resize:vertical;min-height:60px}
   .saiken-box{border:1px solid #ccc;background:#fff}
   /* 保存バッジ非表示 */
   .save-badge{display:none}
+  /* 印刷対象タブ以外は非表示 */
+  [data-print-tab] .tab-panel { display:none !important; }
+  [data-print-tab="journal"] #tab-journal { display:block !important; }
+  [data-print-tab="vitals"] #tab-vitals { display:block !important; }
+  [data-print-tab="individual"] #tab-individual { display:block !important; }
 }
 </style>
 </head>
@@ -968,20 +973,10 @@ function applyUserSelection(){
 
 // ===================== タブ別印刷 =====================
 function printTab(tabName){
-  // 一時的に対象タブだけ表示して印刷
-  const panels = document.querySelectorAll('.tab-panel');
-  const prevDisplay = [];
-  panels.forEach(p => {
-    prevDisplay.push(p.style.display);
-    p.style.display = 'none';
-  });
-  document.getElementById('tab-'+tabName).style.display = 'block';
+  // body に印刷対象タブ名をセット → CSSで制御
+  document.body.setAttribute('data-print-tab', tabName);
   window.print();
-  // 印刷後に元に戻す
-  panels.forEach((p,i) => { p.style.display = prevDisplay[i]; });
-  document.getElementById('tab-'+tabName).style.display = '';
-  // アクティブタブを再表示
-  document.querySelector('.tab-panel.active').style.display = 'block';
+  document.body.removeAttribute('data-print-tab');
 }
 // ===== 起動 =====
 initAll();
