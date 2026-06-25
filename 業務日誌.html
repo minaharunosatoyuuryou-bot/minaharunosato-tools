@@ -864,23 +864,41 @@ function init(){
   buildChips('am',[]); buildChips('pm',[]);
   loadFromGAS();
 }
-function initAll(){
-  loadMaster();
+async function initAll(){
+  await loadMaster();
   init();
 }
 
 
 // ===================== マスター管理 =====================
 
-function loadMaster(){
+async function loadMaster(){
+  // まずlocalStorageから読み込む（即時表示）
   try{msStaff=JSON.parse(localStorage.getItem('dsj_ms_staff')||'[]');}catch(e){msStaff=[];}
   try{msUsers=JSON.parse(localStorage.getItem('dsj_ms_users')||'[]');}catch(e){msUsers=[];}
   renderStaffSelChips();
   renderUserSelChips();
+  // GASからも読み込んでマージ（最新を優先）
+  try{
+    const res = await gas({action:'getOne', sheet:'マスター', date:'master'});
+    if(res && res.data){
+      const d = res.data;
+      if(d.staff_list) { msStaff=d.staff_list.split('，').filter(Boolean); localStorage.setItem('dsj_ms_staff',JSON.stringify(msStaff)); }
+      if(d.user_list)  { msUsers=d.user_list.split('，').filter(Boolean);  localStorage.setItem('dsj_ms_users',JSON.stringify(msUsers)); }
+      renderStaffSelChips();
+      renderUserSelChips();
+    }
+  }catch(e){ /* オフラインでも動く */ }
 }
 
-function saveMsStaff(){localStorage.setItem('dsj_ms_staff',JSON.stringify(msStaff));}
-function saveMsUsers(){localStorage.setItem('dsj_ms_users',JSON.stringify(msUsers));}
+function saveMsStaff(){
+  localStorage.setItem('dsj_ms_staff',JSON.stringify(msStaff));
+  saveMasterToGAS();
+}
+function saveMsUsers(){
+  localStorage.setItem('dsj_ms_users',JSON.stringify(msUsers));
+  saveMasterToGAS();
+}
 
 function addMsStaff(){
   const n=document.getElementById('ms-staff-input').value.trim();
@@ -973,6 +991,17 @@ function applyUserSelection(){
 }
 
 
+
+async function saveMasterToGAS(){
+  try{
+    const payload = {
+      date: 'master',
+      staff_list: msStaff.join('，'),
+      user_list: msUsers.join('，')
+    };
+    await gas({action:'save', sheet:'マスター', data:JSON.stringify(payload)});
+  }catch(e){ /* エラーは無視（ローカルには保存済） */ }
+}
 // ===================== 履歴削除 =====================
 async function deleteHistRecord(){
   if(!selectedHistDate) return;
