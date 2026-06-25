@@ -214,6 +214,7 @@ function checkPW(){
 
 <header class="app-hdr no-print">
   <h1>🏥 デイサービス 業務日誌</h1>
+  <span class="hdate" id="hdate"></span>
   <div class="date-nav">
     <button onclick="changeDate(-1)">◀</button>
     <input type="date" id="main-date" onchange="onDateChange()">
@@ -456,8 +457,16 @@ let selectedHistDate = null;
 
 async function gas(params){
   const url = GAS_URL+'?'+new URLSearchParams(params).toString();
-  const res = await fetch(url);
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 10000);
+  try{
+    const res = await fetch(url, {signal: controller.signal});
+    clearTimeout(timer);
+    return res.json();
+  } catch(e) {
+    clearTimeout(timer);
+    throw new Error('接続タイムアウトまたはネットワークエラー');
+  }
 }
 
 // ===================== 日付管理 =====================
@@ -525,15 +534,15 @@ async function loadFromGAS(){
   const date = getDateStr();
   try{
     const res = await gas({action:'getOne', sheet:'業務日誌', date});
-    if(res.data){
+    if(res && res.data){
       fillFormFromGAS(res.data);
       setSaveBadge('saved','保存済 ✓');
     } else {
       setSaveBadge('unsaved','新規（未保存）');
     }
   }catch(e){
-    setSaveBadge('unsaved','読込エラー');
-    showToast('読込エラー',true);
+    setSaveBadge('unsaved','オフライン');
+    showToast('GAS接続エラー（オフラインで入力可能）',true);
   }
   renderVitalTable(); renderIndividual(); updateStats();
 }
@@ -863,8 +872,8 @@ function init(){
   buildChips('am',[]); buildChips('pm',[]);
   loadFromGAS();
 }
-init();
 loadMaster();
+init();
 
 // ===================== マスター管理 =====================
 
