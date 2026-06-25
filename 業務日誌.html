@@ -409,6 +409,7 @@ function checkPW(){
         <span class="hist-date-badge" id="hist-detail-date"></span>
         <div style="display:flex;gap:7px">
           <button class="btn btn-grn btn-sm" onclick="loadDateToForm()">📝 この日を編集</button>
+          <button class="btn btn-red btn-sm" onclick="deleteHistRecord()">🗑️ 削除</button>
           <button class="btn btn-out btn-sm" onclick="document.getElementById('hist-detail-panel').style.display='none'">✕ 閉じる</button>
         </div>
       </div>
@@ -971,6 +972,21 @@ function applyUserSelection(){
   showToast('✅ 利用者を反映しました');
 }
 
+
+// ===================== 履歴削除 =====================
+async function deleteHistRecord(){
+  if(!selectedHistDate) return;
+  if(!confirm(fmtJP(selectedHistDate)+'\nこの日の記録を削除しますか？')) return;
+  try{
+    await gas({action:'delete', sheet:'業務日誌', date:selectedHistDate});
+    showToast('🗑️ 削除しました');
+    document.getElementById('hist-detail-panel').style.display='none';
+    selectedHistDate=null;
+    await loadHistoryMonth();
+  }catch(e){
+    showToast('削除エラー: '+e.message, true);
+  }
+}
 // ===================== 起動 =====================
 
 // ===================== タブ別印刷 =====================
