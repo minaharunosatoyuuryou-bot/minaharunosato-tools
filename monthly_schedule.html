@@ -267,7 +267,7 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">所属</th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">職種</th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">資格</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">入職</th>
+          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">入職日</th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">勤務形態</th><th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">勤務形態</th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">状態</th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">表示</th>
@@ -985,13 +985,31 @@ function buildSettings(){
       const rowBg=st.retired?'#f5f5f5':st.active===false?'#fff3f3':'#fff';
       tr.style.background=rowBg;
       const nameStyle=st.retired?'color:#999;text-decoration:line-through':'font-weight:bold';
-      const curForm=settings.staffForm&&settings.staffForm[s.id]?settings.staffForm[s.id]:(s.form||'常');
+            const curForm=settings.staffForm&&settings.staffForm[s.id]?settings.staffForm[s.id]:(s.form||'常');
+      const curQual=settings.staffQual&&settings.staffQual[s.id]?settings.staffQual[s.id]:(s.qual||'');
+      const curRole=settings.staffRole&&settings.staffRole[s.id]?settings.staffRole[s.id]:(s.role||'');
+      const curHire=settings.staffHire&&settings.staffHire[s.id]?settings.staffHire[s.id]:(s.hire||'');
+      const ROLE_OPTS=['管理者','デイ管理者','有料管理者','定巡管理者','オペレーター','生活相談員','相談員','介護福祉士','介護','介護補助','看護師','准看護師','機能訓練指導員','訪問看護師','訪問介護員','事務','調理','その他'];
+      const QUAL_OPTS=['介護福祉士','実務者研修修了','初任者研修修了','介護士','看護師','准看護師','社会福祉士','精神保健福祉士','理学療法士','作業療法士','言語聴覚士','管理栄養士','調理師','（なし）'];
       tr.innerHTML=`
         <td style="padding:4px 8px;border:1px solid #eee;font-size:11px;${nameStyle}">${s.conc&&s.conc.length>1?'★':''}${s.name}</td>
         <td style="padding:4px 8px;border:1px solid #eee;font-size:10px;text-align:center;color:${SVC_CLR[s.svc]}">${SVC_LBL[s.svc]}</td>
-        <td style="padding:4px 8px;border:1px solid #eee;font-size:10px">${s.role}</td>
-        <td style="padding:4px 8px;border:1px solid #eee;font-size:10px;text-align:center">${s.hire||''}</td>
-        <td style="padding:4px 8px;border:1px solid #eee;text-align:center">
+        <td style="padding:3px 6px;border:1px solid #eee">
+          <select onchange="updateStaffRole('${s.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid #ccc;border-radius:3px;max-width:110px">
+            ${ROLE_OPTS.map(r=>`<option value="${r}" ${curRole===r?'selected':''}>${r}</option>`).join('')}
+            <option value="${curRole}" ${!ROLE_OPTS.includes(curRole)?'selected':''}>${curRole||'その他'}</option>
+          </select>
+        </td>
+        <td style="padding:3px 6px;border:1px solid #eee">
+          <select onchange="updateStaffQual('${s.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid #ccc;border-radius:3px;max-width:120px">
+            ${QUAL_OPTS.map(q=>`<option value="${q}" ${curQual===q?'selected':''}>${q}</option>`).join('')}
+          </select>
+        </td>
+        <td style="padding:3px 6px;border:1px solid #eee;text-align:center">
+          <input type="text" value="${curHire}" placeholder="例：R8.4" style="width:70px;padding:3px;font-size:10px;border:1px solid #ccc;border-radius:3px;text-align:center"
+            onchange="updateStaffHire('${s.id}',this.value)">
+        </td>
+        <td style="padding:3px 6px;border:1px solid #eee;text-align:center">
           <select onchange="updateStaffForm('${s.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid #ccc;border-radius:3px">
             ${['常','非','パート','嘱託','派遣'].map(f=>`<option value="${f}" ${curForm===f?'selected':''}>${f}</option>`).join('')}
           </select>
@@ -1096,6 +1114,14 @@ function addShiftRow(){
   buildShiftEditTable();
 }
 
+function updateStaffRole(id,role){
+  if(!settings.staffRole)settings.staffRole={};
+  settings.staffRole[id]=role;
+}
+function updateStaffHire(id,hire){
+  if(!settings.staffHire)settings.staffHire={};
+  settings.staffHire[id]=hire;
+}
 function updateStaffQual(id,qual){
   if(!settings.staffQual)settings.staffQual={};
   settings.staffQual[id]=qual;
@@ -1166,6 +1192,14 @@ function addShiftRow(){
   buildShiftEditTable();
 }
 
+function updateStaffRole(id,role){
+  if(!settings.staffRole)settings.staffRole={};
+  settings.staffRole[id]=role;
+}
+function updateStaffHire(id,hire){
+  if(!settings.staffHire)settings.staffHire={};
+  settings.staffHire[id]=hire;
+}
 function updateStaffQual(id,qual){
   if(!settings.staffQual)settings.staffQual={};
   settings.staffQual[id]=qual;
@@ -1248,6 +1282,14 @@ function addShiftRow(){
   if(!settings.customShifts)settings.customShifts=SHIFTS.map(s=>({...s}));
   settings.customShifts.push({k:'新',label:'新しい区分',h:8,c:'#E0E0E0',t:'#333333'});
   buildSettings();
+}
+function updateStaffRole(id,role){
+  if(!settings.staffRole)settings.staffRole={};
+  settings.staffRole[id]=role;
+}
+function updateStaffHire(id,hire){
+  if(!settings.staffHire)settings.staffHire={};
+  settings.staffHire[id]=hire;
 }
 function updateStaffQual(id,qual){
   if(!settings.staffQual)settings.staffQual={};
