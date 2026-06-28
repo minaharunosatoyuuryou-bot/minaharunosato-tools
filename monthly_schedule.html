@@ -993,7 +993,13 @@ function buildSettings(){
       const QUAL_OPTS=['介護福祉士','実務者研修修了','初任者研修修了','介護士','看護師','准看護師','社会福祉士','精神保健福祉士','理学療法士','作業療法士','言語聴覚士','管理栄養士','調理師','（なし）'];
       tr.innerHTML=`
         <td style="padding:4px 8px;border:1px solid #eee;font-size:11px;${nameStyle}">${s.conc&&s.conc.length>1?'★':''}${s.name}</td>
-        <td style="padding:4px 8px;border:1px solid #eee;font-size:10px;text-align:center;color:${SVC_CLR[s.svc]}">${SVC_LBL[s.svc]}</td>
+        <td style="padding:3px 6px;border:1px solid #eee;text-align:center">
+          <select onchange="updateStaffSvc('${s.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid #ccc;border-radius:3px;color:${SVC_CLR[s.svc]};font-weight:bold">
+            <option value="day" ${s.svc==='day'?'selected':''}>デイ</option>
+            <option value="fac" ${s.svc==='fac'?'selected':''}>有料</option>
+            <option value="pat" ${s.svc==='pat'?'selected':''}>悠巡</option>
+          </select>
+        </td>
         <td style="padding:3px 6px;border:1px solid #eee">
           <select onchange="updateStaffRole('${s.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid #ccc;border-radius:3px;max-width:110px">
             ${ROLE_OPTS.map(r=>`<option value="${r}" ${curRole===r?'selected':''}>${r}</option>`).join('')}
@@ -1114,6 +1120,10 @@ function addShiftRow(){
   buildShiftEditTable();
 }
 
+function updateStaffSvc(id,svc){
+  if(!settings.staffSvc)settings.staffSvc={};
+  settings.staffSvc[id]=svc;
+}
 function updateStaffRole(id,role){
   if(!settings.staffRole)settings.staffRole={};
   settings.staffRole[id]=role;
@@ -1192,6 +1202,10 @@ function addShiftRow(){
   buildShiftEditTable();
 }
 
+function updateStaffSvc(id,svc){
+  if(!settings.staffSvc)settings.staffSvc={};
+  settings.staffSvc[id]=svc;
+}
 function updateStaffRole(id,role){
   if(!settings.staffRole)settings.staffRole={};
   settings.staffRole[id]=role;
@@ -1282,6 +1296,10 @@ function addShiftRow(){
   if(!settings.customShifts)settings.customShifts=SHIFTS.map(s=>({...s}));
   settings.customShifts.push({k:'新',label:'新しい区分',h:8,c:'#E0E0E0',t:'#333333'});
   buildSettings();
+}
+function updateStaffSvc(id,svc){
+  if(!settings.staffSvc)settings.staffSvc={};
+  settings.staffSvc[id]=svc;
 }
 function updateStaffRole(id,role){
   if(!settings.staffRole)settings.staffRole={};
