@@ -1382,15 +1382,24 @@ function buildSumTable(){
 async function saveAll(){
   setStatus('保存中...');
   const schKey=`sch_${curY}_${curM}`;
+  const monthKey=`month_${curY}_${curM}`;
+  const settingsKey=`settings_${curY}_${curM}`;
   try{
-    await fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'月間勤務',key:schKey,value:JSON.stringify(schData)})});
-    for(const [dateStr,data] of Object.entries(tlData)){
-      await fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'時間帯管理',key:`jikan_${dateStr}`,value:JSON.stringify(data)})});
-    }
+    // 月間シフト・時間帯・設定を並列保存
+    await Promise.all([
+      fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'月間勤務',key:schKey,value:JSON.stringify(schData)})}),
+      fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'月間勤務',key:monthKey,value:JSON.stringify(tlData)})}),
+      fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'設定',key:settingsKey,value:JSON.stringify(settings)})}),
+    ]);
+    // ローカルにも保存
+    localStorage.setItem(schKey,JSON.stringify(schData));
+    localStorage.setItem(monthKey,JSON.stringify(tlData));
+    localStorage.setItem(settingsKey,JSON.stringify(settings));
     setStatus('✅ 保存しました');
   }catch(e){
     localStorage.setItem(schKey,JSON.stringify(schData));
-    Object.entries(tlData).forEach(([ds,data])=>localStorage.setItem(`jikan_${ds}`,JSON.stringify(data)));
+    localStorage.setItem(monthKey,JSON.stringify(tlData));
+    localStorage.setItem(settingsKey,JSON.stringify(settings));
     setStatus('💾 ローカル保存しました');
   }
 }
@@ -1398,23 +1407,50 @@ async function saveAll(){
 async function loadAll(){
   setStatus('読み込み中...');
   const schKey=`sch_${curY}_${curM}`;
-  try{
-    const r=await fetch(`${GAS}?action=get&pass=${PASS}&sheet=月間勤務&key=${schKey}`).then(r=>r.json());
-    if(r.value)schData=JSON.parse(r.value);
-    else{const l=localStorage.getItem(schKey);if(l)schData=JSON.parse(l);}
-  }catch(e){const l=localStorage.getItem(schKey);if(l)schData=JSON.parse(l);}
+  const monthKey=`month_${curY}_${curM}`;
+  const settingsKey=`settings_${curY}_${curM}`;
 
-  const dim=new Date(curY,curM,0).getDate();
-  for(let d=1;d<=dim;d++){
-    const ds=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    try{
-      const r=await fetch(`${GAS}?action=get&pass=${PASS}&sheet=時間帯管理&key=jikan_${ds}`).then(r=>r.json());
-      if(r.value)tlData[ds]=JSON.parse(r.value);
-      else{const l=localStorage.getItem(`jikan_${ds}`);if(l)tlData[ds]=JSON.parse(l);}
-    }catch(e){const l=localStorage.getItem(`jikan_${ds}`);if(l)tlData[ds]=JSON.parse(l);}
+  try{
+    // 1回のリクエストで月間シフト・時間帯・設定を一括取得
+    const keys=[schKey, monthKey, settingsKey];
+    const r=await fetch(`${GAS}?action=getMulti&pass=${PASS}&keys=${encodeURIComponent(JSON.stringify(keys))}`).then(r=>r.json());
+
+    // 月間シフト
+    if(r[schKey])schData=JSON.parse(r[schKey]);
+    else{const l=localStorage.getItem(schKey);if(l)schData=JSON.parse(l);}
+
+    // 月間時間帯（一括保存されている場合）
+    if(r[monthKey]){
+      tlData=JSON.parse(r[monthKey]);
+    }else{
+      // フォールバック：個別ローカルストレージから
+      const dim=new Date(curY,curM,0).getDate();
+      for(let d=1;d<=dim;d++){
+        const ds=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const l=localStorage.getItem(`jikan_${ds}`);if(l)tlData[ds]=JSON.parse(l);
+      }
+    }
+
+    // 設定
+    if(r[settingsKey])settings=JSON.parse(r[settingsKey]);
+    else{const l=localStorage.getItem(settingsKey);if(l)settings=JSON.parse(l);}
+
+  }catch(e){
+    // GAS失敗時はローカルから
+    const ls=localStorage.getItem(schKey);if(ls)schData=JSON.parse(ls);
+    const lm=localStorage.getItem(monthKey);
+    if(lm){tlData=JSON.parse(lm);}
+    else{
+      const dim=new Date(curY,curM,0).getDate();
+      for(let d=1;d<=dim;d++){
+        const ds=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const l=localStorage.getItem(`jikan_${ds}`);if(l)tlData[ds]=JSON.parse(l);
+      }
+    }
+    const lset=localStorage.getItem(settingsKey);if(lset)settings=JSON.parse(lset);
   }
+
   initData();buildSchTable();
-  await loadSettings();
   setStatus(`✅ ${curY}年${curM}月のデータを読み込みました`);
 }
 
