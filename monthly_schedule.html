@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -30,6 +31,7 @@ body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
 .tab.t-day.active{background:#1565C0}
 .tab.t-fac.active{background:#1B5E20}
 .tab.t-pat.active{background:#4A148C}
+.tab.t-set.active{background:#37474F}
 
 /* ===== 全員タブ：月間シフト表 ===== */
 .sch-wrap{overflow:auto;padding:10px 14px;background:#fff}
@@ -160,6 +162,7 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
   <div class="tab t-day" onclick="setTab('day',this)">🔵 デイサービス（時間帯）</div>
   <div class="tab t-fac" onclick="setTab('fac',this)">🟢 有料老人ホーム（時間帯）</div>
   <div class="tab t-pat" onclick="setTab('pat',this)">🟣 定期巡回（時間帯）</div>
+  <div class="tab t-set" onclick="setTab('set',this)">⚙️ 設定</div>
 </div>
 
 <!-- 全員：月間シフト表 -->
@@ -176,6 +179,73 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 </div>
 <div id="v-pat" class="hidden">
   <div id="mtl-pat" class="mtl-wrap"></div>
+</div>
+
+<!-- 設定 -->
+<div id="v-set" class="hidden">
+  <div style="padding:14px">
+    <h2 style="font-size:13px;font-weight:bold;color:#263238;margin-bottom:12px">⚙️ 設定</h2>
+
+    <!-- 所定労働時間 -->
+    <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
+      <h3 style="font-size:12px;font-weight:bold;color:#263238;margin-bottom:10px;border-left:4px solid #1565C0;padding-left:8px">
+        📅 月別所定労働時間（変形労働時間制）
+      </h3>
+      <p style="font-size:10px;color:#888;margin-bottom:10px">月ごとに所定時間が変わる場合はここで設定してください。全員共通の月次所定時間です。</p>
+      <table style="border-collapse:collapse;width:100%;max-width:600px">
+        <thead>
+          <tr>
+            <th style="background:#455A64;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">月</th>
+            <th style="background:#1565C0;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">所定時間（h）</th>
+            <th style="background:#455A64;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">月</th>
+            <th style="background:#1565C0;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">所定時間（h）</th>
+          </tr>
+        </thead>
+        <tbody id="monthHrsTbl"></tbody>
+      </table>
+      <button class="btn b-green" style="margin-top:10px" onclick="saveSettings()">💾 設定を保存</button>
+    </div>
+
+    <!-- 配置基準 -->
+    <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
+      <h3 style="font-size:12px;font-weight:bold;color:#263238;margin-bottom:10px;border-left:4px solid #1B5E20;padding-left:8px">
+        👥 配置基準（最低人数）
+      </h3>
+      <table style="border-collapse:collapse;width:100%;max-width:600px">
+        <thead>
+          <tr>
+            <th style="background:#455A64;color:#fff;padding:5px 10px;font-size:11px;text-align:left;border:1px solid #ccc">サービス</th>
+            <th style="background:#455A64;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">平日（名以上）</th>
+            <th style="background:#455A64;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">土日（名以上）</th>
+            <th style="background:#455A64;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">備考</th>
+          </tr>
+        </thead>
+        <tbody id="minStaffTbl"></tbody>
+      </table>
+      <button class="btn b-green" style="margin-top:10px" onclick="saveSettings()">💾 設定を保存</button>
+    </div>
+
+    <!-- 職員別所定時間 -->
+    <div style="background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
+      <h3 style="font-size:12px;font-weight:bold;color:#263238;margin-bottom:10px;border-left:4px solid #4A148C;padding-left:8px">
+        👤 職員別　勤務形態・所定時間倍率
+      </h3>
+      <p style="font-size:10px;color:#888;margin-bottom:10px">パート・非常勤など所定時間が異なる職員の倍率を設定（常勤=1.0、6h÷8h=0.75など）</p>
+      <table style="border-collapse:collapse;width:100%;max-width:700px">
+        <thead>
+          <tr>
+            <th style="background:#455A64;color:#fff;padding:5px 10px;font-size:11px;text-align:left;border:1px solid #ccc">氏名</th>
+            <th style="background:#455A64;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">所属</th>
+            <th style="background:#455A64;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">勤務形態</th>
+            <th style="background:#4A148C;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">時間倍率</th>
+            <th style="background:#1565C0;color:#fff;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #ccc">今月所定(h)</th>
+          </tr>
+        </thead>
+        <tbody id="staffHrsTbl"></tbody>
+      </table>
+      <button class="btn b-green" style="margin-top:10px" onclick="saveSettings()">💾 設定を保存</button>
+    </div>
+  </div>
 </div>
 
 <!-- 月間集計 -->
@@ -280,15 +350,16 @@ function init(){
 function setTab(t,el){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  ['all','day','fac','pat','sum'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
+  ['all','day','fac','pat','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
   document.getElementById('v-'+t).classList.remove('hidden');
-  if(t!=='all'&&t!=='sum') buildMtl(t);
+  if(t!=='all'&&t!=='sum'&&t!=='set') buildMtl(t);
   if(t==='sum') buildSumTable();
+  if(t==='set') buildSettings();
 }
 
 function showView(v){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  ['all','day','fac','pat','sum'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
+  ['all','day','fac','pat','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
   document.getElementById('v-'+v).classList.remove('hidden');
   if(v==='sum')buildSumTable();
 }
@@ -428,7 +499,7 @@ function setShift(k){
 function buildMtl(svc){
   const wrap=document.getElementById('mtl-'+svc);
   wrap.innerHTML='';
-  const members=STAFF.filter(s=>s.svc===svc); // 専任のみ
+  const members=STAFF.filter(s=>s.conc.includes(svc)); // 兼任含む全員
 
   // パレット
   const pal=document.createElement('div');pal.className='palette';
@@ -562,11 +633,102 @@ function paintTl(svc,sid,h,dateStr,cell){
   cell.className=`tl-cell ${curPal}`;
   cell.querySelector('.tl-lbl').textContent=SVC_LBL[curPal];
   // 合計更新
-  const members=STAFF.filter(s=>s.svc===svc);
+  const members=STAFF.filter(s=>s.conc.includes(svc));
   ['day','fac','pat','op'].forEach(sv=>{
     const cnt=members.filter(s=>tlData[dateStr][s.id]&&tlData[dateStr][s.id][h]===sv).length;
     const el=document.getElementById(`tlsum_${svc}_${sv}_${h}_${dateStr}`);if(el)el.textContent=cnt||'';
   });
+}
+
+// ===== 設定データ =====
+const MONTHLY_HRS_DEFAULT={1:160,2:160,3:168,4:168,5:168,6:160,7:168,8:168,9:160,10:168,11:160,12:160};
+let settings={
+  monthHrs:{...MONTHLY_HRS_DEFAULT},
+  minStaff:{
+    day:{weekday:3,holiday:2,note:'利用者25名→介護職員3名以上'},
+    fac:{weekday:3,holiday:3,note:'常時3名以上（目安）'},
+    pat:{weekday:1,holiday:1,note:'オペレーター1名以上（8:00〜18:00）'},
+  },
+  staffRate:{}, // {staffId: rate}
+};
+// デフォルト倍率
+STAFF.forEach(s=>{
+  settings.staffRate[s.id]=s.id==='inagara'?0.75:1.0;
+});
+
+function getMonthHrs(){return settings.monthHrs[curM]||168;}
+function getStaffHrs(sid){return Math.round(getMonthHrs()*(settings.staffRate[sid]||1.0));}
+
+function buildSettings(){
+  // 月別所定時間テーブル
+  const tbl=document.getElementById('monthHrsTbl');tbl.innerHTML='';
+  const months=[[1,2,3,4,5,6],[7,8,9,10,11,12]];
+  for(let r=0;r<6;r++){
+    const tr=document.createElement('tr');
+    [months[0][r],months[1][r]].forEach(m=>{
+      const tdM=document.createElement('td');tdM.style.cssText='padding:4px 10px;border:1px solid #ccc;text-align:center;font-size:11px;background:#ECEFF1';tdM.textContent=m+'月';tr.appendChild(tdM);
+      const tdV=document.createElement('td');tdV.style.cssText='padding:2px 6px;border:1px solid #ccc;text-align:center';
+      const inp=document.createElement('input');inp.type='number';inp.value=settings.monthHrs[m]||168;
+      inp.min=100;inp.max=200;inp.style.cssText='width:70px;text-align:center;padding:3px;font-size:12px;border:1px solid #90CAF9;border-radius:3px';
+      inp.onchange=()=>{settings.monthHrs[m]=+inp.value;buildSettings()};
+      tdV.appendChild(inp);tr.appendChild(tdV);
+    });
+    tbl.appendChild(tr);
+  }
+
+  // 配置基準テーブル
+  const tbl2=document.getElementById('minStaffTbl');tbl2.innerHTML='';
+  const svcInfo={day:{label:'デイサービス',color:'#1565C0'},fac:{label:'有料老人ホーム',color:'#1B5E20'},pat:{label:'定期巡回（悠巡）',color:'#4A148C'}};
+  Object.entries(settings.minStaff).forEach(([svc,v])=>{
+    const tr=document.createElement('tr');
+    const td0=document.createElement('td');td0.style.cssText=`padding:5px 10px;border:1px solid #ccc;font-weight:bold;color:${svcInfo[svc].color}`;td0.textContent=svcInfo[svc].label;tr.appendChild(td0);
+    ['weekday','holiday'].forEach(k=>{
+      const td=document.createElement('td');td.style.cssText='padding:2px 6px;border:1px solid #ccc;text-align:center';
+      const inp=document.createElement('input');inp.type='number';inp.value=v[k];inp.min=0;inp.max=10;
+      inp.style.cssText='width:50px;text-align:center;padding:3px;font-size:12px;border:1px solid #90CAF9;border-radius:3px';
+      inp.onchange=()=>{settings.minStaff[svc][k]=+inp.value};
+      td.appendChild(inp);tr.appendChild(td);
+    });
+    const tdN=document.createElement('td');tdN.style.cssText='padding:5px 10px;border:1px solid #ccc;font-size:10px;color:#777';tdN.textContent=v.note;tr.appendChild(tdN);
+    tbl2.appendChild(tr);
+  });
+
+  // 職員別倍率テーブル
+  const tbl3=document.getElementById('staffHrsTbl');tbl3.innerHTML='';
+  STAFF.forEach(s=>{
+    const tr=document.createElement('tr');
+    const rate=settings.staffRate[s.id]||1.0;
+    const hrs=Math.round(getMonthHrs()*rate);
+    const color=SVC_CLR[s.svc];
+    tr.innerHTML=`
+      <td style="padding:4px 8px;border:1px solid #ccc;font-size:11px;font-weight:bold">${s.conc.length>1?'★':''}${s.name}</td>
+      <td style="padding:4px 8px;border:1px solid #ccc;font-size:10px;color:${color};text-align:center">${SVC_LBL[s.svc]}</td>
+      <td style="padding:4px 8px;border:1px solid #ccc;font-size:10px;text-align:center">${s.id==='inagara'?'非常勤':s.conc.length>1?'兼任':'常勤'}</td>
+      <td style="padding:2px 6px;border:1px solid #ccc;text-align:center">
+        <input type="number" value="${rate}" min="0.1" max="1.5" step="0.05"
+          style="width:60px;text-align:center;padding:3px;font-size:12px;border:1px solid #CE93D8;border-radius:3px"
+          onchange="settings.staffRate['${s.id}']=+this.value;buildSettings()">
+      </td>
+      <td style="padding:4px 8px;border:1px solid #ccc;font-size:12px;font-weight:bold;text-align:center;color:#1565C0">${hrs}h</td>`;
+    tbl3.appendChild(tr);
+  });
+}
+
+function saveSettings(){
+  const key=`settings_${curY}_${curM}`;
+  const val=JSON.stringify(settings);
+  fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'設定',key,value:val})})
+    .then(()=>setStatus('✅ 設定を保存しました'))
+    .catch(()=>{localStorage.setItem(key,val);setStatus('💾 設定をローカル保存しました')});
+}
+
+async function loadSettings(){
+  const key=`settings_${curY}_${curM}`;
+  try{
+    const r=await fetch(`${GAS}?action=get&pass=${PASS}&sheet=設定&key=${key}`).then(r=>r.json());
+    if(r.value)settings=JSON.parse(r.value);
+    else{const l=localStorage.getItem(key);if(l)settings=JSON.parse(l);}
+  }catch(e){const l=localStorage.getItem(key);if(l)settings=JSON.parse(l);}
 }
 
 // ===== 月間集計 =====
@@ -635,6 +797,7 @@ async function loadAll(){
     }catch(e){const l=localStorage.getItem(`jikan_${ds}`);if(l)tlData[ds]=JSON.parse(l);}
   }
   initData();buildSchTable();
+  await loadSettings();
   setStatus(`✅ ${curY}年${curM}月のデータを読み込みました`);
 }
 
