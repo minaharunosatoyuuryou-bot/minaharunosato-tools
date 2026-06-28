@@ -66,8 +66,8 @@ table.sch th,table.sch td{border:1px solid #ccc;padding:0}
 .dsum-row .sn{text-align:left;padding:2px 5px;font-size:9px;position:sticky;left:0}
 
 /* シフト選択ポップ */
-.shift-pop{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;background:#fff;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:9999!important;padding:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;min-width:260px;max-height:70vh;overflow-y:auto}
-.shift-opt{padding:5px 6px;border-radius:3px;cursor:pointer;font-size:11px;font-weight:bold;text-align:center;border:1px solid #ddd}
+.shift-pop{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;background:#fff;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:9999!important;padding:10px;display:block;min-width:280px;max-height:75vh;overflow-y:auto}
+.shift-opt{padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;display:flex;align-items:center;gap:8px;border:1px solid #ddd;margin-bottom:3px}
 .shift-opt:hover{opacity:.8}
 
 /* ===== 部署タブ：月間時間帯表 ===== */
@@ -390,12 +390,7 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 
 <!-- シフト選択ポップ -->
 <div id="popOverlay" class="pop-overlay hidden" onclick="closeShiftPop()"></div>
-<div id="shiftPop" class="shift-pop hidden">
-  <div style="grid-column:span 4;font-size:11px;font-weight:bold;color:#263238;padding:2px 4px 6px;border-bottom:1px solid #eee;margin-bottom:2px">
-    勤務区分を選択
-    <span onclick="closeShiftPop()" style="float:right;cursor:pointer;color:#999;font-size:14px">✕</span>
-  </div>
-</div>
+<div id="shiftPop" class="shift-pop hidden"></div>
 
 <script>
 const GAS='https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
@@ -403,14 +398,23 @@ const PASS='2408';
 const WD=['日','月','火','水','木','金','土'];
 
 const SHIFTS=[
-  {k:'日', c:'#BBDEFB',t:'#0D47A1',h:8},{k:'日A',c:'#90CAF9',t:'#01579B',h:8},
-  {k:'日B',c:'#64B5F6',t:'#01579B',h:8},{k:'日6',c:'#B3E5FC',t:'#01579B',h:6},
-  {k:'日4',c:'#E1F5FE',t:'#0277BD',h:4},{k:'日2',c:'#F0F4FF',t:'#283593',h:2},
-  {k:'早', c:'#C8E6C9',t:'#1B5E20',h:8},{k:'早4',c:'#DCEDC8',t:'#33691E',h:4},
-  {k:'早6',c:'#F1F8E9',t:'#33691E',h:6},{k:'遅', c:'#FFE0B2',t:'#E65100',h:8},
-  {k:'夜', c:'#CE93D8',t:'#4A148C',h:16},{k:'明',c:'#E1BEE7',t:'#6A1B9A',h:0},
-  {k:'休', c:'#FFCDD2',t:'#B71C1C',h:0},{k:'有', c:'#FFF9C4',t:'#F57F17',h:0},
-  {k:'研', c:'#B2DFDB',t:'#004D40',h:0},{k:'欠', c:'#FFCCBC',t:'#BF360C',h:0},
+  {k:'日', label:'8:30〜17:30', c:'#BBDEFB',t:'#0D47A1',h:8},
+  {k:'日A',label:'8:00〜17:00', c:'#90CAF9',t:'#01579B',h:8},
+  {k:'日B',label:'9:00〜18:00', c:'#64B5F6',t:'#01579B',h:8},
+  {k:'日6',label:'9:00〜15:00', c:'#B3E5FC',t:'#01579B',h:6},
+  {k:'日4',label:'4h勤務',      c:'#E1F5FE',t:'#0277BD',h:4},
+  {k:'日2',label:'2h勤務',      c:'#F0F4FF',t:'#283593',h:2},
+  {k:'早', label:'7:00〜16:00', c:'#C8E6C9',t:'#1B5E20',h:8},
+  {k:'早4',label:'早番4h',      c:'#DCEDC8',t:'#33691E',h:4},
+  {k:'早6',label:'早番6h',      c:'#F1F8E9',t:'#33691E',h:6},
+  {k:'遅', label:'10:00〜19:00',c:'#FFE0B2',t:'#E65100',h:8},
+  {k:'夜', label:'17:00〜翌9:00',c:'#CE93D8',t:'#4A148C',h:16},
+  {k:'明', label:'夜勤明け',    c:'#E1BEE7',t:'#6A1B9A',h:0},
+  {k:'休', label:'公休',        c:'#FFCDD2',t:'#B71C1C',h:0},
+  {k:'有', label:'有給休暇',    c:'#FFF9C4',t:'#F57F17',h:0},
+  {k:'有2',label:'有給半日',    c:'#FFF59D',t:'#F57F17',h:0},
+  {k:'研', label:'研修',        c:'#B2DFDB',t:'#004D40',h:0},
+  {k:'欠', label:'欠勤',        c:'#FFCCBC',t:'#BF360C',h:0},
 ];
 const SMAP={}; SHIFTS.forEach(s=>SMAP[s.k]=s);
 
@@ -593,12 +597,22 @@ function updateDaySum(d){
 function openShiftPop(e,sid,d,cell){
   e.stopPropagation();activeCell={sid,d,cell};
   const pop=document.getElementById('shiftPop');pop.innerHTML='';
-  const clr=document.createElement('div');clr.className='shift-opt';
-  clr.style.cssText='background:#eee;color:#555;grid-column:span 4';clr.textContent='空白（クリア）';
-  clr.onclick=()=>setShift('');pop.appendChild(clr);
-  SHIFTS.forEach(s=>{
+
+  // タイトルとXボタン
+  const title=document.createElement('div');
+  title.style.cssText='grid-column:span 4;font-size:11px;font-weight:bold;color:#263238;padding:2px 4px 8px;border-bottom:1px solid #eee;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center';
+  title.innerHTML='勤務区分を選択 <span onclick="closeShiftPop()" style="cursor:pointer;color:#999;font-size:16px;line-height:1">✕</span>';
+  pop.appendChild(title);
+  // 空白クリア
+  const clrDiv=document.createElement('div');clrDiv.className='shift-opt';
+  clrDiv.style.cssText='background:#f5f5f5;color:#555;margin-bottom:6px;border:1px solid #ccc';
+  clrDiv.innerHTML='<span style="font-size:13px">⬜</span><span>空白（クリア）</span>';
+  clrDiv.onclick=()=>setShift('');pop.appendChild(clrDiv);
+  const currentShifts=settings.customShifts||SHIFTS;
+  currentShifts.forEach(s=>{
     const div=document.createElement('div');div.className='shift-opt';
-    div.style.background=s.c;div.style.color=s.t;div.textContent=s.k;
+    div.style.cssText=`background:${s.c};color:${s.t};border-color:${s.c}`;
+    div.innerHTML=`<span style="font-size:13px;font-weight:bold;min-width:28px;text-align:center">${s.k}</span><span style="font-size:10px;opacity:.9">${s.label||''} ${s.h>0?`(${s.h}h)`:''}</span>`;
     div.onclick=()=>setShift(s.k);pop.appendChild(div);
   });
   document.getElementById('popOverlay').classList.remove('hidden');
