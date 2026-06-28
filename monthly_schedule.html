@@ -499,7 +499,7 @@ function setShift(k){
 function buildMtl(svc){
   const wrap=document.getElementById('mtl-'+svc);
   wrap.innerHTML='';
-  const members=STAFF.filter(s=>s.conc.includes(svc)); // 兼任含む全員
+  const members=STAFF.filter(s=>s.conc.includes(svc));
 
   // パレット
   const pal=document.createElement('div');pal.className='palette';
@@ -521,9 +521,11 @@ function buildMtl(svc){
     <div class="leg"><div class="lb lb-none"></div>空白</div>`;
   wrap.appendChild(leg);
 
-  // 日付ヘッダー横スクロール行
-  const hdrWrap=document.createElement('div');hdrWrap.style.cssText='overflow-x:auto;background:#fff;border-bottom:2px solid #ddd';
-  const hdrTbl=document.createElement('table');hdrTbl.style.cssText='border-collapse:collapse;white-space:nowrap';
+  // メインテーブル（職員名 + 日付ヘッダー + 日付セル）を一体化
+  const tblWrap=document.createElement('div');tblWrap.style.cssText='overflow:auto;background:#fff;padding:0 14px 10px';
+  const tbl=document.createElement('table');tbl.style.cssText='border-collapse:collapse;white-space:nowrap;min-width:100%';
+
+  // ヘッダー行（職員名列 + 日付列）
   const htr=document.createElement('tr');
   const th0=document.createElement('th');th0.className='mtl-th-name';th0.textContent='職員 / 日付';htr.appendChild(th0);
   for(let d=1;d<=days;d++){
@@ -531,13 +533,130 @@ function buildMtl(svc){
     const wc=wd===6?'sat':wd===0?'sun':'';
     const th=document.createElement('th');th.className=`mtl-th-d ${wc}`;
     th.innerHTML=`<div class="dn">${d}</div><div class="dw">${WD[wd]}</div>`;
-    th.onclick=()=>toggleDayTl(d,svc,wrap,members);th.id=`mtl-th-${svc}-${d}`;htr.appendChild(th);
+    th.id=`mtl-th-${svc}-${d}`;
+    th.onclick=()=>openMtlDay(d,svc,members);
+    htr.appendChild(th);
   }
-  hdrTbl.appendChild(htr);hdrWrap.appendChild(hdrTbl);wrap.appendChild(hdrWrap);
+  tbl.appendChild(htr);
 
-  // 時間帯エリア（初期は非表示）
+  // 職員行（常時表示）
+  members.forEach(s=>{
+    const isConc=s.conc.length>1;
+    const bgColor=isConc?
+      (s.svc==='day'?'#BBDEFB':s.svc==='fac'?'#A5D6A7':'#CE93D8'):
+      (s.svc==='day'?'#E3F2FD':s.svc==='fac'?'#E8F5E9':'#F3E5F5');
+    const tr=document.createElement('tr');
+
+    // 職員名セル（固定）
+    const tdN=document.createElement('td');
+    tdN.style.cssText=`background:${bgColor};font-size:10px;font-weight:bold;padding:3px 6px;position:sticky;left:0;z-index:1;white-space:nowrap;border:1px solid #ccc;border-left:3px solid ${SVC_CLR[s.svc]}`;
+    tdN.innerHTML=`${isConc?'★':''}${s.name}<span style="font-size:8px;color:#777;display:block">${s.role}</span>`;
+    tr.appendChild(tdN);
+
+    // 日付セル（クリックで当日時間帯展開）
+    for(let d=1;d<=days;d++){
+      const wd=new Date(curY,curM-1,d).getDay();
+      const cellBg=wd===6?'#EEF0FB':wd===0?'#FFF5F5':'#fff';
+      const td=document.createElement('td');
+      td.style.cssText=`width:34px;min-width:34px;height:26px;border:1px solid #ddd;background:${cellBg};cursor:pointer;text-align:center;font-size:9px;font-weight:bold`;
+      td.id=`mtl-cell-${svc}-${s.id}-${d}`;
+      // 既存tlDataがあれば色を反映
+      const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      updateMtlCell(td,svc,s.id,dateStr);
+      td.onclick=()=>openMtlDay(d,svc,members);
+      tr.appendChild(td);
+    }
+    tbl.appendChild(tr);
+  });
+
+  tblWrap.appendChild(tbl);wrap.appendChild(tblWrap);
+
+  // 時間帯展開エリア
   const tlArea=document.createElement('div');tlArea.id=`tl-area-${svc}`;tlArea.className='hidden';
   wrap.appendChild(tlArea);
+}
+
+function updateMtlCell(td,svc,sid,dateStr){
+  if(!tlData[dateStr]||!tlData[dateStr][sid])return;
+  // その日の主なサービス色を表示（最多の色）
+  const counts={day:0,fac:0,pat:0,op:0};
+  HOURS.forEach(({h})=>{const sv=tlData[dateStr][sid][h];if(sv&&sv!=='none')counts[sv]++;});
+  const dominant=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  if(dominant&&dominant[1]>0){
+    td.style.background=SVC_CLR[dominant[0]];
+    td.style.color='#fff';
+    td.textContent=SVC_LBL[dominant[0]];
+  }
+}
+
+function openMtlDay(d,svc,members){
+  const areaId=`tl-area-${svc}`;
+  const area=document.getElementById(areaId);
+  const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const thId=`mtl-th-${svc}-${d}`;
+
+  if(openDayInfo[svc]===d){
+    area.classList.add('hidden');area.innerHTML='';
+    document.getElementById(thId).style.outline='';
+    openDayInfo[svc]=null;return;
+  }
+  if(openDayInfo[svc]){
+    const prevTh=document.getElementById(`mtl-th-${svc}-${openDayInfo[svc]}`);
+    if(prevTh)prevTh.style.outline='';
+  }
+  openDayInfo[svc]=d;
+  document.getElementById(thId).style.outline='3px solid #FF5722';
+
+  if(!tlData[dateStr]){
+    tlData[dateStr]={};
+    STAFF.forEach(s=>{tlData[dateStr][s.id]={};HOURS.forEach(({h})=>tlData[dateStr][s.id][h]='none')});
+  }
+
+  area.innerHTML='';
+  const wd=new Date(curY,curM-1,d).getDay();
+  const title=document.createElement('div');title.className='day-tl-title';
+  title.innerHTML=`${curM}月${d}日（${WD[wd]}）の時間帯振り分け　<span style="font-size:10px;opacity:.8">クリック/ドラッグで色を塗る</span>`;
+  area.appendChild(title);
+
+  const tblWrap=document.createElement('div');tblWrap.style.cssText='overflow-x:auto;padding:6px 14px';
+  const tbl=document.createElement('table');tbl.className='tl';
+  const htr=document.createElement('tr');
+  const th0=document.createElement('th');th0.className='tlth-name';th0.textContent='職員';htr.appendChild(th0);
+  HOURS.forEach(({disp,cls})=>{
+    const th=document.createElement('th');th.className=`tlth-h ${cls}`;th.textContent=disp;htr.appendChild(th);
+  });
+  tbl.appendChild(htr);
+
+  members.forEach(s=>{
+    const tr=document.createElement('tr');
+    const td0=document.createElement('td');td0.className='tl-name';
+    td0.innerHTML=`${s.name}<span class="tl-role">${s.role}</span>`;tr.appendChild(td0);
+    HOURS.forEach(({h})=>{
+      const sv=tlData[dateStr][s.id]?tlData[dateStr][s.id][h]||'none':'none';
+      const td=document.createElement('td');td.className=`tl-cell ${sv}`;td.id=`tl_${svc}_${s.id}_${h}_${dateStr}`;
+      const lbl=document.createElement('div');lbl.className='tl-lbl';lbl.textContent=SVC_LBL[sv];td.appendChild(lbl);
+      td.addEventListener('mousedown',e=>{e.preventDefault();isDrag=true;paintTl(svc,s.id,h,dateStr,td)});
+      td.addEventListener('mouseenter',()=>{if(isDrag)paintTl(svc,s.id,h,dateStr,td)});
+      tr.appendChild(td);
+    });
+    tbl.appendChild(tr);
+  });
+
+  ['day','fac','pat','op'].forEach(sv=>{
+    const lbl={day:'デイ人数',fac:'有料人数',pat:'悠巡人数',op:'悠巡OP'}[sv];
+    const tr=document.createElement('tr');tr.className='tl-sum';
+    const td0=document.createElement('td');td0.className='tsn';td0.style.background=SVC_CLR[sv];td0.style.color='#fff';td0.textContent=lbl;tr.appendChild(td0);
+    HOURS.forEach(({h})=>{
+      const td=document.createElement('td');td.id=`tlsum_${svc}_${sv}_${h}_${dateStr}`;
+      td.style.background=SVC_CLR[sv];td.style.color='#fff';
+      const cnt=members.filter(s=>tlData[dateStr]&&tlData[dateStr][s.id]&&tlData[dateStr][s.id][h]===sv).length;
+      td.textContent=cnt||'';tr.appendChild(td);
+    });
+    tbl.appendChild(tr);
+  });
+
+  tblWrap.appendChild(tbl);area.appendChild(tblWrap);
+  area.classList.remove('hidden');
 }
 
 let openDayInfo={};
@@ -638,6 +757,10 @@ function paintTl(svc,sid,h,dateStr,cell){
     const cnt=members.filter(s=>tlData[dateStr][s.id]&&tlData[dateStr][s.id][h]===sv).length;
     const el=document.getElementById(`tlsum_${svc}_${sv}_${h}_${dateStr}`);if(el)el.textContent=cnt||'';
   });
+  // 月間表の日付セルも色更新
+  const d=parseInt(dateStr.slice(8));
+  const mcell=document.getElementById(`mtl-cell-${svc}-${sid}-${d}`);
+  if(mcell)updateMtlCell(mcell,svc,sid,dateStr);
 }
 
 // ===== 設定データ =====
