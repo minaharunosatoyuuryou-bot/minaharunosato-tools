@@ -86,7 +86,7 @@ table.mtl-hdr-tbl{border-collapse:collapse;white-space:nowrap}
 .day-tl-title{padding:6px 14px;background:#455A64;color:#fff;font-size:11px;font-weight:bold;display:flex;align-items:center;gap:8px}
 
 /* パレット */
-.palette{display:flex;gap:5px;padding:6px 14px;background:#fff;border-bottom:1px solid #ddd;align-items:center;flex-wrap:wrap}
+.palette{display:flex;gap:5px;padding:6px 14px;background:#fff;border-bottom:1px solid #ddd;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10;box-shadow:0 2px 4px rgba(0,0,0,.1)}
 .palette > span{font-size:11px;color:#555}
 .pal-btn{width:62px;height:24px;border-radius:3px;border:2px solid transparent;cursor:pointer;font-size:10px;font-weight:bold;color:#fff}
 .pal-btn.active{border-color:#FF5722;box-shadow:0 0 0 2px #FF5722}
@@ -499,7 +499,13 @@ function setShift(k){
 function buildMtl(svc){
   const wrap=document.getElementById('mtl-'+svc);
   wrap.innerHTML='';
-  const members=STAFF.filter(s=>s.conc.includes(svc));
+  let members=STAFF.filter(s=>s.conc.includes(svc));
+  // 定巡は平岡を先頭に
+  if(svc==='pat'){
+    const hiraoka=members.filter(s=>s.id==='hiraoka');
+    const others=members.filter(s=>s.id!=='hiraoka');
+    members=[...hiraoka,...others];
+  }
 
   // パレット
   const pal=document.createElement('div');pal.className='palette';
