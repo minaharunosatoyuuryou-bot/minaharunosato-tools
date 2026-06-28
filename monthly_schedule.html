@@ -525,8 +525,18 @@ function openShiftPop(e,sid,d,cell){
     div.onclick=()=>setShift(s.k);pop.appendChild(div);
   });
   const rect=cell.getBoundingClientRect();
-  let left=rect.left+window.scrollX,top=rect.bottom+window.scrollY+2;
+  let left=rect.left+window.scrollX;
+  // 画面下半分なら上に表示、上半分なら下に表示
+  const popH=220; // ポップアップ概算高さ
+  let top;
+  if(rect.bottom+popH>window.innerHeight){
+    top=rect.top+window.scrollY-popH-4; // 上に表示
+    if(top<window.scrollY)top=rect.bottom+window.scrollY+2; // 上に収まらなければ下
+  }else{
+    top=rect.bottom+window.scrollY+2; // 下に表示
+  }
   if(left+220>window.innerWidth)left=window.innerWidth-225;
+  if(left<0)left=4;
   pop.style.left=left+'px';pop.style.top=top+'px';pop.classList.remove('hidden');
 }
 
