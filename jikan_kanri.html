@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>時間帯管理 - みなはるの里</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
+.hidden{display:none!important}
+
+/* ===== ヘッダー ===== */
+.hdr{background:#263238;color:#fff;padding:9px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hdr h1{font-size:14px;font-weight:bold}
+.hdr-right{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn{padding:5px 12px;border-radius:4px;border:none;cursor:pointer;font-size:11px;font-weight:bold}
+.btn-blue{background:#1E88E5;color:#fff}.btn-green{background:#43A047;color:#fff}
+.btn-orange{background:#FB8C00;color:#fff}.btn-gray{background:#607D8B;color:#fff}
+.btn-red{background:#E53935;color:#fff}.btn-purple{background:#6A1B9A;color:#fff}
+
+/* ===== 月選択バー ===== */
+.month-bar{background:#37474F;color:#fff;padding:7px 14px;display:flex;align-items:center;gap:10px}
+.month-bar select{padding:3px 8px;border-radius:4px;border:none;font-size:12px;background:#fff}
+.month-bar .month-title{font-size:14px;font-weight:bold;margin:0 8px}
+
+/* ===== カレンダー ===== */
+.cal-wrap{padding:12px 14px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:1000px}
+.cal-wd{text-align:center;font-size:11px;font-weight:bold;padding:4px;background:#455A64;color:#fff;border-radius:3px}
+.cal-wd.sat{background:#1565C0}.cal-wd.sun{background:#C62828}
+.cal-day{background:#fff;border-radius:6px;padding:5px;min-height:80px;cursor:pointer;border:1px solid #ddd;transition:box-shadow .15s;position:relative}
+.cal-day:hover{box-shadow:0 2px 8px rgba(0,0,0,.2);border-color:#90CAF9}
+.cal-day.empty{background:#f5f5f5;cursor:default;border-color:#eee}
+.cal-day.today{border:2px solid #1E88E5}
+.cal-day.sat .d-num{color:#1565C0}
+.cal-day.sun .d-num{color:#C62828}
+.d-num{font-size:13px;font-weight:bold;margin-bottom:3px}
+.d-bars{display:flex;flex-direction:column;gap:2px;margin-top:3px}
+.d-bar{border-radius:2px;height:8px;font-size:8px;color:#fff;padding:0 3px;line-height:8px;white-space:nowrap;overflow:hidden}
+.bar-day{background:#1565C0}.bar-fac{background:#1B5E20}
+.bar-pat{background:#4A148C}.bar-op{background:#E65100}
+.d-saved{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:#43A047}
+
+/* ===== 月間集計 ===== */
+.summary-wrap{padding:0 14px 16px}
+.summary-wrap h2{font-size:13px;font-weight:bold;color:#263238;margin-bottom:8px;padding-top:8px}
+.sum-table{width:100%;border-collapse:collapse;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.sum-table th{background:#455A64;color:#fff;padding:5px 8px;font-size:11px;text-align:center;white-space:nowrap}
+.sum-table td{padding:5px 8px;border-bottom:1px solid #eee;font-size:11px;text-align:center}
+.sum-table tr:last-child td{border-bottom:none}
+.sum-table td:first-child{text-align:left;font-weight:bold}
+.bar-wrap{display:flex;height:14px;border-radius:3px;overflow:hidden;min-width:80px}
+.bar-seg{display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:bold;overflow:hidden;white-space:nowrap}
+
+/* ===== 日別入力画面 ===== */
+.day-hdr{background:#1565C0;color:#fff;padding:8px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.day-hdr h2{font-size:14px;font-weight:bold}
+.palette{display:flex;gap:5px;padding:6px 14px;background:#fff;border-bottom:1px solid #ddd;align-items:center;flex-wrap:wrap}
+.palette span{font-size:11px;color:#555}
+.pal-btn{width:66px;height:24px;border-radius:3px;border:2px solid transparent;cursor:pointer;font-size:10px;font-weight:bold;color:#fff}
+.pal-btn.active{border-color:#FF5722;box-shadow:0 0 0 2px #FF5722}
+.pal-none{background:#ddd;color:#555}
+.pal-day{background:#1565C0}.pal-fac{background:#1B5E20}
+.pal-pat{background:#4A148C}.pal-op{background:#E65100}
+
+.tl-wrap{overflow-x:auto;padding:10px 14px 20px}
+table.tl{border-collapse:collapse;min-width:1100px}
+table.tl th,table.tl td{border:1px solid #ccc;padding:0}
+.th-name{width:108px;min-width:108px;padding:3px 5px;background:#455A64;color:#fff;font-size:10px;text-align:center;position:sticky;left:0;z-index:2}
+.th-h{width:38px;min-width:38px;background:#37474F;color:#fff;font-size:9px;text-align:center;padding:2px 0}
+.th-h.night{background:#1a237e}.th-h.dawn{background:#263238}
+.cell{width:38px;height:30px;cursor:pointer;user-select:none}
+.cell:hover{opacity:.75}
+.cell.none{background:#fafafa}
+.cell.day{background:#1565C0}.cell.fac{background:#1B5E20}
+.cell.pat{background:#4A148C}.cell.op{background:#E65100}
+.cell-lbl{font-size:8px;color:#fff;text-align:center;line-height:30px;pointer-events:none;font-weight:bold}
+.cell.none .cell-lbl{color:#ccc}
+.name-cell{background:#ECEFF1;font-size:10px;padding:3px 5px;white-space:nowrap;position:sticky;left:0;z-index:1;font-weight:bold;border-left:3px solid #ccc}
+.name-cell.svc-day{border-left-color:#1565C0}
+.name-cell.svc-fac{border-left-color:#1B5E20}
+.name-cell.svc-pat{border-left-color:#4A148C}
+.name-role{font-size:8px;color:#777;display:block}
+.svc-hdr-row td{color:#fff;font-size:10px;font-weight:bold;padding:3px 6px;height:18px}
+.sum-r td{font-size:9px;text-align:center;padding:1px 0;height:18px;color:#fff}
+.sum-r .sn{font-size:9px;font-weight:bold;padding:1px 5px;text-align:left}
+
+.status{padding:5px 14px;font-size:11px;color:#555;background:#fffde7;border-bottom:1px solid #ffe082;min-height:22px}
+.legend{display:flex;gap:12px;padding:5px 14px;background:#fff;border-bottom:1px solid #eee;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:4px;font-size:10px}
+.lb{width:16px;height:11px;border-radius:2px}
+.lb-day{background:#1565C0}.lb-fac{background:#1B5E20}
+.lb-pat{background:#4A148C}.lb-op{background:#E65100}
+.lb-none{background:#eee;border:1px solid #ccc}
+
+.svc-tabs{display:flex;gap:0;padding:8px 14px 0}
+.svc-tab{padding:5px 14px;border-radius:5px 5px 0 0;cursor:pointer;font-size:11px;font-weight:bold;border:1px solid #ccc;border-bottom:none;background:#ddd;color:#555}
+.svc-tab.active{background:#fff;color:#263238}
+
+@media print{
+  .hdr,.month-bar,.palette,.legend,.svc-tabs,.status,.hdr-right,.day-hdr .btn{display:none!important}
+  .th-name,.name-cell{position:static}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== ヘッダー ===== -->
+<div class="hdr">
+  <h1>⏱ 時間帯管理　みなはるの里</h1>
+  <div class="hdr-right">
+    <button class="btn btn-gray" id="btnCal" onclick="showView('cal')">📅 月間カレンダー</button>
+    <button class="btn btn-green" onclick="saveData()">💾 保存</button>
+    <button class="btn btn-orange" onclick="window.print()">🖨 印刷</button>
+  </div>
+</div>
+
+<!-- ===== カレンダービュー ===== -->
+<div id="viewCal">
+  <div class="month-bar">
+    <button class="btn btn-gray" onclick="changeMonth(-1)">◀</button>
+    <span class="month-title" id="monthTitle"></span>
+    <button class="btn btn-gray" onclick="changeMonth(1)">▶</button>
+    <select id="yearSel" onchange="updateCal()"></select>
+    <select id="monthSel" onchange="updateCal()">
+      <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+      <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+      <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+      <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+    </select>
+    <button class="btn btn-blue" onclick="loadMonthData()">📂 この月を読み込み</button>
+  </div>
+  <div class="cal-wrap">
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+  <div class="summary-wrap">
+    <h2>📊 月間集計　― 職員別サービス時間・割合</h2>
+    <table class="sum-table" id="sumTable">
+      <thead>
+        <tr>
+          <th>職員</th><th>所属</th>
+          <th style="background:#1565C0">デイ(h)</th>
+          <th style="background:#1B5E20">有料(h)</th>
+          <th style="background:#4A148C">悠巡(h)</th>
+          <th style="background:#E65100">悠巡OP(h)</th>
+          <th>合計(h)</th>
+          <th>割合グラフ</th>
+        </tr>
+      </thead>
+      <tbody id="sumBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 日別入力ビュー ===== -->
+<div id="viewDay" class="hidden">
+  <div class="day-hdr">
+    <button class="btn btn-gray" onclick="showView('cal')">◀ カレンダーへ戻る</button>
+    <h2 id="dayTitle"></h2>
+    <button class="btn btn-red" onclick="clearDay()">🗑 クリア</button>
+  </div>
+  <div class="palette">
+    <span>塗る色：</span>
+    <button class="pal-btn pal-none active" id="pal-none" onclick="setPal('none')">空白</button>
+    <button class="pal-btn pal-day"  id="pal-day"  onclick="setPal('day')">デイ</button>
+    <button class="pal-btn pal-fac"  id="pal-fac"  onclick="setPal('fac')">有料</button>
+    <button class="pal-btn pal-pat"  id="pal-pat"  onclick="setPal('pat')">悠巡</button>
+    <button class="pal-btn pal-op"   id="pal-op"   onclick="setPal('op')">悠巡OP</button>
+    <span style="margin-left:8px;color:#888;font-size:10px">クリック or ドラッグで色を塗れます</span>
+  </div>
+  <div class="status" id="statusMsg">読み込み中...</div>
+  <div class="legend">
+    <div class="leg"><div class="lb lb-day"></div>デイサービス</div>
+    <div class="leg"><div class="lb lb-fac"></div>有料老人ホーム</div>
+    <div class="leg"><div class="lb lb-pat"></div>定期巡回（悠巡）</div>
+    <div class="leg"><div class="lb lb-op"></div>悠巡オペレーター</div>
+    <div class="leg"><div class="lb lb-none"></div>空白/休み</div>
+  </div>
+  <div class="svc-tabs">
+    <div class="svc-tab active" onclick="showSvc('all',event)">全員</div>
+    <div class="svc-tab" onclick="showSvc('day',event)">デイ</div>
+    <div class="svc-tab" onclick="showSvc('fac',event)">有料</div>
+    <div class="svc-tab" onclick="showSvc('pat',event)">定期巡回</div>
+  </div>
+  <div class="tl-wrap">
+    <table class="tl" id="tlTable"></table>
+  </div>
+</div>
+
+<script>
+const GAS_URL='https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
+const PASS='2408';
+
+const HOURS=[];
+for(let h=6;h<=34;h++){
+  const disp=h>=24?`翌${h-24}:00`:`${h}:00`;
+  const cls=h>=22?'night':(h<8?'dawn':'');
+  HOURS.push({h,disp,cls});
+}
+
+const SVC_LABEL={day:'デイ',fac:'有料',pat:'悠巡',op:'OP',none:''};
+const SVC_COLOR={day:'#1565C0',fac:'#1B5E20',pat:'#4A148C',op:'#E65100'};
+const SVC_FULL={day:'デイサービス',fac:'有料老人ホーム',pat:'定期巡回（悠巡）'};
+
+const STAFF=[
+  {id:'mitsumata',name:'三ッ股 久美子',role:'デイ管理者',svc:'day',conc:['day']},
+  {id:'takeo',    name:'竹尾 登美代',  role:'相談員/介護',svc:'day',conc:['day']},
+  {id:'kuramoto', name:'栗本 花梨',    role:'相談員/OP', svc:'day',conc:['day','pat']},
+  {id:'ueno_k',   name:'上野 和代',    role:'介護',      svc:'day',conc:['day']},
+  {id:'kitomi',   name:'キトミ',       role:'介護',      svc:'day',conc:['day']},
+  {id:'puruni',   name:'プールニーマー',role:'介護',      svc:'day',conc:['day']},
+  {id:'dirumi',   name:'ディルミ',     role:'介護',      svc:'day',conc:['day']},
+  {id:'gan',      name:'ガン',         role:'介護',      svc:'day',conc:['day']},
+  {id:'dinda',    name:'ディンダ',     role:'介護',      svc:'day',conc:['day']},
+  {id:'danisa',   name:'ダニサ',       role:'介護',      svc:'day',conc:['day']},
+  {id:'ueno_y',   name:'上野 由太佳',  role:'有料管理者', svc:'fac',conc:['fac']},
+  {id:'hiraoka',  name:'平岡 好美',    role:'定巡管理者/OP',svc:'fac',conc:['pat','fac']},
+  {id:'kudo',     name:'工藤 亜希子',  role:'介護/OP',   svc:'fac',conc:['fac','pat','day']},
+  {id:'nakagawa', name:'中川 和',      role:'介護',      svc:'fac',conc:['fac','pat','day']},
+  {id:'sato',     name:'佐藤 美鈴',    role:'介護',      svc:'fac',conc:['fac','pat','day']},
+  {id:'ichimanda',name:'一万田 琴乃',  role:'介護',      svc:'fac',conc:['fac','pat','day']},
+  {id:'inagara',  name:'稲垣 百子',    role:'介護補助',  svc:'fac',conc:['fac','pat','day']},
+  {id:'goto',     name:'後藤 安斗',    role:'介護補助/OP',svc:'fac',conc:['fac','pat','day']},
+  {id:'maki',     name:'牧 良子',      role:'課長/OP',   svc:'pat',conc:['pat','fac','day']},
+  {id:'pat1',     name:'訪問介護①',   role:'介護福祉士/OP',svc:'pat',conc:['pat']},
+  {id:'pat2',     name:'訪問介護②',   role:'介護福祉士/OP',svc:'pat',conc:['pat']},
+  {id:'pat3',     name:'訪問看護①',   role:'訪問看護師', svc:'pat',conc:['pat']},
+];
+
+// monthData: {dateStr: {staffId: {hour: svc}}}
+let monthData={};
+let currentDate='';
+let currentSvc='all';
+let currentPal='none';
+let isDragging=false;
+let curYear=new Date().getFullYear();
+let curMonth=new Date().getMonth()+1;
+
+// ===== 初期化 =====
+function init(){
+  const ySel=document.getElementById('yearSel');
+  for(let y=2025;y<=2028;y++){
+    const o=document.createElement('option');
+    o.value=y;o.textContent=y+'年';
+    if(y===curYear)o.selected=true;
+    ySel.appendChild(o);
+  }
+  document.getElementById('monthSel').value=curMonth;
+  updateCal();
+  showView('cal');
+}
+
+function showView(v){
+  document.getElementById('viewCal').classList.toggle('hidden',v!=='cal');
+  document.getElementById('viewDay').classList.toggle('hidden',v!=='day');
+}
+
+// ===== カレンダー =====
+function changeMonth(d){
+  curMonth+=d;
+  if(curMonth>12){curMonth=1;curYear++}
+  if(curMonth<1){curMonth=12;curYear--}
+  document.getElementById('yearSel').value=curYear;
+  document.getElementById('monthSel').value=curMonth;
+  updateCal();
+}
+
+function updateCal(){
+  curYear=parseInt(document.getElementById('yearSel').value);
+  curMonth=parseInt(document.getElementById('monthSel').value);
+  const reiwa=curYear-2018;
+  document.getElementById('monthTitle').textContent=`令和${reiwa}年 ${curMonth}月`;
+  buildCal();
+  buildSumTable();
+}
+
+function buildCal(){
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+  const wds=['月','火','水','木','金','土','日'];
+  const wdCls=['','','','','','sat','sun'];
+  wds.forEach((w,i)=>{
+    const d=document.createElement('div');
+    d.className=`cal-wd ${wdCls[i]}`;d.textContent=w;grid.appendChild(d);
+  });
+
+  const firstDay=new Date(curYear,curMonth-1,1).getDay();
+  const shift=(firstDay+6)%7; // 月曜始まり
+  const daysInMonth=new Date(curYear,curMonth,0).getDate();
+  const today=new Date();
+
+  for(let i=0;i<shift;i++){
+    const e=document.createElement('div');e.className='cal-day empty';grid.appendChild(e);
+  }
+
+  for(let d=1;d<=daysInMonth;d++){
+    const wday=new Date(curYear,curMonth-1,d).getDay();
+    const isToday=today.getFullYear()===curYear&&today.getMonth()+1===curMonth&&today.getDate()===d;
+    const dateStr=`${curYear}-${String(curMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const wCls=wday===6?'sat':wday===0?'sun':'';
+
+    const div=document.createElement('div');
+    div.className=`cal-day ${wCls}${isToday?' today':''}`;
+    div.onclick=()=>openDay(dateStr,d);
+
+    const dn=document.createElement('div');dn.className='d-num';dn.textContent=d;div.appendChild(dn);
+
+    // その日のサマリーバー
+    const data=monthData[dateStr];
+    if(data){
+      const saved=document.createElement('div');saved.className='d-saved';div.appendChild(saved);
+      const bars=document.createElement('div');bars.className='d-bars';
+      const totals={day:0,fac:0,pat:0,op:0};
+      STAFF.forEach(s=>{if(data[s.id])HOURS.forEach(({h})=>{const sv=data[s.id][h];if(sv&&sv!=='none')totals[sv]++})});
+      ['day','fac','pat','op'].forEach(sv=>{
+        if(totals[sv]>0){
+          const b=document.createElement('div');
+          b.className=`d-bar bar-${sv}`;
+          b.textContent=`${SVC_LABEL[sv]} ${totals[sv]}h`;
+          bars.appendChild(b);
+        }
+      });
+      div.appendChild(bars);
+    }
+    grid.appendChild(div);
+  }
+}
+
+// ===== 月間集計 =====
+function buildSumTable(){
+  const tbody=document.getElementById('sumBody');
+  tbody.innerHTML='';
+  STAFF.forEach(s=>{
+    const totals={day:0,fac:0,pat:0,op:0};
+    Object.values(monthData).forEach(dayState=>{
+      if(!dayState[s.id])return;
+      HOURS.forEach(({h})=>{
+        const sv=dayState[s.id][h];
+        if(sv&&sv!=='none')totals[sv]++;
+      });
+    });
+    const total=totals.day+totals.fac+totals.pat+totals.op;
+    const tr=document.createElement('tr');
+    const pct=(v)=>total>0?Math.round(v/total*100):0;
+    tr.innerHTML=`
+      <td>${s.conc.length>1?'★':''}${s.name}</td>
+      <td style="color:${SVC_COLOR[s.svc]};font-weight:bold">${SVC_FULL[s.svc].replace('サービス','').replace('老人ホーム','').replace('定期巡回（悠巡）','悠巡')}</td>
+      <td style="color:#1565C0;font-weight:bold">${totals.day||''}</td>
+      <td style="color:#1B5E20;font-weight:bold">${totals.fac||''}</td>
+      <td style="color:#4A148C;font-weight:bold">${totals.pat||''}</td>
+      <td style="color:#E65100;font-weight:bold">${totals.op||''}</td>
+      <td><b>${total||''}</b></td>
+      <td>
+        ${total>0?`<div class="bar-wrap">
+          ${totals.day>0?`<div class="bar-seg bar-day" style="width:${pct(totals.day)}%;background:#1565C0">${pct(totals.day)}%</div>`:''}
+          ${totals.fac>0?`<div class="bar-seg bar-fac" style="width:${pct(totals.fac)}%;background:#1B5E20">${pct(totals.fac)}%</div>`:''}
+          ${totals.pat>0?`<div class="bar-seg bar-pat" style="width:${pct(totals.pat)}%;background:#4A148C">${pct(totals.pat)}%</div>`:''}
+          ${totals.op>0?`<div class="bar-seg bar-op" style="width:${pct(totals.op)}%;background:#E65100">${pct(totals.op)}%</div>`:''}
+        </div>`:'―'}
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ===== 日別入力 =====
+function openDay(dateStr,d){
+  currentDate=dateStr;
+  const wday=new Date(curYear,curMonth-1,d).getDay();
+  const wdNames=['日','月','火','水','木','金','土'];
+  const reiwa=curYear-2018;
+  document.getElementById('dayTitle').textContent=`令和${reiwa}年${curMonth}月${d}日（${wdNames[wday]}）`;
+  if(!monthData[dateStr]){
+    monthData[dateStr]={};
+    STAFF.forEach(s=>{monthData[dateStr][s.id]={};HOURS.forEach(({h})=>monthData[dateStr][s.id][h]='none')});
+  }
+  buildTable();renderState();
+  setStatus(`${curMonth}月${d}日 ― 色を塗って「💾 保存」してください`);
+  showView('day');
+}
+
+function setPal(p){
+  currentPal=p;
+  document.querySelectorAll('.pal-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pal-'+p).classList.add('active');
+}
+
+function showSvc(svc,e){
+  currentSvc=svc;
+  document.querySelectorAll('.svc-tab').forEach(t=>t.classList.remove('active'));
+  if(e)e.target.classList.add('active');
+  buildTable();renderState();
+}
+
+function buildTable(){
+  const tbl=document.getElementById('tlTable');tbl.innerHTML='';
+  const htr=document.createElement('tr');
+  const th0=document.createElement('th');th0.className='th-name';th0.textContent='職員';htr.appendChild(th0);
+  HOURS.forEach(({disp,cls})=>{
+    const th=document.createElement('th');th.className=`th-h ${cls}`;th.textContent=disp;htr.appendChild(th);
+  });
+  tbl.appendChild(htr);
+
+  const svcs=currentSvc==='all'?['day','fac','pat']:[currentSvc];
+  const bgMap={day:'#1565C0',fac:'#1B5E20',pat:'#4A148C'};
+
+  svcs.forEach(svc=>{
+    const members=currentSvc==='all'?STAFF.filter(s=>s.svc===svc):STAFF.filter(s=>s.conc.includes(svc));
+    const shdr=document.createElement('tr');shdr.className='svc-hdr-row';
+    const shd=document.createElement('td');shd.colSpan=HOURS.length+1;
+    shd.style.background=bgMap[svc];shd.textContent=`▼ ${SVC_FULL[svc]}`;shdr.appendChild(shd);tbl.appendChild(shdr);
+
+    members.forEach(s=>{
+      const tr=document.createElement('tr');
+      const td0=document.createElement('td');
+      td0.className=`name-cell svc-${s.svc}`;
+      td0.innerHTML=`${s.conc.length>1?'★':''}${s.name}<span class="name-role">${s.role}</span>`;
+      tr.appendChild(td0);
+      HOURS.forEach(({h})=>{
+        const td=document.createElement('td');td.className='cell none';td.id=`c_${s.id}_${h}`;
+        const lbl=document.createElement('div');lbl.className='cell-lbl';lbl.textContent='';td.appendChild(lbl);
+        td.addEventListener('mousedown',e=>{e.preventDefault();isDragging=true;paint(s.id,h)});
+        td.addEventListener('mouseenter',()=>{if(isDragging)paint(s.id,h)});
+        tr.appendChild(td);
+      });
+      tbl.appendChild(tr);
+    });
+
+    // 合計行
+    ['day','fac','pat','op'].forEach(sv=>{
+      const lbl={day:'デイ人数',fac:'有料人数',pat:'悠巡人数',op:'悠巡OP'}[sv];
+      const tr=document.createElement('tr');tr.className='sum-r';
+      const td0=document.createElement('td');td0.className='sn';
+      td0.style.background=SVC_COLOR[sv];td0.style.color='#fff';td0.textContent=lbl;tr.appendChild(td0);
+      HOURS.forEach(({h})=>{
+        const td=document.createElement('td');td.id=`sum_${svc}_${sv}_${h}`;
+        td.style.background=SVC_COLOR[sv];tr.appendChild(td);
+      });
+      tbl.appendChild(tr);
+    });
+  });
+  document.addEventListener('mouseup',()=>isDragging=false);
+}
+
+function paint(sid,h){
+  if(!monthData[currentDate])return;
+  monthData[currentDate][sid][h]=currentPal;
+  const cell=document.getElementById(`c_${sid}_${h}`);
+  if(!cell)return;
+  cell.className=`cell ${currentPal}`;
+  cell.querySelector('.cell-lbl').textContent=SVC_LABEL[currentPal];
+  updateSumRow();
+}
+
+function updateSumRow(){
+  const svcs=currentSvc==='all'?['day','fac','pat']:[currentSvc];
+  svcs.forEach(svc=>{
+    const members=currentSvc==='all'?STAFF.filter(s=>s.svc===svc):STAFF.filter(s=>s.conc.includes(svc));
+    HOURS.forEach(({h})=>{
+      ['day','fac','pat','op'].forEach(sv=>{
+        const cnt=members.filter(s=>monthData[currentDate]&&monthData[currentDate][s.id]&&monthData[currentDate][s.id][h]===sv).length;
+        const el=document.getElementById(`sum_${svc}_${sv}_${h}`);
+        if(el)el.textContent=cnt||'';
+      });
+    });
+  });
+}
+
+function renderState(){
+  if(!monthData[currentDate])return;
+  STAFF.forEach(s=>{
+    HOURS.forEach(({h})=>{
+      const sv=monthData[currentDate][s.id]?monthData[currentDate][s.id][h]||'none':'none';
+      const cell=document.getElementById(`c_${s.id}_${h}`);
+      if(!cell)return;
+      cell.className=`cell ${sv}`;
+      cell.querySelector('.cell-lbl').textContent=SVC_LABEL[sv];
+    });
+  });
+  updateSumRow();
+}
+
+function clearDay(){
+  if(!confirm('この日のデータをクリアしますか？'))return;
+  STAFF.forEach(s=>{if(monthData[currentDate])HOURS.forEach(({h})=>monthData[currentDate][s.id][h]='none')});
+  renderState();setStatus('クリアしました');
+}
+
+// ===== GAS 保存・読み込み =====
+function saveData(){
+  if(!currentDate){alert('日付を選んでください');return}
+  setStatus('保存中...');
+  const key=`jikan_${currentDate}`;
+  const value=JSON.stringify(monthData[currentDate]);
+  fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'時間帯管理',key,value})})
+    .then(r=>r.json())
+    .then(()=>{setStatus(`✅ ${currentDate} を保存しました`);buildCal();buildSumTable()})
+    .catch(()=>{
+      localStorage.setItem(key,value);
+      setStatus(`💾 ローカル保存しました（${currentDate}）`);
+      buildCal();buildSumTable();
+    });
+}
+
+function loadMonthData(){
+  setStatus('月間データ読み込み中...');
+  const daysInMonth=new Date(curYear,curMonth,0).getDate();
+  const promises=[];
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${curYear}-${String(curMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const key=`jikan_${dateStr}`;
+    const p=fetch(`${GAS_URL}?action=get&pass=${PASS}&sheet=時間帯管理&key=${key}`)
+      .then(r=>r.json())
+      .then(r=>{
+        if(r.value){monthData[dateStr]=JSON.parse(r.value)}
+        else{
+          const local=localStorage.getItem(key);
+          if(local)monthData[dateStr]=JSON.parse(local);
+        }
+      })
+      .catch(()=>{const local=localStorage.getItem(key);if(local)monthData[dateStr]=JSON.parse(local)});
+    promises.push(p);
+  }
+  Promise.all(promises).then(()=>{
+    buildCal();buildSumTable();
+    setStatus(`✅ ${curYear}年${curMonth}月のデータを読み込みました`);
+    showView('cal');
+  });
+}
+
+function setStatus(msg){
+  const el=document.getElementById('statusMsg');
+  if(el)el.textContent=msg;
+}
+
+init();
+</script>
+</body>
+</html>
