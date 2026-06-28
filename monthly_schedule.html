@@ -225,6 +225,56 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
       <button class="btn b-green" style="margin-top:10px" onclick="saveSettings()">💾 設定を保存</button>
     </div>
 
+    <!-- 職員管理 -->
+    <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
+      <h3 style="font-size:12px;font-weight:bold;color:#263238;margin-bottom:10px;border-left:4px solid #E65100;padding-left:8px">
+        👤 職員管理（追加・退職・並び順）
+      </h3>
+      <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn b-blue" onclick="showAddStaff()">➕ 職員を追加</button>
+        <span style="font-size:10px;color:#888">退職職員はグレーで表示。チェックを外すと非表示になります。</span>
+      </div>
+      <!-- 新規追加フォーム -->
+      <div id="addStaffForm" style="display:none;background:#EEF7EE;border-radius:6px;padding:10px;margin-bottom:10px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:8px">
+          <div><label style="font-size:10px;color:#555">氏名</label><input id="ns-name" type="text" placeholder="例：山田 花子" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:3px;font-size:11px"></div>
+          <div><label style="font-size:10px;color:#555">職種</label><input id="ns-role" type="text" placeholder="例：介護" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:3px;font-size:11px"></div>
+          <div><label style="font-size:10px;color:#555">資格</label><input id="ns-qual" type="text" placeholder="例：介護福祉士" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:3px;font-size:11px"></div>
+          <div><label style="font-size:10px;color:#555">入職日</label><input id="ns-hire" type="text" placeholder="例：R8.4" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:3px;font-size:11px"></div>
+          <div><label style="font-size:10px;color:#555">勤務形態</label>
+            <select id="ns-form" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:3px;font-size:11px">
+              <option value="常">常勤</option><option value="非">非常勤</option><option value="パート">パート</option>
+            </select>
+          </div>
+          <div><label style="font-size:10px;color:#555">所属サービス</label>
+            <select id="ns-svc" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:3px;font-size:11px">
+              <option value="day">デイサービス</option>
+              <option value="fac">有料老人ホーム</option>
+              <option value="pat">定期巡回（悠巡）</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn b-green" onclick="addStaff()">追加</button>
+          <button class="btn b-gray" onclick="document.getElementById('addStaffForm').style.display='none'">キャンセル</button>
+        </div>
+      </div>
+      <!-- 職員一覧 -->
+      <table style="border-collapse:collapse;width:100%">
+        <thead><tr>
+          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;text-align:left;border:1px solid #ccc">氏名</th>
+          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">所属</th>
+          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">職種</th>
+          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">入職</th>
+          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">状態</th>
+          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">表示</th>
+          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">操作</th>
+        </tr></thead>
+        <tbody id="staffMgmtTbl"></tbody>
+      </table>
+      <button class="btn b-green" style="margin-top:10px" onclick="saveSettings()">💾 設定を保存</button>
+    </div>
+
     <!-- 職員別所定時間 -->
     <div style="background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
       <h3 style="font-size:12px;font-weight:bold;color:#263238;margin-bottom:10px;border-left:4px solid #4A148C;padding-left:8px">
@@ -595,7 +645,14 @@ function updateMtlCell(td,svc,sid,dateStr){
   }
 }
 
-function openMtlDay(d,svc,members){
+function openMtlDay(d,svc,membersOrig){
+  // 定巡は平岡先頭
+  let members=[...membersOrig];
+  if(svc==='pat'){
+    const h=members.filter(s=>s.id==='hiraoka');
+    const o=members.filter(s=>s.id!=='hiraoka');
+    members=[...h,...o];
+  }
   const areaId=`tl-area-${svc}`;
   const area=document.getElementById(areaId);
   const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -778,12 +835,24 @@ let settings={
     fac:{weekday:3,holiday:3,note:'常時3名以上（目安）'},
     pat:{weekday:1,holiday:1,note:'オペレーター1名以上（8:00〜18:00）'},
   },
-  staffRate:{}, // {staffId: rate}
+  staffRate:{},    // {staffId: rate}
+  staffStatus:{},  // {staffId: {active:true/false, retired:false, retireDate:''}}
+  extraStaff:[],   // 追加職員
 };
-// デフォルト倍率
+// デフォルト倍率・状態
 STAFF.forEach(s=>{
   settings.staffRate[s.id]=s.id==='inagara'?0.75:1.0;
+  settings.staffStatus[s.id]={active:true,retired:false,retireDate:''};
 });
+
+// 有効職員を返す（退職・非表示を除外）
+function getActiveStaff(){
+  const allStaff=[...STAFF,...settings.extraStaff];
+  return allStaff.filter(s=>{
+    const st=settings.staffStatus[s.id];
+    return !st||st.active!==false;
+  });
+}
 
 function getMonthHrs(){return settings.monthHrs[curM]||168;}
 function getStaffHrs(sid){return Math.round(getMonthHrs()*(settings.staffRate[sid]||1.0));}
@@ -822,9 +891,42 @@ function buildSettings(){
     tbl2.appendChild(tr);
   });
 
+  // 職員管理テーブル
+  const mgmtTbl=document.getElementById('staffMgmtTbl');
+  if(mgmtTbl){
+    mgmtTbl.innerHTML='';
+    const allStaff=[...STAFF,...(settings.extraStaff||[])];
+    allStaff.forEach(s=>{
+      const st=settings.staffStatus[s.id]||{active:true,retired:false,retireDate:''};
+      const tr=document.createElement('tr');
+      const rowBg=st.retired?'#f5f5f5':st.active===false?'#fff3f3':'#fff';
+      tr.style.background=rowBg;
+      const nameStyle=st.retired?'color:#999;text-decoration:line-through':'font-weight:bold';
+      tr.innerHTML=`
+        <td style="padding:4px 8px;border:1px solid #eee;font-size:11px;${nameStyle}">${s.conc&&s.conc.length>1?'★':''}${s.name}</td>
+        <td style="padding:4px 8px;border:1px solid #eee;font-size:10px;text-align:center;color:${SVC_CLR[s.svc]}">${SVC_LBL[s.svc]}</td>
+        <td style="padding:4px 8px;border:1px solid #eee;font-size:10px">${s.role}</td>
+        <td style="padding:4px 8px;border:1px solid #eee;font-size:10px;text-align:center">${s.hire||''}</td>
+        <td style="padding:4px 8px;border:1px solid #eee;font-size:10px;text-align:center">
+          ${st.retired?`<span style="color:#E53935;font-weight:bold">退職</span><br><span style="font-size:9px;color:#999">${st.retireDate||''}</span>`:'<span style="color:#43A047">在職</span>'}
+        </td>
+        <td style="padding:4px 8px;border:1px solid #eee;text-align:center">
+          <input type="checkbox" ${st.active!==false?'checked':''} onchange="toggleStaffActive('${s.id}',this.checked)" title="表示/非表示">
+        </td>
+        <td style="padding:4px 8px;border:1px solid #eee;text-align:center">
+          ${st.retired?
+            `<button class="btn b-blue" style="font-size:9px;padding:2px 6px" onclick="unretireStaff('${s.id}')">復職</button>`:
+            `<button class="btn b-red" style="font-size:9px;padding:2px 6px" onclick="retireStaff('${s.id}')">退職</button>`
+          }
+        </td>`;
+      mgmtTbl.appendChild(tr);
+    });
+  }
+
   // 職員別倍率テーブル
   const tbl3=document.getElementById('staffHrsTbl');tbl3.innerHTML='';
-  STAFF.forEach(s=>{
+  const allStaffForRate=[...STAFF,...(settings.extraStaff||[])];
+  allStaffForRate.forEach(s=>{
     const tr=document.createElement('tr');
     const rate=settings.staffRate[s.id]||1.0;
     const hrs=Math.round(getMonthHrs()*rate);
@@ -841,6 +943,63 @@ function buildSettings(){
       <td style="padding:4px 8px;border:1px solid #ccc;font-size:12px;font-weight:bold;text-align:center;color:#1565C0">${hrs}h</td>`;
     tbl3.appendChild(tr);
   });
+}
+
+function showAddStaff(){
+  const f=document.getElementById('addStaffForm');
+  f.style.display=f.style.display==='none'?'block':'none';
+}
+
+function addStaff(){
+  const name=document.getElementById('ns-name').value.trim();
+  if(!name){alert('氏名を入力してください');return}
+  const svc=document.getElementById('ns-svc').value;
+  const newId='extra_'+Date.now();
+  const s={
+    id:newId,
+    name,
+    role:document.getElementById('ns-role').value||'介護',
+    qual:document.getElementById('ns-qual').value||'',
+    hire:document.getElementById('ns-hire').value||'',
+    form:document.getElementById('ns-form').value||'常',
+    svc,
+    conc:[svc],
+    op:false,
+  };
+  if(!settings.extraStaff)settings.extraStaff=[];
+  settings.extraStaff.push(s);
+  if(!settings.staffStatus)settings.staffStatus={};
+  settings.staffStatus[newId]={active:true,retired:false,retireDate:''};
+  if(!settings.staffRate)settings.staffRate={};
+  settings.staffRate[newId]=1.0;
+  document.getElementById('addStaffForm').style.display='none';
+  // フォームリセット
+  ['ns-name','ns-role','ns-qual','ns-hire'].forEach(id=>document.getElementById(id).value='');
+  buildSettings();
+  setStatus(`✅ ${name} を追加しました（保存ボタンで確定）`);
+}
+
+function retireStaff(id){
+  const s=[...STAFF,...(settings.extraStaff||[])].find(s=>s.id===id);
+  const date=prompt(`${s?s.name:''}の退職日を入力（例：R8.7.31）`,'');
+  if(date===null)return;
+  if(!settings.staffStatus)settings.staffStatus={};
+  settings.staffStatus[id]={active:false,retired:true,retireDate:date};
+  buildSettings();
+  setStatus('退職設定しました（保存ボタンで確定）');
+}
+
+function unretireStaff(id){
+  if(!settings.staffStatus)settings.staffStatus={};
+  settings.staffStatus[id]={active:true,retired:false,retireDate:''};
+  buildSettings();
+  setStatus('復職設定しました（保存ボタンで確定）');
+}
+
+function toggleStaffActive(id,checked){
+  if(!settings.staffStatus)settings.staffStatus={};
+  if(!settings.staffStatus[id])settings.staffStatus[id]={active:true,retired:false,retireDate:''};
+  settings.staffStatus[id].active=checked;
 }
 
 function saveSettings(){
