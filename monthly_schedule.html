@@ -1679,9 +1679,12 @@ async function loadAll(){
   const settingsKey=`settings_${curY}_${curM}`;
 
   try{
-    // 1回のリクエストで月間シフト・時間帯・設定を一括取得
+    // 1回のリクエストで月間シフト・時間帯・設定を一括取得（POST）
     const keys=[schKey, monthKey, settingsKey];
-    const r=await fetch(`${GAS}?action=getMulti&pass=${PASS}&keys=${encodeURIComponent(JSON.stringify(keys))}`).then(r=>r.json());
+    const r=await fetch(GAS,{
+      method:'POST',
+      body:JSON.stringify({action:'getMulti',pass:PASS,keys})
+    }).then(r=>r.json());
 
     // 月間シフト
     if(r[schKey])schData=JSON.parse(r[schKey]);
