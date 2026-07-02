@@ -1704,7 +1704,8 @@ async function loadAll(){
   }catch(e){console.log('GAS読み込み失敗:',e);}
 
   // GAS読み込み完了後にテーブル構築
-  console.log('schData keys:',Object.keys(schData).length,'件');
+  console.log('schData keys:',Object.keys(schData));
+  console.log('STAFF ids:',STAFF.map(s=>s.id));
   initData();
   buildSchTable();
   setStatus(`✅ ${curY}年${curM}月のデータを読み込みました`);
