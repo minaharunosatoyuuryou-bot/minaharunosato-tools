@@ -1678,47 +1678,33 @@ async function loadAll(){
   const monthKey=`month_${curY}_${curM}`;
   const settingsKey=`settings_${curY}_${curM}`;
 
+  // まずローカルストレージから読み込む
+  const ls=localStorage.getItem(schKey);if(ls)schData=JSON.parse(ls);
+  const lm=localStorage.getItem(monthKey);if(lm)tlData=JSON.parse(lm);
+  const lset=localStorage.getItem(settingsKey);if(lset)settings=JSON.parse(lset);
+
+  // GASからも取得を試みる（POSTでgetMulti）
   try{
-    // 1回のリクエストで月間シフト・時間帯・設定を一括取得（POST）
     const keys=[schKey, monthKey, settingsKey];
     const r=await fetch(GAS,{
       method:'POST',
-      body:JSON.stringify({action:'getMulti',pass:PASS,keys})
+      body:JSON.stringify({action:'getMulti',pass:PASS,keys:keys})
     }).then(r=>r.json());
 
-    // 月間シフト
-    if(r[schKey])schData=JSON.parse(r[schKey]);
-    else{const l=localStorage.getItem(schKey);if(l)schData=JSON.parse(l);}
-
-    // 月間時間帯（一括保存されている場合）
+    if(r[schKey]){
+      const parsed=JSON.parse(r[schKey]);
+      if(parsed&&Object.keys(parsed).length>0)schData=parsed;
+    }
     if(r[monthKey]){
-      tlData=JSON.parse(r[monthKey]);
-    }else{
-      // フォールバック：個別ローカルストレージから
-      const dim=new Date(curY,curM,0).getDate();
-      for(let d=1;d<=dim;d++){
-        const ds=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const l=localStorage.getItem(`jikan_${ds}`);if(l)tlData[ds]=JSON.parse(l);
-      }
+      const parsed=JSON.parse(r[monthKey]);
+      if(parsed&&Object.keys(parsed).length>0)tlData=parsed;
     }
-
-    // 設定
-    if(r[settingsKey])settings=JSON.parse(r[settingsKey]);
-    else{const l=localStorage.getItem(settingsKey);if(l)settings=JSON.parse(l);}
-
+    if(r[settingsKey]){
+      const parsed=JSON.parse(r[settingsKey]);
+      if(parsed)settings=parsed;
+    }
   }catch(e){
-    // GAS失敗時はローカルから
-    const ls=localStorage.getItem(schKey);if(ls)schData=JSON.parse(ls);
-    const lm=localStorage.getItem(monthKey);
-    if(lm){tlData=JSON.parse(lm);}
-    else{
-      const dim=new Date(curY,curM,0).getDate();
-      for(let d=1;d<=dim;d++){
-        const ds=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const l=localStorage.getItem(`jikan_${ds}`);if(l)tlData[ds]=JSON.parse(l);
-      }
-    }
-    const lset=localStorage.getItem(settingsKey);if(lset)settings=JSON.parse(lset);
+    console.log('GAS読み込み失敗、ローカルを使用');
   }
 
   initData();buildSchTable();
