@@ -1654,10 +1654,10 @@ async function saveAll(){
   const settingsKey=`settings_${curY}_${curM}`;
   try{
     // 月間シフト・時間帯・設定を並列保存
-    await Promise.all([
-      fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'月間勤務',key:schKey,value:JSON.stringify(schData)})}),
-      fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'月間勤務',key:monthKey,value:JSON.stringify(tlData)})}),
-      fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'設定',key:settingsKey,value:JSON.stringify(settings)})}),
+    const results=await Promise.all([
+      fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'月間勤務',key:schKey,value:JSON.stringify(schData)})}).catch(e=>({ok:false})),
+      fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'月間勤務',key:monthKey,value:JSON.stringify(tlData)})}).catch(e=>({ok:false})),
+      fetch(GAS,{method:'POST',body:JSON.stringify({action:'set',pass:PASS,sheet:'設定',key:settingsKey,value:JSON.stringify(settings)})}).catch(e=>({ok:false})),
     ]);
     // ローカルにも保存
     localStorage.setItem(schKey,JSON.stringify(schData));
