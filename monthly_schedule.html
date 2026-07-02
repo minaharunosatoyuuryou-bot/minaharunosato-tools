@@ -603,7 +603,7 @@ function buildSchTable(){
       for(let d=1;d<=days;d++){
         const wd=new Date(curY,curM-1,d).getDay();
         const wc=wd===6?' sat':wd===0?' sun':'';
-        const k=schData[s.id]?schData[s.id][d]||'':'';
+        const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
         const sd=SMAP[k];
         const td=document.createElement('td');
         // 兼任先では同じデータを参照（id共通）
@@ -628,7 +628,7 @@ function buildSchTable(){
     for(let d=1;d<=days;d++){
       const td=document.createElement('td');td.id=`ds_${svc}_${d}`;
       td.style.background=SVC_CLR[svc];td.style.color='#fff';
-      const cnt=mems.filter(s=>schData[s.id]&&schData[s.id][d]&&!['休','有','有2','明','夜','欠','研',''].includes(schData[s.id][d])).length;
+      const cnt=mems.filter(s=>schData[s.id]&&schData[s.id][d]&&!['休','有','有2','明','夜','欠','研',''].includes(schData[s.id][d]||schData[s.id][String(d)]||'')).length;
       td.textContent=cnt||'';tr.appendChild(td);
     }
     const td2=document.createElement('td');td2.style.background=SVC_CLR[svc];tr.appendChild(td2);
@@ -638,14 +638,14 @@ function buildSchTable(){
 
 function calcTotal(sid){
   let h=0;
-  for(let d=1;d<=days;d++){const k=schData[sid]?schData[sid][d]||'':'';const sd=SMAP[k];if(sd)h+=sd.h;}
+  for(let d=1;d<=days;d++){const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';const sd=SMAP[k];if(sd)h+=sd.h;}
   return h||'';
 }
 
 function updateDaySum(d){
   ['day','fac','pat'].forEach(svc=>{
     const mems=STAFF.filter(s=>s.svc===svc);
-    const cnt=mems.filter(s=>schData[s.id]&&schData[s.id][d]&&!['休','有','有2','明','夜','欠','研',''].includes(schData[s.id][d])).length;
+    const cnt=mems.filter(s=>schData[s.id]&&schData[s.id][d]&&!['休','有','有2','明','夜','欠','研',''].includes(schData[s.id][d]||schData[s.id][String(d)]||'')).length;
     const el=document.getElementById(`ds_${svc}_${d}`);if(el)el.textContent=cnt||'';
   });
 }
@@ -795,7 +795,7 @@ function buildMtl(svc){
 function updateMtlCell(td,svc,sid,dateStr){
   // まずシフト記号から休み判定
   const d=parseInt(dateStr.slice(8));
-  const k=schData[sid]?schData[sid][d]||'':'';
+  const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';
   if(['休','明','欠'].includes(k)){
     td.style.background='#FFCDD2';td.style.color='#B71C1C';td.textContent='休';return;
   }
@@ -1348,7 +1348,7 @@ function buildSumTable(){
     // 休み・有給日数をschDataから集計
     let kyuDays=0,yuuDays=0;
     for(let d=1;d<=31;d++){
-      const k=schData[s.id]?schData[s.id][d]||'':'';
+      const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
       if(['休','明','欠'].includes(k))kyuDays++;
       if(['有','有2'].includes(k))yuuDays++;
     }
@@ -1386,7 +1386,7 @@ function buildTotalStats(){
       HOURS.forEach(({h})=>{const sv=ds[s.id][h];if(sv&&sv!=='none')totals[sv]=(totals[sv]||0)+0.5;});
     });
     for(let d=1;d<=31;d++){
-      const k=schData[s.id]?schData[s.id][d]||'':'';
+      const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
       if(['休','明','欠'].includes(k))totals.kyu++;
       if(['有','有2'].includes(k))totals.yuu++;
     }
@@ -1577,7 +1577,7 @@ function autoFillAll(svc,silent=false){
       STAFF.forEach(s=>{tlData[dateStr][s.id]={};HOURS.forEach(({h})=>tlData[dateStr][s.id][h]='none')});
     }
     members.forEach(s=>{
-      const k=schData[s.id]?schData[s.id][d]||'':'';
+      const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
       const auto=SHIFT_AUTO[k];
       const svcColor=s.svc; // 主所属サービス色
       if(auto){
