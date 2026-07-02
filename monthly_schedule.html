@@ -1160,89 +1160,6 @@ function buildSettings(){
 
 // ===== 勤務区分カスタマイズ =====
 function getShifts(){
-  return settings.customShifts||[...SHIFTS];
-}
-
-function buildShiftEditTable(){
-  const tbody=document.getElementById('shiftEditBody');
-  if(!tbody)return;
-  tbody.innerHTML='';
-  getShifts().forEach((s,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td style="padding:3px 6px;border:1px solid #eee">
-        <input type="text" value="${s.k}" maxlength="4"
-          style="width:50px;padding:3px;font-size:11px;font-weight:bold;border:1px solid #ccc;border-radius:3px;text-align:center"
-          onchange="updateShift(${i},'k',this.value)">
-      </td>
-      <td style="padding:3px 6px;border:1px solid #eee">
-        <input type="text" value="${s.label||''}" placeholder="例：8:30〜17:30"
-          style="width:140px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:3px"
-          onchange="updateShift(${i},'label',this.value)">
-      </td>
-      <td style="padding:3px 6px;border:1px solid #eee;text-align:center">
-        <input type="number" value="${s.h}" min="0" max="24" step="0.5"
-          style="width:55px;padding:3px;font-size:11px;border:1px solid #ccc;border-radius:3px;text-align:center"
-          onchange="updateShift(${i},'h',+this.value)">
-      </td>
-      <td style="padding:3px 6px;border:1px solid #eee;text-align:center">
-        <input type="color" value="${s.c||'#BBDEFB'}"
-          style="width:40px;height:26px;border:none;cursor:pointer;border-radius:3px"
-          onchange="updateShift(${i},'c',this.value)">
-      </td>
-      <td style="padding:3px 6px;border:1px solid #eee;text-align:center">
-        <span style="background:${s.c||'#BBDEFB'};color:${s.t||'#0D47A1'};padding:3px 8px;border-radius:3px;font-size:11px;font-weight:bold">${s.k}</span>
-      </td>
-      <td style="padding:3px 6px;border:1px solid #eee;text-align:center">
-        <button onclick="removeShift(${i})" style="background:#f44336;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:10px;cursor:pointer">削除</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-function updateShift(i,key,val){
-  if(!settings.customShifts)settings.customShifts=[...SHIFTS];
-  settings.customShifts[i][key]=val;
-  // SMAPを更新
-  settings.customShifts.forEach(s=>SMAP[s.k]=s);
-  buildShiftEditTable();
-}
-
-function removeShift(i){
-  if(!settings.customShifts)settings.customShifts=[...SHIFTS];
-  settings.customShifts.splice(i,1);
-  buildShiftEditTable();
-}
-
-function addShiftRow(){
-  if(!settings.customShifts)settings.customShifts=[...SHIFTS];
-  settings.customShifts.push({k:'新',label:'新しい区分',h:8,c:'#E0E0E0',t:'#333333'});
-  buildShiftEditTable();
-}
-
-function updateStaffSvc(id,svc){
-  if(!settings.staffSvc)settings.staffSvc={};
-  settings.staffSvc[id]=svc;
-}
-function updateStaffRole(id,role){
-  if(!settings.staffRole)settings.staffRole={};
-  settings.staffRole[id]=role;
-}
-function updateStaffHire(id,hire){
-  if(!settings.staffHire)settings.staffHire={};
-  settings.staffHire[id]=hire;
-}
-function updateStaffQual(id,qual){
-  if(!settings.staffQual)settings.staffQual={};
-  settings.staffQual[id]=qual;
-}
-function updateStaffForm(id,form){
-  if(!settings.staffForm)settings.staffForm={};
-  settings.staffForm[id]=form;
-}
-
-// ===== 勤務区分カスタマイズ =====
-function getShifts(){
   return settings.customShifts||SHIFTS;
 }
 
@@ -1380,43 +1297,6 @@ function toggleStaffActive(id,checked){
   settings.staffStatus[id].active=checked;
 }
 
-function getShifts(){return settings.customShifts||[...SHIFTS];}
-function updateShift(i,key,val){
-  if(!settings.customShifts)settings.customShifts=SHIFTS.map(s=>({...s}));
-  settings.customShifts[i][key]=val;
-  settings.customShifts.forEach(s=>{SMAP[s.k]=s;});
-  buildSettings();
-}
-function removeShift(i){
-  if(!settings.customShifts)settings.customShifts=SHIFTS.map(s=>({...s}));
-  settings.customShifts.splice(i,1);
-  buildSettings();
-}
-function addShiftRow(){
-  if(!settings.customShifts)settings.customShifts=SHIFTS.map(s=>({...s}));
-  settings.customShifts.push({k:'新',label:'新しい区分',h:8,c:'#E0E0E0',t:'#333333'});
-  buildSettings();
-}
-function updateStaffSvc(id,svc){
-  if(!settings.staffSvc)settings.staffSvc={};
-  settings.staffSvc[id]=svc;
-}
-function updateStaffRole(id,role){
-  if(!settings.staffRole)settings.staffRole={};
-  settings.staffRole[id]=role;
-}
-function updateStaffHire(id,hire){
-  if(!settings.staffHire)settings.staffHire={};
-  settings.staffHire[id]=hire;
-}
-function updateStaffQual(id,qual){
-  if(!settings.staffQual)settings.staffQual={};
-  settings.staffQual[id]=qual;
-}
-function updateStaffForm(id,form){
-  if(!settings.staffForm)settings.staffForm={};
-  settings.staffForm[id]=form;
-}
 function saveSettings(){
   const key=`settings_${curY}_${curM}`;
   const val=JSON.stringify(settings);
