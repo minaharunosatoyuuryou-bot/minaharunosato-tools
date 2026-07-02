@@ -1698,12 +1698,15 @@ async function loadAll(){
       gasGet('月間勤務',monthKey),
       gasGet('設定',settingsKey),
     ]);
-    if(v1){try{const d=JSON.parse(v1);if(d&&Object.keys(d).length>0){schData=d;localStorage.setItem(schKey,v1);console.log('GASから読み込み成功:',schKey);}}catch(e){}}
+    if(v1){try{const d=JSON.parse(v1);if(d&&Object.keys(d).length>0){schData=d;localStorage.setItem(schKey,v1);}}catch(e){}}
     if(v2){try{const d=JSON.parse(v2);if(d&&Object.keys(d).length>0){tlData=d;localStorage.setItem(monthKey,v2);}}catch(e){}}
     if(v3){try{const d=JSON.parse(v3);if(d)settings=d;}catch(e){}}
   }catch(e){console.log('GAS読み込み失敗:',e);}
 
-  initData();buildSchTable();
+  // GAS読み込み完了後にテーブル構築
+  console.log('schData keys:',Object.keys(schData).length,'件');
+  initData();
+  buildSchTable();
   setStatus(`✅ ${curY}年${curM}月のデータを読み込みました`);
 }
 
