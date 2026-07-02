@@ -381,10 +381,30 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
         <th style="background:#1B5E20">有料(h)</th>
         <th style="background:#4A148C">悠巡(h)</th>
         <th style="background:#E65100">悠巡OP(h)</th>
-        <th>合計(h)</th><th>割合グラフ</th>
+        <th>合計(h)</th>
+        <th style="background:#FFCDD2;color:#B71C1C">休み(日)</th>
+        <th style="background:#FFF9C4;color:#F57F17">有給(日)</th>
+        <th>割合グラフ</th>
       </tr></thead>
       <tbody id="sumBody"></tbody>
     </table>
+  </div>
+
+  <!-- 全体時間割合 -->
+  <div class="ms-wrap" style="margin-top:0;padding-top:0">
+    <h2 style="font-size:13px;font-weight:bold;color:#263238;margin-bottom:8px;padding-top:8px">📊 全体集計　― サービス別時間割合・時間帯別人数</h2>
+
+    <!-- サービス別合計 -->
+    <div style="background:#fff;border-radius:6px;padding:12px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
+      <h3 style="font-size:11px;font-weight:bold;color:#555;margin-bottom:8px">▼ 全職員　サービス別時間合計</h3>
+      <div id="totalSvcBars" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- 時間帯別人数グラフ -->
+    <div style="background:#fff;border-radius:6px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
+      <h3 style="font-size:11px;font-weight:bold;color:#555;margin-bottom:8px">▼ 月間　時間帯別サービス人数（全日合計）</h3>
+      <div id="hourlyChart" style="overflow-x:auto"></div>
+    </div>
   </div>
 </div>
 
@@ -490,7 +510,7 @@ function setTab(t,el){
   ['all','day','fac','pat','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
   document.getElementById('v-'+t).classList.remove('hidden');
   if(t!=='all'&&t!=='sum'&&t!=='set') buildMtl(t);
-  if(t==='sum') buildSumTable();
+  if(t==='sum'){buildSumTable();buildTotalStats();}
   if(t==='set') buildSettings();
 }
 
@@ -498,7 +518,7 @@ function showView(v){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   ['all','day','fac','pat','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
   document.getElementById('v-'+v).classList.remove('hidden');
-  if(v==='sum')buildSumTable();
+  if(v==='sum'){buildSumTable();buildTotalStats();}
 }
 
 function changeMonth(d){
@@ -763,8 +783,19 @@ function buildMtl(svc){
 }
 
 function updateMtlCell(td,svc,sid,dateStr){
+  // まずシフト記号から休み判定
+  const d=parseInt(dateStr.slice(8));
+  const k=schData[sid]?schData[sid][d]||'':'';
+  if(['休','明','欠'].includes(k)){
+    td.style.background='#FFCDD2';td.style.color='#B71C1C';td.textContent='休';return;
+  }
+  if(['有','有2'].includes(k)){
+    td.style.background='#FFF9C4';td.style.color='#F57F17';td.textContent='有';return;
+  }
+  if(['研'].includes(k)){
+    td.style.background='#B2DFDB';td.style.color='#004D40';td.textContent='研';return;
+  }
   if(!tlData[dateStr]||!tlData[dateStr][sid])return;
-  // その日の主なサービス色を表示（最多の色）
   const counts={day:0,fac:0,pat:0,op:0};
   HOURS.forEach(({h})=>{const sv=tlData[dateStr][sid][h];if(sv&&sv!=='none')counts[sv]++;});
   const dominant=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
@@ -1396,6 +1427,13 @@ function buildSumTable(){
     });
     const total=Object.values(totals).reduce((a,b)=>a+b,0);
     const pct=v=>total>0?Math.round(v/total*100):0;
+    // 休み・有給日数をschDataから集計
+    let kyuDays=0,yuuDays=0;
+    for(let d=1;d<=31;d++){
+      const k=schData[s.id]?schData[s.id][d]||'':'';
+      if(['休','明','欠'].includes(k))kyuDays++;
+      if(['有','有2'].includes(k))yuuDays++;
+    }
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${s.conc.length>1?'★':''}${s.name}</td>
@@ -1405,6 +1443,8 @@ function buildSumTable(){
       <td style="color:#4A148C;font-weight:bold">${totals.pat||''}</td>
       <td style="color:#E65100;font-weight:bold">${totals.op||''}</td>
       <td><b>${total||''}</b></td>
+      <td style="color:#B71C1C;font-weight:bold;text-align:center">${kyuDays||''}</td>
+      <td style="color:#F57F17;font-weight:bold;text-align:center">${yuuDays||''}</td>
       <td>${total>0?`<div class="bar-wrap">
         ${totals.day>0?`<div class="bar-seg" style="width:${pct(totals.day)}%;background:#1565C0">${pct(totals.day)}%</div>`:''}
         ${totals.fac>0?`<div class="bar-seg" style="width:${pct(totals.fac)}%;background:#1B5E20">${pct(totals.fac)}%</div>`:''}
@@ -1413,6 +1453,88 @@ function buildSumTable(){
       </div>`:'―'}</td>`;
     tbody.appendChild(tr);
   });
+}
+
+// ===== 全体集計 =====
+function buildTotalStats(){
+  // サービス別合計
+  const bars=document.getElementById('totalSvcBars');
+  if(!bars)return;
+  bars.innerHTML='';
+  const totals={day:0,fac:0,pat:0,op:0,kyu:0,yuu:0};
+  STAFF.forEach(s=>{
+    Object.values(tlData).forEach(ds=>{
+      if(!ds[s.id])return;
+      HOURS.forEach(({h})=>{const sv=ds[s.id][h];if(sv&&sv!=='none')totals[sv]=(totals[sv]||0)+0.5;});
+    });
+    for(let d=1;d<=31;d++){
+      const k=schData[s.id]?schData[s.id][d]||'':'';
+      if(['休','明','欠'].includes(k))totals.kyu++;
+      if(['有','有2'].includes(k))totals.yuu++;
+    }
+  });
+  const total=(totals.day||0)+(totals.fac||0)+(totals.pat||0)+(totals.op||0);
+  const items=[
+    {k:'day',lbl:'デイ',clr:'#1565C0',v:totals.day||0},
+    {k:'fac',lbl:'有料',clr:'#1B5E20',v:totals.fac||0},
+    {k:'pat',lbl:'悠巡',clr:'#4A148C',v:totals.pat||0},
+    {k:'op', lbl:'悠巡OP',clr:'#E65100',v:totals.op||0},
+    {k:'kyu',lbl:'休み',clr:'#EF9A9A',v:totals.kyu||0},
+    {k:'yuu',lbl:'有給',clr:'#FFF176',v:totals.yuu||0},
+  ];
+  items.forEach(item=>{
+    const pct=total>0&&['day','fac','pat','op'].includes(item.k)?Math.round(item.v/total*100):0;
+    const div=document.createElement('div');
+    div.style.cssText='background:#f5f5f5;border-radius:6px;padding:10px 14px;text-align:center;min-width:90px';
+    div.innerHTML=`<div style="font-size:10px;color:#555;margin-bottom:4px">${item.lbl}</div>
+      <div style="font-size:18px;font-weight:bold;color:${item.clr}">${item.v}</div>
+      <div style="font-size:10px;color:#888">${['day','fac','pat','op'].includes(item.k)?`(${pct}%)`:'日'}</div>`;
+    bars.appendChild(div);
+  });
+
+  // 時間帯別グラフ
+  const chart=document.getElementById('hourlyChart');
+  if(!chart)return;
+  chart.innerHTML='';
+  if(!Object.keys(tlData).length){chart.innerHTML='<p style="color:#888;font-size:11px">時間帯データがありません</p>';return;}
+
+  const svcs=['day','fac','pat','op'];
+  const hCounts={};
+  HOURS.forEach(({h})=>{hCounts[h]={day:0,fac:0,pat:0,op:0};});
+  Object.values(tlData).forEach(ds=>{
+    STAFF.forEach(s=>{
+      if(!ds[s.id])return;
+      HOURS.forEach(({h})=>{const sv=ds[s.id][h];if(sv&&sv!=='none'&&hCounts[h])hCounts[h][sv]=(hCounts[h][sv]||0)+1;});
+    });
+  });
+
+  const maxVal=Math.max(...HOURS.map(({h})=>svcs.reduce((a,sv)=>a+(hCounts[h][sv]||0),0)),1);
+  const tbl=document.createElement('table');
+  tbl.style.cssText='border-collapse:collapse;white-space:nowrap;font-size:9px';
+  // ヘッダー
+  const hdr=document.createElement('tr');
+  const th0=document.createElement('td');th0.style.cssText='width:50px;padding:2px 4px;font-weight:bold;color:#555';th0.textContent='時間';hdr.appendChild(th0);
+  svcs.forEach(sv=>{const td=document.createElement('td');td.style.cssText=`width:60px;text-align:center;color:#fff;background:${SVC_CLR[sv]};padding:2px 4px;font-weight:bold`;td.textContent=SVC_LBL[sv];hdr.appendChild(td);});
+  const thBar=document.createElement('td');thBar.style.cssText='padding:2px 4px;color:#555;font-weight:bold';thBar.textContent='グラフ';hdr.appendChild(thBar);
+  tbl.appendChild(hdr);
+
+  HOURS.forEach(({h,disp})=>{
+    const tr=document.createElement('tr');
+    const td0=document.createElement('td');td0.style.cssText='padding:1px 4px;color:#555;white-space:nowrap';td0.textContent=disp;tr.appendChild(td0);
+    svcs.forEach(sv=>{
+      const td=document.createElement('td');td.style.cssText=`text-align:center;padding:1px 4px;color:${SVC_CLR[sv]};font-weight:bold`;
+      td.textContent=hCounts[h][sv]||'';tr.appendChild(td);
+    });
+    const tdBar=document.createElement('td');tdBar.style.cssText='padding:1px 4px;width:200px';
+    const barWrap=document.createElement('div');barWrap.style.cssText='display:flex;height:12px;gap:1px';
+    svcs.forEach(sv=>{
+      const v=hCounts[h][sv]||0;
+      if(v>0){const b=document.createElement('div');b.style.cssText=`width:${Math.round(v/maxVal*180)}px;background:${SVC_CLR[sv]};border-radius:2px`;barWrap.appendChild(b);}
+    });
+    tdBar.appendChild(barWrap);tr.appendChild(tdBar);
+    tbl.appendChild(tr);
+  });
+  chart.appendChild(tbl);
 }
 
 // ===== GAS 保存・読み込み =====
