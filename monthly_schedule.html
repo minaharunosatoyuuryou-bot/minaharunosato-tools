@@ -1678,33 +1678,28 @@ async function loadAll(){
   const monthKey=`month_${curY}_${curM}`;
   const settingsKey=`settings_${curY}_${curM}`;
 
-  // GASからGETで取得（シンプルな方法）
-  try{
-    const [r1,r2,r3]=await Promise.all([
-      fetch(`${GAS}?action=get&pass=${PASS}&sheet=月間勤務&key=${schKey}`).then(r=>r.json()).catch(()=>({value:null})),
-      fetch(`${GAS}?action=get&pass=${PASS}&sheet=月間勤務&key=${monthKey}`).then(r=>r.json()).catch(()=>({value:null})),
-      fetch(`${GAS}?action=get&pass=${PASS}&sheet=設定&key=${settingsKey}`).then(r=>r.json()).catch(()=>({value:null})),
-    ]);
-    if(r1.value){
-      const d=JSON.parse(r1.value);
-      if(d&&Object.keys(d).length>0){schData=d;localStorage.setItem(schKey,r1.value);}
-      else{const l=localStorage.getItem(schKey);if(l)schData=JSON.parse(l);}
-    }else{const l=localStorage.getItem(schKey);if(l)schData=JSON.parse(l);}
-    if(r2.value){
-      const d=JSON.parse(r2.value);
-      if(d&&Object.keys(d).length>0){tlData=d;localStorage.setItem(monthKey,r2.value);}
-      else{const l=localStorage.getItem(monthKey);if(l)tlData=JSON.parse(l);}
-    }else{const l=localStorage.getItem(monthKey);if(l)tlData=JSON.parse(l);}
-    if(r3.value){
-      const d=JSON.parse(r3.value);
-      if(d)settings=d;
-    }
-  }catch(e){
-    console.log('GAS読み込みエラー:',e);
-    const l1=localStorage.getItem(schKey);if(l1)schData=JSON.parse(l1);
-    const l2=localStorage.getItem(monthKey);if(l2)tlData=JSON.parse(l2);
-    const l3=localStorage.getItem(settingsKey);if(l3)settings=JSON.parse(l3);
+  // まずローカルストレージから読み込む（即時表示）
+  const ls1=localStorage.getItem(schKey);if(ls1){try{const d=JSON.parse(ls1);if(d&&Object.keys(d).length>0)schData=d;}catch(e){}}
+  const ls2=localStorage.getItem(monthKey);if(ls2){try{const d=JSON.parse(ls2);if(d&&Object.keys(d).length>0)tlData=d;}catch(e){}}
+  const ls3=localStorage.getItem(settingsKey);if(ls3){try{settings=JSON.parse(ls3);}catch(e){}}
+
+  // GASから個別にfetchで取得（リダイレクト追跡）
+  async function gasGet(sheet,key){
+    try{
+      const url=`${GAS}?action=get&pass=${PASS}&sheet=${encodeURIComponent(sheet)}&key=${encodeURIComponent(key)}`;
+      const r=await fetch(url,{redirect:'follow'});
+      const j=await r.json();
+      return j.value||null;
+    }catch(e){return null;}
   }
+  const [v1,v2,v3]=await Promise.all([
+    gasGet('月間勤務',schKey),
+    gasGet('月間勤務',monthKey),
+    gasGet('設定',settingsKey),
+  ]);
+  if(v1){try{const d=JSON.parse(v1);if(d&&Object.keys(d).length>0){schData=d;localStorage.setItem(schKey,v1);}}catch(e){}}
+  if(v2){try{const d=JSON.parse(v2);if(d&&Object.keys(d).length>0){tlData=d;localStorage.setItem(monthKey,v2);}}catch(e){}}
+  if(v3){try{const d=JSON.parse(v3);if(d)settings=d;}catch(e){}}
 
   initData();buildSchTable();
   setStatus(`✅ ${curY}年${curM}月のデータを読み込みました`);
