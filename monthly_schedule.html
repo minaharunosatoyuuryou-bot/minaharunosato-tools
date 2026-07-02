@@ -33,6 +33,7 @@ body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
 .tab.t-day.active{background:#1565C0}
 .tab.t-fac.active{background:#1B5E20}
 .tab.t-pat.active{background:#4A148C}
+.tab.t-day.active{background:#37474F}
 .tab.t-set.active{background:#37474F}
 
 /* ===== 全員タブ：月間シフト表 ===== */
@@ -161,9 +162,7 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 <!-- タブ -->
 <div class="tabs">
   <div class="tab t-all active" onclick="setTab('all',this)">📋 全員（シフト）</div>
-  <div class="tab t-day" onclick="setTab('day',this)">🔵 デイサービス（時間帯）</div>
-  <div class="tab t-fac" onclick="setTab('fac',this)">🟢 有料老人ホーム（時間帯）</div>
-  <div class="tab t-pat" onclick="setTab('pat',this)">🟣 定期巡回（時間帯）</div>
+  <div class="tab t-day" onclick="setTab('tl',this)">🕐 時間帯（全サービス）</div>
   <div class="tab t-set" onclick="setTab('set',this)">⚙️ 設定</div>
 </div>
 
@@ -172,15 +171,9 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
   <div class="sch-wrap"><table class="sch" id="schTable"></table></div>
 </div>
 
-<!-- 部署別：月間時間帯表 -->
-<div id="v-day" class="hidden">
-  <div id="mtl-day" class="mtl-wrap"></div>
-</div>
-<div id="v-fac" class="hidden">
-  <div id="mtl-fac" class="mtl-wrap"></div>
-</div>
-<div id="v-pat" class="hidden">
-  <div id="mtl-pat" class="mtl-wrap"></div>
+<!-- 時間帯（全サービス統合） -->
+<div id="v-tl" class="hidden">
+  <div id="mtl-tl" class="mtl-wrap"></div>
 </div>
 
 <!-- 設定 -->
@@ -523,16 +516,17 @@ function init(){
 function setTab(t,el){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  ['all','day','fac','pat','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
-  document.getElementById('v-'+t).classList.remove('hidden');
-  if(t!=='all'&&t!=='sum'&&t!=='set') buildMtl(t);
+  ['all','tl','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
+  const vid=t==='day'||t==='fac'||t==='pat'?'tl':t;
+  document.getElementById('v-'+vid).classList.remove('hidden');
+  if(vid==='tl') buildMtlAll();
   if(t==='sum'){buildSumTable();buildTotalStats();}
   if(t==='set') buildSettings();
 }
 
 function showView(v){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  ['all','day','fac','pat','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
+  ['all','tl','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
   document.getElementById('v-'+v).classList.remove('hidden');
   if(v==='sum'){buildSumTable();buildTotalStats();}
 }
@@ -548,9 +542,7 @@ function updateMonth(){
   const reiwa=curY-2018;
   document.getElementById('mtitle').textContent=`令和${reiwa}年 ${curM}月`;
   initData();buildSchTable();
-  ['day','fac','pat'].forEach(svc=>{
-    const el=document.getElementById('mtl-'+svc);if(el)el.innerHTML='';
-  });
+  const tlEl=document.getElementById('mtl-tl');if(tlEl)tlEl.innerHTML='';
 }
 
 function initData(){
@@ -1435,9 +1427,119 @@ function buildTotalStats(){
   chart.appendChild(tbl);
 }
 
+// ===== 全サービス統合時間帯表 =====
+function buildMtlAll(){
+  const wrap=document.getElementById('mtl-tl');
+  wrap.innerHTML='';
+
+  // パレット（共通）
+  const pal=document.createElement('div');pal.className='palette';
+  pal.innerHTML=`<span>塗る色：</span>
+    <button class="pal-btn pb-none active" id="pal-none-tl" onclick="setPal('none','tl')">空白</button>
+    <button class="pal-btn pb-day"  id="pal-day-tl"  onclick="setPal('day','tl')">デイ</button>
+    <button class="pal-btn pb-fac"  id="pal-fac-tl"  onclick="setPal('fac','tl')">有料</button>
+    <button class="pal-btn pb-pat"  id="pal-pat-tl"  onclick="setPal('pat','tl')">悠巡</button>
+    <button class="pal-btn pb-op"   id="pal-op-tl"   onclick="setPal('op','tl')">悠巡OP</button>
+    <span style="color:#888;font-size:10px;margin-left:6px">日付をクリックして時間帯を入力</span>
+    <button class="btn b-orange" style="margin-left:10px" onclick="autoFillAllSvcs()">⚡ 全日自動塗り</button>
+    <button class="btn b-gray" style="margin-left:4px" onclick="clearAllSvcs()">🗑 全消去</button>`;
+  wrap.appendChild(pal);
+
+  // 凡例
+  const leg=document.createElement('div');leg.className='legend';
+  leg.innerHTML=`<div class="leg"><div class="lb lb-day"></div>デイ</div>
+    <div class="leg"><div class="lb lb-fac"></div>有料</div>
+    <div class="leg"><div class="lb lb-pat"></div>悠巡</div>
+    <div class="leg"><div class="lb lb-op"></div>悠巡OP</div>
+    <div class="leg"><div class="lb lb-none"></div>空白</div>`;
+  wrap.appendChild(leg);
+
+  // 各サービスのブロックを縦に並べる
+  ['day','fac','pat'].forEach(svc=>{
+    // サービスヘッダー
+    const hdr=document.createElement('div');
+    hdr.style.cssText=`background:${SVC_CLR[svc]};color:#fff;font-size:12px;font-weight:bold;padding:6px 14px;margin-top:4px;display:flex;align-items:center;gap:10px`;
+    hdr.innerHTML=`▼ ${SVC_FULL[svc]}
+      <button class="btn" style="background:rgba(255,255,255,.2);color:#fff;font-size:10px;padding:2px 8px" onclick="autoFillAll('${svc}')">⚡ 自動塗り</button>`;
+    wrap.appendChild(hdr);
+
+    // メインテーブル
+    let members=STAFF.filter(s=>s.conc.includes(svc));
+    if(svc==='pat'){
+      const h=members.filter(s=>s.id==='hiraoka');
+      const o=members.filter(s=>s.id!=='hiraoka');
+      members=[...h,...o];
+    }
+
+    const tblWrap=document.createElement('div');
+    tblWrap.style.cssText='overflow:auto;background:#fff;padding:0 14px 10px';
+    const tbl=document.createElement('table');
+    tbl.style.cssText='border-collapse:collapse;white-space:nowrap;min-width:100%';
+
+    // 日付ヘッダー
+    const htr=document.createElement('tr');
+    const th0=document.createElement('th');th0.className='mtl-th-name';th0.textContent='職員 / 日付';htr.appendChild(th0);
+    for(let d=1;d<=days;d++){
+      const wd=new Date(curY,curM-1,d).getDay();
+      const wc=wd===6?'sat':wd===0?'sun':'';
+      const th=document.createElement('th');th.className=`mtl-th-d ${wc}`;
+      th.innerHTML=`<div class="dn">${d}</div><div class="dw">${WD[wd]}</div>`;
+      th.id=`mtl-th-${svc}-${d}`;
+      th.onclick=()=>openMtlDay(d,svc,members);
+      htr.appendChild(th);
+    }
+    tbl.appendChild(htr);
+
+    // 職員行
+    members.forEach(s=>{
+      const isConc=s.svc!==svc;
+      const bgColor=isConc?
+        (s.svc==='day'?'#BBDEFB':s.svc==='fac'?'#A5D6A7':'#CE93D8'):
+        (s.svc==='day'?'#E3F2FD':s.svc==='fac'?'#E8F5E9':'#F3E5F5');
+      const tr=document.createElement('tr');
+      const tdN=document.createElement('td');
+      tdN.style.cssText=`background:${bgColor};font-size:10px;font-weight:bold;padding:3px 6px;position:sticky;left:0;z-index:1;white-space:nowrap;border:1px solid #ccc;border-left:3px solid ${SVC_CLR[s.svc]}`;
+      tdN.innerHTML=`${isConc?'★':''}${s.name}<span style="font-size:8px;color:#777;display:block">${s.role}</span>`;
+      tr.appendChild(tdN);
+      for(let d=1;d<=days;d++){
+        const wd=new Date(curY,curM-1,d).getDay();
+        const cellBg=wd===6?'#EEF0FB':wd===0?'#FFF5F5':'#fff';
+        const td=document.createElement('td');
+        td.style.cssText=`width:34px;min-width:34px;height:26px;border:1px solid #ddd;background:${cellBg};cursor:pointer;text-align:center;font-size:9px;font-weight:bold`;
+        td.id=`mtl-cell-${svc}-${s.id}-${d}`;
+        const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        updateMtlCell(td,svc,s.id,dateStr);
+        td.onclick=()=>openMtlDay(d,svc,members);
+        tr.appendChild(td);
+      }
+      tbl.appendChild(tr);
+    });
+
+    tblWrap.appendChild(tbl);wrap.appendChild(tblWrap);
+
+    // 時間帯展開エリア
+    const tlArea=document.createElement('div');tlArea.id=`tl-area-${svc}`;tlArea.className='hidden';
+    wrap.appendChild(tlArea);
+  });
+}
+
+function autoFillAllSvcs(){
+  if(!confirm('全サービスの時間帯を自動で塗ります。よろしいですか？'))return;
+  ['day','fac','pat'].forEach(svc=>autoFillAll(svc,true));
+  buildMtlAll();
+  setStatus('✅ 全サービスの時間帯を自動塗りしました');
+}
+
+function clearAllSvcs(){
+  if(!confirm('全サービスの時間帯データを消去します。よろしいですか？'))return;
+  ['day','fac','pat'].forEach(svc=>clearAllTl(svc,true));
+  buildMtlAll();
+  setStatus('🗑 全サービスの時間帯データを消去しました');
+}
+
 // ===== 自動塗り =====
-function autoFillAll(svc){
-  if(!confirm('シフト記号から時間帯を自動で塗ります。既存の入力は上書きされます。よろしいですか？'))return;
+function autoFillAll(svc,silent=false){
+  if(!silent&&!confirm('シフト記号から時間帯を自動で塗ります。既存の入力は上書きされます。よろしいですか？'))return;
   const members=STAFF.filter(s=>s.conc.includes(svc));
   const dim=new Date(curY,curM,0).getDate();
   for(let d=1;d<=dim;d++){
@@ -1490,8 +1592,8 @@ function autoFillAll(svc){
   setStatus(`✅ ${svc==='day'?'デイ':svc==='fac'?'有料':'定巡'} の時間帯を自動塗りしました`);
 }
 
-function clearAllTl(svc){
-  if(!confirm('このサービスの全時間帯データを消去します。よろしいですか？'))return;
+function clearAllTl(svc,silent=false){
+  if(!silent&&!confirm('このサービスの全時間帯データを消去します。よろしいですか？'))return;
   const members=STAFF.filter(s=>s.conc.includes(svc));
   const dim=new Date(curY,curM,0).getDate();
   for(let d=1;d<=dim;d++){
