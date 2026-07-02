@@ -1683,35 +1683,25 @@ async function loadAll(){
   const ls2=localStorage.getItem(monthKey);if(ls2){try{const d=JSON.parse(ls2);if(d&&Object.keys(d).length>0)tlData=d;}catch(e){}}
   const ls3=localStorage.getItem(settingsKey);if(ls3){try{settings=JSON.parse(ls3);}catch(e){}}
 
-  // GASからJSONPで取得（バックグラウンド）
-  function gasGetJsonp(sheet,key){
-    return new Promise((resolve)=>{
-      const cb='cb_'+Math.random().toString(36).slice(2);
-      const timer=setTimeout(()=>{
-        try{delete window[cb];document.head.removeChild(s);}catch(e){}
-        resolve(null);
-      },5000);
-      window[cb]=(data)=>{
-        clearTimeout(timer);
-        try{delete window[cb];document.head.removeChild(s);}catch(e){}
-        resolve(data&&data.value?data.value:null);
-      };
-      const s=document.createElement('script');
-      s.src=`${GAS}?action=get&pass=${PASS}&sheet=${encodeURIComponent(sheet)}&key=${encodeURIComponent(key)}&callback=${cb}`;
-      s.onerror=()=>{clearTimeout(timer);try{delete window[cb];document.head.removeChild(s);}catch(e){}resolve(null);};
-      document.head.appendChild(s);
-    });
+  // GASからfetchで取得
+  async function gasGet(sheet,key){
+    try{
+      const url=`${GAS}?action=get&pass=${PASS}&sheet=${encodeURIComponent(sheet)}&key=${encodeURIComponent(key)}`;
+      const r=await fetch(url);
+      const j=await r.json();
+      return j.value||null;
+    }catch(e){return null;}
   }
   try{
     const [v1,v2,v3]=await Promise.all([
-      gasGetJsonp('月間勤務',schKey),
-      gasGetJsonp('月間勤務',monthKey),
-      gasGetJsonp('設定',settingsKey),
+      gasGet('月間勤務',schKey),
+      gasGet('月間勤務',monthKey),
+      gasGet('設定',settingsKey),
     ]);
-    if(v1){try{const d=JSON.parse(v1);if(d&&Object.keys(d).length>0){schData=d;localStorage.setItem(schKey,v1);}}catch(e){}}
+    if(v1){try{const d=JSON.parse(v1);if(d&&Object.keys(d).length>0){schData=d;localStorage.setItem(schKey,v1);console.log('GASから読み込み成功:',schKey);}}catch(e){}}
     if(v2){try{const d=JSON.parse(v2);if(d&&Object.keys(d).length>0){tlData=d;localStorage.setItem(monthKey,v2);}}catch(e){}}
     if(v3){try{const d=JSON.parse(v3);if(d)settings=d;}catch(e){}}
-  }catch(e){console.log('JSONP失敗');}
+  }catch(e){console.log('GAS読み込み失敗:',e);}
 
   initData();buildSchTable();
   setStatus(`✅ ${curY}年${curM}月のデータを読み込みました`);
