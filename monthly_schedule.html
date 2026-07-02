@@ -103,9 +103,9 @@ table.mtl-hdr-tbl{border-collapse:collapse;white-space:nowrap}
 table.tl{border-collapse:collapse;white-space:nowrap;margin-top:4px}
 table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 .tlth-name{width:108px;min-width:108px;padding:3px 4px;background:#455A64;color:#fff;font-size:10px;text-align:center;position:sticky;left:0;z-index:2}
-.tlth-h{width:36px;min-width:36px;background:#37474F;color:#fff;font-size:9px;text-align:center;padding:2px 0}
+.tlth-h{width:26px;min-width:26px;background:#37474F;color:#fff;font-size:9px;text-align:center;padding:2px 0}
 .tlth-h.night{background:#1a237e}.tlth-h.dawn{background:#263238}
-.tl-cell{width:36px;height:28px;cursor:pointer;user-select:none}
+.tl-cell{width:26px;height:28px;cursor:pointer;user-select:none}
 .tl-cell:hover{opacity:.75}
 .tl-cell.none{background:#fafafa}
 .tl-cell.day{background:#1565C0}.tl-cell.fac{background:#1B5E20}
@@ -420,9 +420,15 @@ const SMAP={}; SHIFTS.forEach(s=>SMAP[s.k]=s);
 
 const HOURS=[];
 for(let h=6;h<=34;h++){
+  // 整時
   const disp=h>=24?`翌${h-24}:00`:`${h}:00`;
   const cls=h>=22?'night':(h<8?'dawn':'');
   HOURS.push({h,disp,cls});
+  // 30分（最後の時間は30分なし）
+  if(h<34){
+    const disp30=h>=24?`翌${h-24}:30`:`${h}:30`;
+    HOURS.push({h:h+0.5,disp:disp30,cls});
+  }
 }
 
 const SVC_LBL={day:'デイ',fac:'有料',pat:'悠巡',op:'OP',none:''};
@@ -436,8 +442,8 @@ const STAFF=[
   {id:'takeo',    name:'竹尾 登美代',  role:'相談員/介護',  svc:'day',conc:['day']},
   {id:'kuramoto', name:'栗本 花梨',    role:'相談員/OP',    svc:'day',conc:['day','pat']},
   {id:'ueno_k',   name:'上野 和代',    role:'介護',         svc:'day',conc:['day']},
-  {id:'kitomi',   name:'キトミ',       role:'介護',         svc:'day',conc:['day']},
-  {id:'puruni',   name:'プールニーマー',role:'介護',         svc:'day',conc:['day']},
+  {id:'kitomi',   name:'キトミ',       role:'介護',         svc:'day',conc:['day','pat']},
+  {id:'puruni',   name:'プールニーマー',role:'介護',         svc:'day',conc:['day','pat']},
   {id:'dirumi',   name:'ディルミ',     role:'介護',         svc:'day',conc:['day']},
   {id:'gan',      name:'ガン',         role:'介護',         svc:'day',conc:['day']},
   {id:'dinda',    name:'ディンダ',     role:'介護',         svc:'day',conc:['day']},
