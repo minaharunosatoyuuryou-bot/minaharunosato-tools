@@ -536,30 +536,53 @@ function buildSchTable(){
   const tth=document.createElement('th');tth.className='th-total';tth.textContent='計(h)';htr.appendChild(tth);
   tbl.appendChild(htr);
 
-  let prevSvc='';
-  STAFF.forEach(s=>{
-    if(s.svc!==prevSvc){
-      const sep=document.createElement('tr');sep.className='svc-sep';
-      const td=document.createElement('td');td.colSpan=days+4;
-      td.style.background=SVC_CLR[s.svc];td.textContent=`▼ ${SVC_FULL[s.svc]}`;sep.appendChild(td);tbl.appendChild(sep);
-      prevSvc=s.svc;
+  // サービス順に全員を表示（兼任は兼任先にも表示）
+  const svcs=['day','fac','pat'];
+  svcs.forEach(svc=>{
+    // このサービスに属する職員（主所属 or 兼任）
+    let members=STAFF.filter(s=>s.conc.includes(svc));
+    if(svc==='pat'){
+      const h=members.filter(s=>s.id==='hiraoka');
+      const o=members.filter(s=>s.id!=='hiraoka');
+      members=[...h,...o];
     }
-    const tr=document.createElement('tr');
-    const tds=document.createElement('td');tds.className=`td-svc s${s.svc[0]}`;tds.textContent=SVC_LBL[s.svc];tr.appendChild(tds);
-    const tdr=document.createElement('td');tdr.className='td-role';tdr.textContent=s.role;tr.appendChild(tdr);
-    const tdn=document.createElement('td');tdn.className=`td-name${s.conc.length>1?' conc':''}`;tdn.textContent=(s.conc.length>1?'★':'')+s.name;tr.appendChild(tdn);
-    for(let d=1;d<=days;d++){
-      const wd=new Date(curY,curM-1,d).getDay();
-      const wc=wd===6?' sat':wd===0?' sun':'';
-      const k=schData[s.id]?schData[s.id][d]||'':'';
-      const sd=SMAP[k];
-      const td=document.createElement('td');td.id=`sc_${s.id}_${d}`;
-      td.className=`sc${wc}${sd?' s-'+k:''}`;td.textContent=k;
-      if(sd){td.style.background=sd.c;td.style.color=sd.t}
-      td.onclick=e=>openShiftPop(e,s.id,d,td);tr.appendChild(td);
-    }
-    const tdt=document.createElement('td');tdt.className='td-total';tdt.id=`tot_${s.id}`;tdt.textContent=calcTotal(s.id);tr.appendChild(tdt);
-    tbl.appendChild(tr);
+    if(!members.length)return;
+    // サービスヘッダー
+    const sep=document.createElement('tr');sep.className='svc-sep';
+    const sepTd=document.createElement('td');sepTd.colSpan=days+4;
+    sepTd.style.background=SVC_CLR[svc];sepTd.textContent=`▼ ${SVC_FULL[svc]}`;sep.appendChild(sepTd);tbl.appendChild(sep);
+
+    members.forEach(s=>{
+      const isConc=s.svc!==svc; // このサービスが兼任先かどうか
+      const tr=document.createElement('tr');
+      const tds=document.createElement('td');
+      tds.className=`td-svc s${svc[0]}`;
+      tds.textContent=isConc?'兼任':SVC_LBL[svc];
+      tds.style.opacity=isConc?'0.7':'1';
+      tr.appendChild(tds);
+      const tdr=document.createElement('td');tdr.className='td-role';tdr.textContent=s.role;tr.appendChild(tdr);
+      const tdn=document.createElement('td');
+      tdn.className=`td-name${s.conc.length>1?' conc':''}`;
+      tdn.textContent=(s.conc.length>1?'★':'')+s.name;
+      if(isConc)tdn.style.color='#E65100';
+      tr.appendChild(tdn);
+      for(let d=1;d<=days;d++){
+        const wd=new Date(curY,curM-1,d).getDay();
+        const wc=wd===6?' sat':wd===0?' sun':'';
+        const k=schData[s.id]?schData[s.id][d]||'':'';
+        const sd=SMAP[k];
+        const td=document.createElement('td');
+        // 兼任先では同じデータを参照（id共通）
+        td.id=`sc_${s.id}_${d}_${svc}`; // svcごとに別ID
+        td.className=`sc${wc}${sd?' s-'+k:''}`;td.textContent=k;
+        if(sd){td.style.background=sd.c;td.style.color=sd.t}
+        if(isConc)td.style.opacity='0.85';
+        td.onclick=e=>openShiftPop(e,s.id,d,td);tr.appendChild(td);
+      }
+      const tdt=document.createElement('td');tdt.className='td-total';
+      tdt.id=`tot_${s.id}_${svc}`;tdt.textContent=calcTotal(s.id);tr.appendChild(tdt);
+      tbl.appendChild(tr);
+    });
   });
 
   // 出勤者数行
@@ -633,7 +656,15 @@ function setShift(k){
   const wc=wd===6?' sat':wd===0?' sun':'';
   cell.className=`sc${wc}${sd?' s-'+k:''}`;cell.textContent=k;
   if(sd){cell.style.background=sd.c;cell.style.color=sd.t}else{cell.style.background='';cell.style.color=''}
-  const tot=document.getElementById(`tot_${sid}`);if(tot)tot.textContent=calcTotal(sid);
+  // 全サービスの表示セルを更新（兼任対応）
+  ['day','fac','pat'].forEach(svc=>{
+    const c=document.getElementById(`sc_${sid}_${d}_${svc}`);
+    if(c){
+      c.className=`sc${wd===6?' sat':wd===0?' sun':''}${sd?' s-'+k:''}`;c.textContent=k;
+      if(sd){c.style.background=sd.c;c.style.color=sd.t}else{c.style.background='';c.style.color=''}
+    }
+    const t=document.getElementById(`tot_${sid}_${svc}`);if(t)t.textContent=calcTotal(sid);
+  });
   updateDaySum(d);
   closeShiftPop();
 }
