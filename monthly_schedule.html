@@ -438,6 +438,21 @@ const SHIFTS=[
 ];
 const SMAP={}; SHIFTS.forEach(s=>SMAP[s.k]=s);
 
+// シフト記号→自動塗り時間帯（開始・終了を0.5h単位で）
+const SHIFT_AUTO={
+  '日': {start:8.5, end:17.5},
+  '日A':{start:8.0, end:17.0},
+  '日B':{start:9.0, end:18.0},
+  '日6':{start:9.0, end:15.0},
+  '日4':{start:9.0, end:13.0},
+  '日2':{start:9.0, end:11.0},
+  '早': {start:7.0, end:16.0},
+  '早4':{start:7.0, end:11.0},
+  '早6':{start:7.0, end:13.0},
+  '遅': {start:10.0,end:19.0},
+  '夜': {start:17.0,end:34.0}, // 翌9時=24+9=33→34まで
+};
+
 const HOURS=[];
 for(let h=6;h<=34;h++){
   // 整時
@@ -715,7 +730,9 @@ function buildMtl(svc){
     <button class="pal-btn pb-fac"  id="pal-fac-${svc}"  onclick="setPal('fac','${svc}')">有料</button>
     <button class="pal-btn pb-pat"  id="pal-pat-${svc}"  onclick="setPal('pat','${svc}')">悠巡</button>
     <button class="pal-btn pb-op"   id="pal-op-${svc}"   onclick="setPal('op','${svc}')">悠巡OP</button>
-    <span style="color:#888;font-size:10px;margin-left:6px">日付をクリックして時間帯を入力</span>`;
+    <span style="color:#888;font-size:10px;margin-left:6px">日付をクリックして時間帯を入力</span>
+    <button class="btn b-orange" style="margin-left:10px" onclick="autoFillAll('${svc}')">⚡ 全日自動塗り</button>
+    <button class="btn b-gray" style="margin-left:4px" onclick="clearAllTl('${svc}')">🗑 全消去</button>\`;
   wrap.appendChild(pal);
 
   // 凡例
@@ -1535,6 +1552,87 @@ function buildTotalStats(){
     tbl.appendChild(tr);
   });
   chart.appendChild(tbl);
+}
+
+// ===== 自動塗り =====
+function autoFillAll(svc){
+  if(!confirm('シフト記号から時間帯を自動で塗ります。既存の入力は上書きされます。よろしいですか？'))return;
+  const members=STAFF.filter(s=>s.conc.includes(svc));
+  const dim=new Date(curY,curM,0).getDate();
+  for(let d=1;d<=dim;d++){
+    const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if(!tlData[dateStr]){
+      tlData[dateStr]={};
+      STAFF.forEach(s=>{tlData[dateStr][s.id]={};HOURS.forEach(({h})=>tlData[dateStr][s.id][h]='none')});
+    }
+    members.forEach(s=>{
+      const k=schData[s.id]?schData[s.id][d]||'':'';
+      const auto=SHIFT_AUTO[k];
+      const svcColor=s.svc; // 主所属サービス色
+      if(auto){
+        HOURS.forEach(({h})=>{
+          if(h>=auto.start&&h<auto.end){
+            tlData[dateStr][s.id][h]=svcColor;
+          } else {
+            tlData[dateStr][s.id][h]='none';
+          }
+        });
+      } else {
+        // 休み・有・明・欠は全部none
+        if(['休','有','有2','明','欠','研','夜',''].includes(k)){
+          HOURS.forEach(({h})=>{tlData[dateStr][s.id][h]='none'});
+        }
+      }
+    });
+  }
+  // 表示を更新
+  const wrap=document.getElementById('mtl-'+svc);
+  if(wrap){
+    members.forEach(s=>{
+      for(let d=1;d<=dim;d++){
+        const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const td=document.getElementById(`mtl-cell-${svc}-${s.id}-${d}`);
+        if(td){
+          // リセット
+          td.style.background='';td.style.color='';td.textContent='';
+          updateMtlCell(td,svc,s.id,dateStr);
+        }
+      }
+    });
+  }
+  // 展開中の日付も更新
+  if(openDayInfo[svc]){
+    const d=openDayInfo[svc];
+    openDayInfo[svc]=null;
+    openMtlDay(d,svc,members);
+  }
+  setStatus(`✅ ${svc==='day'?'デイ':svc==='fac'?'有料':'定巡'} の時間帯を自動塗りしました`);
+}
+
+function clearAllTl(svc){
+  if(!confirm('このサービスの全時間帯データを消去します。よろしいですか？'))return;
+  const members=STAFF.filter(s=>s.conc.includes(svc));
+  const dim=new Date(curY,curM,0).getDate();
+  for(let d=1;d<=dim;d++){
+    const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if(tlData[dateStr]){
+      members.forEach(s=>{
+        if(tlData[dateStr][s.id])HOURS.forEach(({h})=>{tlData[dateStr][s.id][h]='none'});
+      });
+    }
+    members.forEach(s=>{
+      const td=document.getElementById(`mtl-cell-${svc}-${s.id}-${d}`);
+      if(td){td.style.background='';td.style.color='';td.textContent='';}
+    });
+  }
+  if(openDayInfo[svc]){
+    const area=document.getElementById(`tl-area-${svc}`);
+    if(area){area.classList.add('hidden');area.innerHTML='';}
+    const th=document.getElementById(`mtl-th-${svc}-${openDayInfo[svc]}`);
+    if(th)th.style.outline='';
+    openDayInfo[svc]=null;
+  }
+  setStatus('🗑 時間帯データを消去しました');
 }
 
 // ===== GAS 保存・読み込み =====
