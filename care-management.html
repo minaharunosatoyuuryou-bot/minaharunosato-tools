@@ -489,6 +489,16 @@ function checkPW(){
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwIXBp2ll8e34yvgDzkDTLoPRcuYVaZXdU8P_nxZn7pKItPgiuDkayY9MImqWQ8dBjW/exec';
 
 async function gasReq(payload){
+  // saveRecord・saveResidentsはデータが大きくなりURLの文字数制限を超えるため、
+  // POST（Content-Type: text/plain でCORSのpreflightを回避）で送信する
+  if(payload.action==='saveRecord' || payload.action==='saveResidents'){
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  }
   const url = GAS_URL + '?' + new URLSearchParams(
     Object.fromEntries(Object.entries(payload).map(([k,v])=>[k,typeof v==='object'?JSON.stringify(v):v]))
   ).toString();
