@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>月間勤務管理 - みなはるの里</title>
-<!-- v2026-07-06-配置基準備考更新 -->
+<!-- v2026-07-06-2-配置基準備考が過去データで上書きされない修正 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
@@ -1028,12 +1028,17 @@ function paintTl(svc,sid,h,dateStr,cell){
 
 // ===== 設定データ =====
 const MONTHLY_HRS_DEFAULT={1:160,2:160,3:168,4:168,5:168,6:160,7:168,8:168,9:160,10:168,11:160,12:160};
+const MINSTAFF_DEFAULT={
+  day:{weekday:3,holiday:2,note:'利用者25名→介護職員3名以上'},
+  fac:{weekday:3,holiday:3,note:'常時3名以上（目安）'},
+  pat:{weekday:1,holiday:1,note:'日中オペレーター1名以上（8:00〜18:00）。定員に満たない日は有料の介護福祉士を定期巡回へ応援配置。夜間オペレーター（18:00〜翌8:00）は牧で固定。'},
+};
 let settings={
   monthHrs:{...MONTHLY_HRS_DEFAULT},
   minStaff:{
-    day:{weekday:3,holiday:2,note:'利用者25名→介護職員3名以上'},
-    fac:{weekday:3,holiday:3,note:'常時3名以上（目安）'},
-    pat:{weekday:1,holiday:1,note:'日中オペレーター1名以上（8:00〜18:00）。定員に満たない日は有料の介護福祉士を定期巡回へ応援配置。夜間オペレーター（18:00〜翌8:00）は牧で固定。'},
+    day:{...MINSTAFF_DEFAULT.day},
+    fac:{...MINSTAFF_DEFAULT.fac},
+    pat:{...MINSTAFF_DEFAULT.pat},
   },
   staffRate:{},      // {staffId: rate}
   staffStatus:{},    // {staffId: {active:true/false, retired:false, retireDate:''}}
@@ -1703,6 +1708,13 @@ async function loadAll(){
     if(v2){try{const d=JSON.parse(v2);if(d&&Object.keys(d).length>0){tlData=d;localStorage.setItem(monthKey,v2);}}catch(e){}}
     if(v3){try{const d=JSON.parse(v3);if(d)settings=d;}catch(e){}}
   }catch(e){console.log('GAS読み込み失敗:',e);}
+
+  // 配置基準の「備考」は常に最新のコード側テキストを優先表示（過去保存データの古い備考で上書きされるのを防ぐ）
+  if(settings.minStaff){
+    Object.entries(settings.minStaff).forEach(([svc,v])=>{
+      if(MINSTAFF_DEFAULT[svc])v.note=MINSTAFF_DEFAULT[svc].note;
+    });
+  }
 
   // GAS読み込み完了後にテーブル構築
   initData();
