@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>月間勤務管理 - みなはるの里</title>
-<!-- v2026-07-06-2-配置基準備考が過去データで上書きされない修正 -->
+<!-- v2026-07-11-空データ誤保存防止の警告を追加 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
@@ -1652,8 +1652,24 @@ function clearAllTl(svc,silent=false){
   setStatus('🗑 時間帯データを消去しました');
 }
 
+// 全員・全日が空欄かどうかを判定（誤って空データで上書き保存するのを防ぐため）
+function isScheduleAllEmpty(data){
+  if(!data||Object.keys(data).length===0)return true;
+  for(const staffId in data){
+    const days=data[staffId];
+    for(const d in days){
+      if(days[d])return false;
+    }
+  }
+  return true;
+}
+
 // ===== GAS 保存・読み込み =====
 async function saveAll(){
+  if(isScheduleAllEmpty(schData)){
+    const ok=confirm('⚠️ 現在、全員のシフトが空欄になっています。\nこのまま保存すると、スプレッドシート上の既存データが空で上書きされる可能性があります。\n\n本当に保存しますか？');
+    if(!ok){setStatus('⏸ 保存を中止しました（データが空のため）');return;}
+  }
   setStatus('保存中...');
   const schKey=`sch_${curY}_${curM}`;
   const monthKey=`month_${curY}_${curM}`;
