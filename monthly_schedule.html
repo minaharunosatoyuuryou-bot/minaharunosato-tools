@@ -296,52 +296,6 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
       </div>
     </div>
 
-    <!-- 勤務区分カスタマイズ -->
-    <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-      <h3 style="font-size:12px;font-weight:bold;color:#263238;margin-bottom:10px;border-left:4px solid #FB8C00;padding-left:8px">
-        🕐 勤務区分カスタマイズ（記号・時間帯・時間数）
-      </h3>
-      <p style="font-size:10px;color:#888;margin-bottom:10px">記号・時間帯・勤務時間数・背景色を自由に変更できます。➕で新しい区分も追加できます。</p>
-      <table style="border-collapse:collapse;width:100%;max-width:820px">
-        <thead><tr>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">記号</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">時間帯（説明）</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">勤務時間(h)</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">背景色</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">プレビュー</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">操作</th>
-        </tr></thead>
-        <tbody id="shiftEditBody"></tbody>
-      </table>
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn b-blue" onclick="addShiftRow()">➕ 区分を追加</button>
-        <button class="btn b-green" onclick="saveSettings()">💾 設定を保存</button>
-      </div>
-    </div>
-
-    <!-- 勤務区分カスタマイズ -->
-    <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-      <h3 style="font-size:12px;font-weight:bold;color:#263238;margin-bottom:10px;border-left:4px solid #FB8C00;padding-left:8px">
-        🕐 勤務区分カスタマイズ（記号・時間帯・時間数）
-      </h3>
-      <p style="font-size:10px;color:#888;margin-bottom:10px">記号・時間帯・勤務時間数・背景色を自由に変更できます。➕ボタンで独自の区分も追加できます。</p>
-      <table style="border-collapse:collapse;width:100%;max-width:800px">
-        <thead><tr>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">記号</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">時間帯・説明</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">勤務時間(h)</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">背景色</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">プレビュー</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">削除</th>
-        </tr></thead>
-        <tbody id="shiftEditBody"></tbody>
-      </table>
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn b-blue" onclick="addShiftRow()">➕ 区分を追加</button>
-        <button class="btn b-green" onclick="saveSettings()">💾 設定を保存</button>
-      </div>
-    </div>
-
     <!-- 職員別所定時間 -->
     <div style="background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
       <h3 style="font-size:12px;font-weight:bold;color:#263238;margin-bottom:10px;border-left:4px solid #4A148C;padding-left:8px">
@@ -408,7 +362,7 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 <div id="shiftPop" class="shift-pop hidden"></div>
 
 <script>
-const GAS='https://script.google.com/macros/s/AKfycbwLvKn5nEpYy87EpBB2kHbA_RG-NwqnidvWjsB3BBoHTpq8fTeDhM8_K-DxrWT5g353/exec';
+const GAS='https://script.google.com/macros/s/AKfycbymxqTvMFX3-spkQXlZsN0sJAwII_t9bsIHEWv9iZ3sFUn5jaD8_YM0cBAFRIr1Htr3/exec';
 const PASS='2408';
 const WD=['日','月','火','水','木','金','土'];
 
