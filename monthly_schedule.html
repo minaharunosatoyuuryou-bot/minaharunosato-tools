@@ -1,12 +1,13 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>月間勤務管理 - みなはるの里</title>
-<!-- v2026-07-12-定期巡回のみタブ追加 -->
+<!-- v2026-07-12-3-定巡/デイ分割シフト記号と自動塗り分割ルールを追加 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
@@ -453,6 +454,15 @@ const SHIFTS=[
   {k:'有2',label:'有給半日',    c:'#FFF59D',t:'#F57F17',h:0},
   {k:'研', label:'研修',        c:'#B2DFDB',t:'#004D40',h:0},
   {k:'欠', label:'欠勤',        c:'#FFCCBC',t:'#BF360C',h:0},
+  // ↓ 兼任職員用：1つのシフトの中で定期巡回とデイに分かれる場合の記号
+  {k:'早巡',label:'早の定巡部分 7:00〜8:30', c:'#D1C4E9',t:'#4A148C',h:1.5},
+  {k:'早デ',label:'早のデイ部分 8:30〜16:00',c:'#BBDEFB',t:'#0D47A1',h:7.5},
+  {k:'A巡', label:'日Aの定巡部分 8:00〜9:00',c:'#D1C4E9',t:'#4A148C',h:1},
+  {k:'Aデ', label:'日Aのデイ部分 9:00〜17:00',c:'#90CAF9',t:'#01579B',h:8},
+  {k:'遅巡',label:'遅の定巡部分 16:30〜19:00',c:'#D1C4E9',t:'#4A148C',h:2.5},
+  {k:'遅デ',label:'遅のデイ部分 10:00〜16:30',c:'#FFE0B2',t:'#E65100',h:6.5},
+  {k:'B巡', label:'日Bの定巡部分 9:00〜16:30',c:'#D1C4E9',t:'#4A148C',h:7.5},
+  {k:'Bデ', label:'日Bのデイ部分 16:30〜18:00',c:'#64B5F6',t:'#01579B',h:1.5},
 ];
 const SMAP={}; SHIFTS.forEach(s=>SMAP[s.k]=s);
 
@@ -469,6 +479,23 @@ const SHIFT_AUTO={
   '早6':{start:7.0, end:13.0},
   '遅': {start:10.0,end:19.0},
   '夜': {start:17.0,end:34.0}, // 翌9時=24+9=33→34まで
+  '早巡':{start:7.0, end:8.5},
+  '早デ':{start:8.5, end:16.0},
+  'A巡':{start:8.0, end:9.0},
+  'Aデ':{start:9.0, end:17.0},
+  '遅巡':{start:16.5,end:19.0},
+  '遅デ':{start:10.0,end:16.5},
+  'B巡':{start:9.0, end:16.5},
+  'Bデ':{start:16.5,end:18.0},
+};
+
+// 兼任職員（デイ⇔定期巡回）が「早/日A/遅/日B」で勤務する場合の時間帯内訳
+// （専任職員は対象外＝勤務時間全体が自分の所属サービスのまま）
+const SHIFT_SPLIT_RULE={
+  '早': [{start:7.0, end:8.5, svc:'pat'},{start:8.5, end:16.0, svc:'day'}],
+  '日A':[{start:8.0, end:9.0, svc:'pat'},{start:9.0, end:17.0, svc:'day'}],
+  '遅': [{start:10.0,end:16.5, svc:'day'},{start:16.5,end:19.0, svc:'pat'}],
+  '日B':[{start:9.0, end:16.5, svc:'pat'},{start:16.5,end:18.0, svc:'day'}],
 };
 
 const HOURS=[];
@@ -697,6 +724,28 @@ function buildPatSimpleTable(){
   banner.innerHTML=`🌙 夜間オペレーター(18:00〜翌8:00)は<b>牧 良子</b>固定。日中オペレーター1名以上(8:00〜18:00)。定員に満たない日は有料の介護福祉士を応援配置。<br>
     ★＝他サービスと兼任の職員です。セルをクリックすると勤務記号を変更できます。`;
   wrap.appendChild(banner);
+
+  const splitWrap=document.createElement('div');
+  splitWrap.style.cssText='margin:0 14px 12px;background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px 14px;';
+  splitWrap.innerHTML=`
+    <div style="font-size:11px;font-weight:bold;color:#4A148C;margin-bottom:6px;">📌 勤務シフト記号ごとの　定期巡回／デイ　振り分け早見表</div>
+    <table style="border-collapse:collapse;font-size:11px;width:100%;max-width:640px">
+      <thead><tr>
+        <th style="background:#455A64;color:#fff;padding:4px 8px;border:1px solid #ccc;">シフト記号</th>
+        <th style="background:#455A64;color:#fff;padding:4px 8px;border:1px solid #ccc;">勤務時間全体</th>
+        <th style="background:#4A148C;color:#fff;padding:4px 8px;border:1px solid #ccc;">定期巡回</th>
+        <th style="background:#1565C0;color:#fff;padding:4px 8px;border:1px solid #ccc;">デイ</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">早</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜16:00</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜8:30</td><td style="padding:3px 8px;border:1px solid #ccc;">8:30〜16:00</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">日A</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜17:00</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜9:00</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜17:00</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">遅</td><td style="padding:3px 8px;border:1px solid #ccc;">10:00〜19:00</td><td style="padding:3px 8px;border:1px solid #ccc;">16:30〜19:00</td><td style="padding:3px 8px;border:1px solid #ccc;">10:00〜16:30</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">日B</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜18:00</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜16:30</td><td style="padding:3px 8px;border:1px solid #ccc;">16:30〜18:00</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:10px;color:#E65100;margin-top:6px;">※ デイサービスがその日の配置基準（必要人数）を満たしている場合は、デイ担当時間も含めて勤務時間全体を定期巡回にあてることがあります。</div>
+  `;
+  wrap.appendChild(splitWrap);
 
   const tblWrap=document.createElement('div');tblWrap.className='pats-wrap';
   const tbl=document.createElement('table');tbl.className='pats';
@@ -1724,6 +1773,9 @@ function clearAllSvcs(){
 }
 
 // ===== 自動塗り =====
+// 分割記号（早巡/早デ等）は、職員の主所属に関わらずこの色で自動塗りする
+const SPLIT_SVC_OVERRIDE={'早巡':'pat','早デ':'day','A巡':'pat','Aデ':'day','遅巡':'pat','遅デ':'day','B巡':'pat','Bデ':'day'};
+
 function autoFillAll(svc,silent=false){
   if(!silent&&!confirm('シフト記号から時間帯を自動で塗ります。既存の入力は上書きされます。よろしいですか？'))return;
   const members=STAFF.filter(s=>s.conc.includes(svc));
@@ -1736,9 +1788,16 @@ function autoFillAll(svc,silent=false){
     }
     members.forEach(s=>{
       const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
+      const isDayPatConc=s.conc.includes('day')&&s.conc.includes('pat');
+      const splitRule=isDayPatConc?SHIFT_SPLIT_RULE[k]:null;
       const auto=SHIFT_AUTO[k];
-      const svcColor=s.svc; // 主所属サービス色
-      if(auto){
+      const svcColor=SPLIT_SVC_OVERRIDE[k]||s.svc; // 分割記号なら固定、それ以外は主所属サービス色
+      if(splitRule){
+        HOURS.forEach(({h})=>{
+          const seg=splitRule.find(sg=>h>=sg.start&&h<sg.end);
+          tlData[dateStr][s.id][h]=seg?seg.svc:'none';
+        });
+      } else if(auto){
         HOURS.forEach(({h})=>{
           if(h>=auto.start&&h<auto.end){
             tlData[dateStr][s.id][h]=svcColor;
