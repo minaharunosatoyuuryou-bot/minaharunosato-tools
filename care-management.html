@@ -703,7 +703,7 @@ async function loadMonthlyData(){
   try{
     const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(currentId)+'_mn_'+month});
     if(res.data){
-      MN_TEXT.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.value=res.data[id];});
+      MN_TEXT.filter(id=>id!=='mn_doctor'&&id!=='mn_cm').forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.value=res.data[id];});
       MN_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.checked=res.data[id];});
       if(res.data.mn_adl) res.data.mn_adl.forEach((a,i)=>{
         const s1=document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
@@ -722,7 +722,7 @@ async function loadTeikiData(){
   try{
     const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(currentId)+'_tk_'+month});
     if(res.data){
-      TK_TEXT.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.value=res.data[id];});
+      TK_TEXT.filter(id=>id!=='tk_doctor'&&id!=='tk_cm').forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.value=res.data[id];});
       TK_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.checked=res.data[id];});
     }
   }catch(e){}
