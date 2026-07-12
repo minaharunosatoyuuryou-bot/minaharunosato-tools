@@ -7,7 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>月間勤務管理 - みなはるの里</title>
-<!-- v2026-07-12-3-定巡/デイ分割シフト記号と自動塗り分割ルールを追加 -->
+<!-- v2026-07-12-4-分割記号の時間帯表記をシンプル化 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
@@ -455,14 +455,14 @@ const SHIFTS=[
   {k:'研', label:'研修',        c:'#B2DFDB',t:'#004D40',h:0},
   {k:'欠', label:'欠勤',        c:'#FFCCBC',t:'#BF360C',h:0},
   // ↓ 兼任職員用：1つのシフトの中で定期巡回とデイに分かれる場合の記号
-  {k:'早巡',label:'早の定巡部分 7:00〜8:30', c:'#D1C4E9',t:'#4A148C',h:1.5},
-  {k:'早デ',label:'早のデイ部分 8:30〜16:00',c:'#BBDEFB',t:'#0D47A1',h:7.5},
-  {k:'A巡', label:'日Aの定巡部分 8:00〜9:00',c:'#D1C4E9',t:'#4A148C',h:1},
-  {k:'Aデ', label:'日Aのデイ部分 9:00〜17:00',c:'#90CAF9',t:'#01579B',h:8},
-  {k:'遅巡',label:'遅の定巡部分 16:30〜19:00',c:'#D1C4E9',t:'#4A148C',h:2.5},
-  {k:'遅デ',label:'遅のデイ部分 10:00〜16:30',c:'#FFE0B2',t:'#E65100',h:6.5},
-  {k:'B巡', label:'日Bの定巡部分 9:00〜16:30',c:'#D1C4E9',t:'#4A148C',h:7.5},
-  {k:'Bデ', label:'日Bのデイ部分 16:30〜18:00',c:'#64B5F6',t:'#01579B',h:1.5},
+  {k:'早巡',label:'7:00〜8:30', c:'#D1C4E9',t:'#4A148C',h:1.5},
+  {k:'早デ',label:'8:30〜16:00',c:'#BBDEFB',t:'#0D47A1',h:7.5},
+  {k:'A巡', label:'8:00〜9:00', c:'#D1C4E9',t:'#4A148C',h:1},
+  {k:'Aデ', label:'9:00〜17:00',c:'#90CAF9',t:'#01579B',h:8},
+  {k:'遅巡',label:'16:30〜19:00',c:'#D1C4E9',t:'#4A148C',h:2.5},
+  {k:'遅デ',label:'10:00〜16:30',c:'#FFE0B2',t:'#E65100',h:6.5},
+  {k:'B巡', label:'9:00〜16:30',c:'#D1C4E9',t:'#4A148C',h:7.5},
+  {k:'Bデ', label:'16:30〜18:00',c:'#64B5F6',t:'#01579B',h:1.5},
 ];
 const SMAP={}; SHIFTS.forEach(s=>SMAP[s.k]=s);
 
