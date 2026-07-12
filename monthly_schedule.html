@@ -7,7 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>月間勤務管理 - みなはるの里</title>
-<!-- v2026-07-12-7-終日1サービス専念記号を追加しタグ表示をコンパクトに戻す -->
+<!-- v2026-07-12-8-全員シフトタブの出勤者数も終日専念記号に対応、休憩1h明記 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
@@ -455,14 +455,14 @@ const SHIFTS=[
   {k:'研', label:'研修',        c:'#B2DFDB',t:'#004D40',h:0},
   {k:'欠', label:'欠勤',        c:'#FFCCBC',t:'#BF360C',h:0},
   // ↓ 兼任職員が「その日は分割せず1サービスに専念する」場合に使う記号
-  {k:'早(定)', label:'早/終日定期巡回',c:'#D1C4E9',t:'#4A148C',h:8},
-  {k:'早(デイ)',label:'早/終日デイ',   c:'#BBDEFB',t:'#0D47A1',h:8},
-  {k:'A(定)',  label:'日A/終日定期巡回',c:'#D1C4E9',t:'#4A148C',h:8},
-  {k:'A(デイ)', label:'日A/終日デイ',  c:'#90CAF9',t:'#01579B',h:8},
-  {k:'遅(定)', label:'遅/終日定期巡回',c:'#D1C4E9',t:'#4A148C',h:8},
-  {k:'遅(デイ)',label:'遅/終日デイ',   c:'#FFE0B2',t:'#E65100',h:8},
-  {k:'B(定)',  label:'日B/終日定期巡回',c:'#D1C4E9',t:'#4A148C',h:8},
-  {k:'B(デイ)', label:'日B/終日デイ',  c:'#64B5F6',t:'#01579B',h:8},
+  {k:'早(定)', label:'7:00〜16:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'早(デイ)',label:'7:00〜16:00（休憩1h含む）',c:'#BBDEFB',t:'#0D47A1',h:8},
+  {k:'A(定)',  label:'8:00〜17:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'A(デイ)', label:'8:00〜17:00（休憩1h含む）',c:'#90CAF9',t:'#01579B',h:8},
+  {k:'遅(定)', label:'10:00〜19:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'遅(デイ)',label:'10:00〜19:00（休憩1h含む）',c:'#FFE0B2',t:'#E65100',h:8},
+  {k:'B(定)',  label:'9:00〜18:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'B(デイ)', label:'9:00〜18:00（休憩1h含む）',c:'#64B5F6',t:'#01579B',h:8},
 ];
 const SMAP={}; SHIFTS.forEach(s=>SMAP[s.k]=s);
 
@@ -495,11 +495,12 @@ const SHIFT_SPLIT_RULE={
 };
 
 // 「早(定)」「早(デイ)」等＝分割せず終日1サービスに専念する記号（固定サービス）
+// 'pat'＝終日定期巡回／'other'＝終日その人の本来の所属サービス（デイ or 有料）
 const PURE_SVC_FIX={
-  '早(定)':'pat','早(デイ)':'day',
-  'A(定)':'pat','A(デイ)':'day',
-  '遅(定)':'pat','遅(デイ)':'day',
-  'B(定)':'pat','B(デイ)':'day',
+  '早(定)':'pat','早(デイ)':'other',
+  'A(定)':'pat','A(デイ)':'other',
+  '遅(定)':'pat','遅(デイ)':'other',
+  'B(定)':'pat','B(デイ)':'other',
 };
 
 const HOURS=[];
@@ -685,7 +686,14 @@ function buildSchTable(){
     for(let d=1;d<=days;d++){
       const td=document.createElement('td');td.id=`ds_${svc}_${d}`;
       td.style.background=SVC_CLR[svc];td.style.color='#fff';
-      const cnt=mems.filter(s=>schData[s.id]&&schData[s.id][d]&&!['休','有','有2','明','夜','欠','研',''].includes(schData[s.id][d]||schData[s.id][String(d)]||'')).length;
+      const cnt=mems.filter(s=>{
+        const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
+        if(!k||['休','有','有2','明','夜','欠','研'].includes(k))return false;
+        const fix=PURE_SVC_FIX[k];
+        if(fix==='pat')return svc==='pat';   // 終日定期巡回専念→定巡のみカウント
+        if(fix==='other')return svc!=='pat'; // 終日その人の本来サービス専念→デイ/有料側でカウント
+        return true;
+      }).length;
       td.textContent=cnt||'';tr.appendChild(td);
     }
     const td2=document.createElement('td');td2.style.background=SVC_CLR[svc];tr.appendChild(td2);
@@ -727,7 +735,9 @@ function patDaySvcTag(sid,d){
   const s=STAFF.find(x=>x.id===sid);
   const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';
   // ①「早(定)」「早(デイ)」等＝終日1サービス専念記号を最優先で判定
-  if(PURE_SVC_FIX[k]!==undefined)return PURE_SVC_FIX[k];
+  const fix=PURE_SVC_FIX[k];
+  if(fix==='pat')return 'pat';
+  if(fix==='other')return s?s.svc:null;
   // ②「早/日A/遅/日B」の分割ルールから即座に判定（自動塗りしていなくても表示される）
   if(s&&s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
     const otherSeg=SHIFT_SPLIT_RULE[k].find(sg=>sg.svc!=='pat');
@@ -838,7 +848,7 @@ function setPatsCountCell(td,d,members){
   const cnt=members.filter(s=>{
     const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
     if(!k||['休','有','有2','明','夜','欠','研'].includes(k))return false;
-    if(PURE_SVC_FIX[k]==='day')return false; // 「◯(デイ)」の日は今日は定巡なし
+    if(PURE_SVC_FIX[k]==='other')return false; // 「◯(デイ)」の日は今日は定巡なし
     return true;
   }).length;
   const min=isHolidayDay(d)?settings.minStaff.pat.holiday:settings.minStaff.pat.weekday;
@@ -860,7 +870,14 @@ function calcTotal(sid){
 function updateDaySum(d){
   ['day','fac','pat'].forEach(svc=>{
     const mems=STAFF.filter(s=>s.svc===svc);
-    const cnt=mems.filter(s=>schData[s.id]&&schData[s.id][d]&&!['休','有','有2','明','夜','欠','研',''].includes(schData[s.id][d]||schData[s.id][String(d)]||'')).length;
+    const cnt=mems.filter(s=>{
+      const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
+      if(!k||['休','有','有2','明','夜','欠','研'].includes(k))return false;
+      const fix=PURE_SVC_FIX[k];
+      if(fix==='pat')return svc==='pat';
+      if(fix==='other')return svc!=='pat';
+      return true;
+    }).length;
     const el=document.getElementById(`ds_${svc}_${d}`);if(el)el.textContent=cnt||'';
   });
 }
@@ -1819,7 +1836,7 @@ function autoFillAll(svc,silent=false){
       const isDayPatConc=s.conc.includes('day')&&s.conc.includes('pat');
       const splitRule=isDayPatConc?SHIFT_SPLIT_RULE[k]:null;
       const auto=SHIFT_AUTO[k];
-      const svcColor=PURE_SVC_FIX[k]||s.svc; // 終日専念記号なら固定、それ以外は主所属サービス色
+      const svcColor=PURE_SVC_FIX[k]==='pat'?'pat':s.svc; // 終日定巡専念なら固定、それ以外は主所属サービス色
       if(splitRule){
         HOURS.forEach(({h})=>{
           const seg=splitRule.find(sg=>h>=sg.start&&h<sg.end);
