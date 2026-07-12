@@ -477,6 +477,8 @@ function checkPW(){
     <div class="mrow"><label>主治医</label><input type="text" id="m-doctor" placeholder="例：大分健生病院　山田Dr."></div>
     <div class="modal-btns">
       <button class="mbtn mbtn-danger" id="btn-delete" style="display:none;margin-right:auto;" onclick="deleteResident()">削除</button>
+      <button class="mbtn" id="btn-discharge" style="display:none;background:#e6a23c;color:#fff;" onclick="dischargeResident()">退所にする</button>
+      <button class="mbtn" id="btn-restore" style="display:none;background:#2d6a4f;color:#fff;" onclick="restoreResident()">在籍に戻す</button>
       <button class="mbtn mbtn-cancel" onclick="closeModal()">キャンセル</button>
       <button class="mbtn mbtn-primary" onclick="saveResident()">保存</button>
     </div>
@@ -543,6 +545,7 @@ window.onload=()=>{
   ['as_date','sv_date','mn_date','tk_date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
   document.getElementById('report_month').value=ym;
   document.getElementById('teiki_report_month').value=ym;
+  setupFieldSync();
   loadResidents();
 };
 
@@ -786,11 +789,14 @@ function openAddModal(){
   document.getElementById('m-svc-day').checked=false;
   document.getElementById('m-svc-teiki').checked=false;
   document.getElementById('btn-delete').style.display='none';
+  document.getElementById('btn-discharge').style.display='none';
+  document.getElementById('btn-restore').style.display='none';
   document.getElementById('modal-bg').classList.remove('hidden');
   setTimeout(()=>document.getElementById('m-name').focus(),50);
 }
 
 function openEditModal(id){
+  const isDischarged=discharged.some(x=>x.id===id);
   const r=[...residents,...discharged].find(x=>x.id===id);
   if(!r) return;
   editingId=id;
@@ -808,6 +814,8 @@ function openEditModal(id){
   document.getElementById('m-svc-day').checked=!!r.svcDay;
   document.getElementById('m-svc-teiki').checked=!!r.svcTeiki;
   document.getElementById('btn-delete').style.display='inline-flex';
+  document.getElementById('btn-discharge').style.display=isDischarged?'none':'inline-flex';
+  document.getElementById('btn-restore').style.display=isDischarged?'inline-flex':'none';
   document.getElementById('modal-bg').classList.remove('hidden');
 }
 
@@ -844,17 +852,75 @@ async function saveResident(){
 
 async function deleteResident(){
   if(!editingId) return;
+  const isDischarged=discharged.some(x=>x.id===editingId);
   const r=[...residents,...discharged].find(x=>x.id===editingId);
   if(!confirm(`「${r?.name}」を削除しますか？`)) return;
-  residents=residents.filter(x=>x.id!==editingId);
-  try{
-    await saveResidentsSplit('ケア管理_利用者', residents);
-  }catch(e){
-    console.warn('GAS通信エラー（削除は完了）:', e);
+  if(isDischarged){
+    discharged=discharged.filter(x=>x.id!==editingId);
+    try{ await saveResidentsSplit('ケア管理_退所者', discharged); }
+    catch(e){ console.warn('GAS通信エラー（削除は完了）:', e); }
+  }else{
+    residents=residents.filter(x=>x.id!==editingId);
+    try{ await saveResidentsSplit('ケア管理_利用者', residents); }
+    catch(e){ console.warn('GAS通信エラー（削除は完了）:', e); }
   }
   closeModal();
   if(currentId===editingId){currentId=null;document.getElementById('no-select').style.display='flex';document.getElementById('form-area').style.display='none';}
   renderList();showToast('✓ 削除しました');
+}
+
+async function dischargeResident(){
+  if(!editingId) return;
+  const idx=residents.findIndex(x=>x.id===editingId);
+  if(idx<0) return;
+  const r=residents[idx];
+  if(!confirm(`「${r.name}」を退所者に移動しますか？`)) return;
+  residents.splice(idx,1);
+  discharged.push(r);
+  try{
+    await saveResidentsSplit('ケア管理_利用者', residents);
+    await saveResidentsSplit('ケア管理_退所者', discharged);
+  }catch(e){
+    console.warn('GAS通信エラー（移動は完了）:', e);
+  }
+  closeModal();
+  if(currentId===r.id){currentId=null;document.getElementById('no-select').style.display='flex';document.getElementById('form-area').style.display='none';}
+  renderList();showToast('✓ 退所者に移動しました');
+}
+
+async function restoreResident(){
+  if(!editingId) return;
+  const idx=discharged.findIndex(x=>x.id===editingId);
+  if(idx<0) return;
+  const r=discharged[idx];
+  if(!confirm(`「${r.name}」を在籍中に戻しますか？`)) return;
+  discharged.splice(idx,1);
+  residents.push(r);
+  try{
+    await saveResidentsSplit('ケア管理_退所者', discharged);
+    await saveResidentsSplit('ケア管理_利用者', residents);
+  }catch(e){
+    console.warn('GAS通信エラー（移動は完了）:', e);
+  }
+  closeModal();
+  renderList();showToast('✓ 在籍中に戻しました');
+}
+
+function setupFieldSync(){
+  const doctorIds=['as_doctor','mn_doctor','tk_doctor'];
+  doctorIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('input',()=>{
+      doctorIds.forEach(oid=>{if(oid!==id){document.getElementById(oid).value=el.value;}});
+    });
+  });
+  const cmIds=['mn_cm','tk_cm'];
+  cmIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('input',()=>{
+      cmIds.forEach(oid=>{if(oid!==id){document.getElementById(oid).value=el.value;}});
+    });
+  });
 }
 
 function showToast(msg){
