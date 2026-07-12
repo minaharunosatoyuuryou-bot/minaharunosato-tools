@@ -7,7 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>月間勤務管理 - みなはるの里</title>
-<!-- v2026-07-12-4-分割記号の時間帯表記をシンプル化 -->
+<!-- v2026-07-12-7-終日1サービス専念記号を追加しタグ表示をコンパクトに戻す -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
@@ -454,15 +454,15 @@ const SHIFTS=[
   {k:'有2',label:'有給半日',    c:'#FFF59D',t:'#F57F17',h:0},
   {k:'研', label:'研修',        c:'#B2DFDB',t:'#004D40',h:0},
   {k:'欠', label:'欠勤',        c:'#FFCCBC',t:'#BF360C',h:0},
-  // ↓ 兼任職員用：1つのシフトの中で定期巡回とデイに分かれる場合の記号
-  {k:'早巡',label:'7:00〜8:30', c:'#D1C4E9',t:'#4A148C',h:1.5},
-  {k:'早デ',label:'8:30〜16:00',c:'#BBDEFB',t:'#0D47A1',h:7.5},
-  {k:'A巡', label:'8:00〜9:00', c:'#D1C4E9',t:'#4A148C',h:1},
-  {k:'Aデ', label:'9:00〜17:00',c:'#90CAF9',t:'#01579B',h:8},
-  {k:'遅巡',label:'16:30〜19:00',c:'#D1C4E9',t:'#4A148C',h:2.5},
-  {k:'遅デ',label:'10:00〜16:30',c:'#FFE0B2',t:'#E65100',h:6.5},
-  {k:'B巡', label:'9:00〜16:30',c:'#D1C4E9',t:'#4A148C',h:7.5},
-  {k:'Bデ', label:'16:30〜18:00',c:'#64B5F6',t:'#01579B',h:1.5},
+  // ↓ 兼任職員が「その日は分割せず1サービスに専念する」場合に使う記号
+  {k:'早(定)', label:'早/終日定期巡回',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'早(デイ)',label:'早/終日デイ',   c:'#BBDEFB',t:'#0D47A1',h:8},
+  {k:'A(定)',  label:'日A/終日定期巡回',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'A(デイ)', label:'日A/終日デイ',  c:'#90CAF9',t:'#01579B',h:8},
+  {k:'遅(定)', label:'遅/終日定期巡回',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'遅(デイ)',label:'遅/終日デイ',   c:'#FFE0B2',t:'#E65100',h:8},
+  {k:'B(定)',  label:'日B/終日定期巡回',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'B(デイ)', label:'日B/終日デイ',  c:'#64B5F6',t:'#01579B',h:8},
 ];
 const SMAP={}; SHIFTS.forEach(s=>SMAP[s.k]=s);
 
@@ -479,23 +479,27 @@ const SHIFT_AUTO={
   '早6':{start:7.0, end:13.0},
   '遅': {start:10.0,end:19.0},
   '夜': {start:17.0,end:34.0}, // 翌9時=24+9=33→34まで
-  '早巡':{start:7.0, end:8.5},
-  '早デ':{start:8.5, end:16.0},
-  'A巡':{start:8.0, end:9.0},
-  'Aデ':{start:9.0, end:17.0},
-  '遅巡':{start:16.5,end:19.0},
-  '遅デ':{start:10.0,end:16.5},
-  'B巡':{start:9.0, end:16.5},
-  'Bデ':{start:16.5,end:18.0},
+  '早(定)':{start:7.0, end:16.0},'早(デイ)':{start:7.0, end:16.0},
+  'A(定)': {start:8.0, end:17.0},'A(デイ)': {start:8.0, end:17.0},
+  '遅(定)':{start:10.0,end:19.0},'遅(デイ)':{start:10.0,end:19.0},
+  'B(定)': {start:9.0, end:18.0},'B(デイ)': {start:9.0, end:18.0},
 };
 
 // 兼任職員（デイ⇔定期巡回）が「早/日A/遅/日B」で勤務する場合の時間帯内訳
 // （専任職員は対象外＝勤務時間全体が自分の所属サービスのまま）
 const SHIFT_SPLIT_RULE={
-  '早': [{start:7.0, end:8.5, svc:'pat'},{start:8.5, end:16.0, svc:'day'}],
+  '早': [{start:7.0, end:9.0, svc:'pat'},{start:9.0, end:16.0, svc:'day'}],
   '日A':[{start:8.0, end:9.0, svc:'pat'},{start:9.0, end:17.0, svc:'day'}],
   '遅': [{start:10.0,end:16.5, svc:'day'},{start:16.5,end:19.0, svc:'pat'}],
   '日B':[{start:9.0, end:16.5, svc:'pat'},{start:16.5,end:18.0, svc:'day'}],
+};
+
+// 「早(定)」「早(デイ)」等＝分割せず終日1サービスに専念する記号（固定サービス）
+const PURE_SVC_FIX={
+  '早(定)':'pat','早(デイ)':'day',
+  'A(定)':'pat','A(デイ)':'day',
+  '遅(定)':'pat','遅(デイ)':'day',
+  'B(定)':'pat','B(デイ)':'day',
 };
 
 const HOURS=[];
@@ -703,8 +707,33 @@ function isHolidayDay(d){
   return wd===0||wd===6;
 }
 
+function fmtHour(h){
+  const hh=Math.floor(h);
+  const mm=(h-hh)>=0.5?'30':'00';
+  return `${hh}:${mm}`;
+}
+
+function patDaySplitLabel(sid,d){
+  const s=STAFF.find(x=>x.id===sid);
+  const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';
+  if(s&&s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
+    return SHIFT_SPLIT_RULE[k].map(sg=>`${SVC_LBL[sg.svc]}${fmtHour(sg.start)}〜${fmtHour(sg.end)}`).join('／');
+  }
+  return null;
+}
+
 function patDaySvcTag(sid,d){
-  // その日、実際にどのサービスにいるか（時間帯データがあれば優先、なければ主所属）
+  // その日、実際にどのサービスにいるか
+  const s=STAFF.find(x=>x.id===sid);
+  const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';
+  // ①「早(定)」「早(デイ)」等＝終日1サービス専念記号を最優先で判定
+  if(PURE_SVC_FIX[k]!==undefined)return PURE_SVC_FIX[k];
+  // ②「早/日A/遅/日B」の分割ルールから即座に判定（自動塗りしていなくても表示される）
+  if(s&&s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
+    const otherSeg=SHIFT_SPLIT_RULE[k].find(sg=>sg.svc!=='pat');
+    if(otherSeg)return otherSeg.svc;
+  }
+  // ③時間帯タブで実際に塗られたデータがあればそちらを優先
   const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   if(tlData[dateStr]&&tlData[dateStr][sid]){
     const counts={day:0,fac:0,pat:0,op:0};
@@ -808,7 +837,9 @@ function setPatsCountCell(td,d,members){
   members=members||getPatOrderedMembers();
   const cnt=members.filter(s=>{
     const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
-    return k&&!['休','有','有2','明','夜','欠','研'].includes(k);
+    if(!k||['休','有','有2','明','夜','欠','研'].includes(k))return false;
+    if(PURE_SVC_FIX[k]==='day')return false; // 「◯(デイ)」の日は今日は定巡なし
+    return true;
   }).length;
   const min=isHolidayDay(d)?settings.minStaff.pat.holiday:settings.minStaff.pat.weekday;
   td.style.background=cnt>=min?'#2E7D32':'#C62828';
@@ -1773,9 +1804,6 @@ function clearAllSvcs(){
 }
 
 // ===== 自動塗り =====
-// 分割記号（早巡/早デ等）は、職員の主所属に関わらずこの色で自動塗りする
-const SPLIT_SVC_OVERRIDE={'早巡':'pat','早デ':'day','A巡':'pat','Aデ':'day','遅巡':'pat','遅デ':'day','B巡':'pat','Bデ':'day'};
-
 function autoFillAll(svc,silent=false){
   if(!silent&&!confirm('シフト記号から時間帯を自動で塗ります。既存の入力は上書きされます。よろしいですか？'))return;
   const members=STAFF.filter(s=>s.conc.includes(svc));
@@ -1791,7 +1819,7 @@ function autoFillAll(svc,silent=false){
       const isDayPatConc=s.conc.includes('day')&&s.conc.includes('pat');
       const splitRule=isDayPatConc?SHIFT_SPLIT_RULE[k]:null;
       const auto=SHIFT_AUTO[k];
-      const svcColor=SPLIT_SVC_OVERRIDE[k]||s.svc; // 分割記号なら固定、それ以外は主所属サービス色
+      const svcColor=PURE_SVC_FIX[k]||s.svc; // 終日専念記号なら固定、それ以外は主所属サービス色
       if(splitRule){
         HOURS.forEach(({h})=>{
           const seg=splitRule.find(sg=>h>=sg.start&&h<sg.end);
