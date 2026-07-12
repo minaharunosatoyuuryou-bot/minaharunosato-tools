@@ -620,9 +620,28 @@ function renderList(filter){
 
 function filterList(){renderList(document.getElementById('search-input').value);}
 
+function resetForm(){
+  const today=new Date().toISOString().slice(0,10);
+  [...AS_TEXT,...SV_TEXT,...MN_TEXT,...TK_TEXT,...PH_TEXT].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(el.tagName==='SELECT') el.selectedIndex=0;
+    else el.value='';
+  });
+  [...AS_CHECK,...SV_CHECK,...MN_CHECK,...TK_CHECK].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.checked=false;
+  });
+  document.querySelectorAll('#as-adl-tbody select, #mn-adl-tbody select').forEach(s=>s.selectedIndex=0);
+  document.querySelectorAll('#as-adl-tbody textarea, #mn-adl-tbody textarea').forEach(t=>t.value='');
+  document.querySelectorAll('#photo-grid .photo-thumb').forEach(p=>p.remove());
+  ['as_date','sv_date','mn_date','tk_date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
+}
+
 function selectResident(id){
   if(currentId&&currentId!==id) saveData(true);
   currentId=id;
+  resetForm();
   const r=[...residents,...discharged].find(x=>x.id===id);
   document.getElementById('no-select').style.display='none';
   document.getElementById('form-area').style.display='block';
