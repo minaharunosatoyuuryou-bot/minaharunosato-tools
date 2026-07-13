@@ -7,7 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>月間勤務管理 - みなはるの里</title>
-<!-- v2026-07-12-8-全員シフトタブの出勤者数も終日専念記号に対応、休憩1h明記 -->
+<!-- v2026-07-13-2-早の分割時間に移動30分を反映 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
@@ -455,14 +455,14 @@ const SHIFTS=[
   {k:'研', label:'研修',        c:'#B2DFDB',t:'#004D40',h:0},
   {k:'欠', label:'欠勤',        c:'#FFCCBC',t:'#BF360C',h:0},
   // ↓ 兼任職員が「その日は分割せず1サービスに専念する」場合に使う記号
-  {k:'早(定)', label:'7:00〜16:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
-  {k:'早(デイ)',label:'7:00〜16:00（休憩1h含む）',c:'#BBDEFB',t:'#0D47A1',h:8},
-  {k:'A(定)',  label:'8:00〜17:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
-  {k:'A(デイ)', label:'8:00〜17:00（休憩1h含む）',c:'#90CAF9',t:'#01579B',h:8},
-  {k:'遅(定)', label:'10:00〜19:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
-  {k:'遅(デイ)',label:'10:00〜19:00（休憩1h含む）',c:'#FFE0B2',t:'#E65100',h:8},
-  {k:'B(定)',  label:'9:00〜18:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
-  {k:'B(デイ)', label:'9:00〜18:00（休憩1h含む）',c:'#64B5F6',t:'#01579B',h:8},
+  {k:'早巡', label:'7:00〜16:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'早デ',label:'7:00〜16:00（休憩1h含む）',c:'#BBDEFB',t:'#0D47A1',h:8},
+  {k:'A巡',  label:'8:00〜17:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'Aデ', label:'8:00〜17:00（休憩1h含む）',c:'#90CAF9',t:'#01579B',h:8},
+  {k:'遅巡', label:'10:00〜19:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'遅デ',label:'10:00〜19:00（休憩1h含む）',c:'#FFE0B2',t:'#E65100',h:8},
+  {k:'B巡',  label:'9:00〜18:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
+  {k:'Bデ', label:'9:00〜18:00（休憩1h含む）',c:'#64B5F6',t:'#01579B',h:8},
 ];
 const SMAP={}; SHIFTS.forEach(s=>SMAP[s.k]=s);
 
@@ -479,28 +479,28 @@ const SHIFT_AUTO={
   '早6':{start:7.0, end:13.0},
   '遅': {start:10.0,end:19.0},
   '夜': {start:17.0,end:34.0}, // 翌9時=24+9=33→34まで
-  '早(定)':{start:7.0, end:16.0},'早(デイ)':{start:7.0, end:16.0},
-  'A(定)': {start:8.0, end:17.0},'A(デイ)': {start:8.0, end:17.0},
-  '遅(定)':{start:10.0,end:19.0},'遅(デイ)':{start:10.0,end:19.0},
-  'B(定)': {start:9.0, end:18.0},'B(デイ)': {start:9.0, end:18.0},
+  '早巡':{start:7.0, end:16.0},'早デ':{start:7.0, end:16.0},
+  'A巡': {start:8.0, end:17.0},'Aデ': {start:8.0, end:17.0},
+  '遅巡':{start:10.0,end:19.0},'遅デ':{start:10.0,end:19.0},
+  'B巡': {start:9.0, end:18.0},'Bデ': {start:9.0, end:18.0},
 };
 
 // 兼任職員（デイ⇔定期巡回）が「早/日A/遅/日B」で勤務する場合の時間帯内訳
 // （専任職員は対象外＝勤務時間全体が自分の所属サービスのまま）
 const SHIFT_SPLIT_RULE={
-  '早': [{start:7.0, end:9.0, svc:'pat'},{start:9.0, end:16.0, svc:'day'}],
+  '早': [{start:7.0, end:8.5, svc:'pat'},{start:8.5, end:9.0, svc:'none'},{start:9.0, end:16.0, svc:'day'}],
   '日A':[{start:8.0, end:9.0, svc:'pat'},{start:9.0, end:17.0, svc:'day'}],
   '遅': [{start:10.0,end:16.5, svc:'day'},{start:16.5,end:19.0, svc:'pat'}],
   '日B':[{start:9.0, end:16.5, svc:'pat'},{start:16.5,end:18.0, svc:'day'}],
 };
 
-// 「早(定)」「早(デイ)」等＝分割せず終日1サービスに専念する記号（固定サービス）
+// 「早巡」「早デ」等＝分割せず終日1サービスに専念する記号（固定サービス）
 // 'pat'＝終日定期巡回／'other'＝終日その人の本来の所属サービス（デイ or 有料）
 const PURE_SVC_FIX={
-  '早(定)':'pat','早(デイ)':'other',
-  'A(定)':'pat','A(デイ)':'other',
-  '遅(定)':'pat','遅(デイ)':'other',
-  'B(定)':'pat','B(デイ)':'other',
+  '早巡':'pat','早デ':'other',
+  'A巡':'pat','Aデ':'other',
+  '遅巡':'pat','遅デ':'other',
+  'B巡':'pat','Bデ':'other',
 };
 
 const HOURS=[];
@@ -734,13 +734,13 @@ function patDaySvcTag(sid,d){
   // その日、実際にどのサービスにいるか
   const s=STAFF.find(x=>x.id===sid);
   const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';
-  // ①「早(定)」「早(デイ)」等＝終日1サービス専念記号を最優先で判定
+  // ①「早巡」「早デ」等＝終日1サービス専念記号を最優先で判定
   const fix=PURE_SVC_FIX[k];
   if(fix==='pat')return 'pat';
   if(fix==='other')return s?s.svc:null;
   // ②「早/日A/遅/日B」の分割ルールから即座に判定（自動塗りしていなくても表示される）
   if(s&&s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
-    const otherSeg=SHIFT_SPLIT_RULE[k].find(sg=>sg.svc!=='pat');
+    const otherSeg=SHIFT_SPLIT_RULE[k].find(sg=>sg.svc!=='pat'&&sg.svc!=='none');
     if(otherSeg)return otherSeg.svc;
   }
   // ③時間帯タブで実際に塗られたデータがあればそちらを優先
@@ -776,13 +776,32 @@ function buildPatSimpleTable(){
         <th style="background:#1565C0;color:#fff;padding:4px 8px;border:1px solid #ccc;">デイ</th>
       </tr></thead>
       <tbody>
-        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">早</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜16:00</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜8:30</td><td style="padding:3px 8px;border:1px solid #ccc;">8:30〜16:00</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">早</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜16:00</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜8:30</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜16:00<br><span style="font-size:9px;color:#888;">（8:30〜9:00は移動等）</span></td></tr>
         <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">日A</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜17:00</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜9:00</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜17:00</td></tr>
         <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">遅</td><td style="padding:3px 8px;border:1px solid #ccc;">10:00〜19:00</td><td style="padding:3px 8px;border:1px solid #ccc;">16:30〜19:00</td><td style="padding:3px 8px;border:1px solid #ccc;">10:00〜16:30</td></tr>
         <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">日B</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜18:00</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜16:30</td><td style="padding:3px 8px;border:1px solid #ccc;">16:30〜18:00</td></tr>
       </tbody>
     </table>
     <div style="font-size:10px;color:#E65100;margin-top:6px;">※ デイサービスがその日の配置基準（必要人数）を満たしている場合は、デイ担当時間も含めて勤務時間全体を定期巡回にあてることがあります。</div>
+
+    <div style="font-size:11px;font-weight:bold;color:#4A148C;margin:14px 0 6px;">📌 分割せず「終日1サービス」に専念する記号</div>
+    <table style="border-collapse:collapse;font-size:11px;width:100%;max-width:480px">
+      <thead><tr>
+        <th style="background:#455A64;color:#fff;padding:4px 8px;border:1px solid #ccc;">記号</th>
+        <th style="background:#455A64;color:#fff;padding:4px 8px;border:1px solid #ccc;">勤務時間帯</th>
+        <th style="background:#455A64;color:#fff;padding:4px 8px;border:1px solid #ccc;">終日どちら</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">早巡</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜16:00（休憩1h含む）</td><td style="padding:3px 8px;border:1px solid #ccc;color:#4A148C;">定期巡回</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">早デ</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜16:00（休憩1h含む）</td><td style="padding:3px 8px;border:1px solid #ccc;color:#1565C0;">デイ／有料</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">A巡</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜17:00（休憩1h含む）</td><td style="padding:3px 8px;border:1px solid #ccc;color:#4A148C;">定期巡回</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">Aデ</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜17:00（休憩1h含む）</td><td style="padding:3px 8px;border:1px solid #ccc;color:#1565C0;">デイ／有料</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">遅巡</td><td style="padding:3px 8px;border:1px solid #ccc;">10:00〜19:00（休憩1h含む）</td><td style="padding:3px 8px;border:1px solid #ccc;color:#4A148C;">定期巡回</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">遅デ</td><td style="padding:3px 8px;border:1px solid #ccc;">10:00〜19:00（休憩1h含む）</td><td style="padding:3px 8px;border:1px solid #ccc;color:#1565C0;">デイ／有料</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">B巡</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜18:00（休憩1h含む）</td><td style="padding:3px 8px;border:1px solid #ccc;color:#4A148C;">定期巡回</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">Bデ</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜18:00（休憩1h含む）</td><td style="padding:3px 8px;border:1px solid #ccc;color:#1565C0;">デイ／有料</td></tr>
+      </tbody>
+    </table>
   `;
   wrap.appendChild(splitWrap);
 
