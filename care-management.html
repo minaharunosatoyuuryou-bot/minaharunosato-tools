@@ -599,12 +599,12 @@ function switchDocTab(tab,btn){
   if(tab==='teiki'&&currentId) loadTeikiData();
 }
 
+// ↓ 高速化版：在籍中・退所者の両方を1回の通信でまとめて取得する
 async function loadResidents(){
   try{
-    const r1=await gasReq({action:'getResidents',sheet:'ケア管理_利用者'});
-    residents=(r1.data||[]).filter(r=>r&&r.name);
-    const r2=await gasReq({action:'getResidents',sheet:'ケア管理_退所者'});
-    discharged=(r2.data||[]).filter(r=>r&&r.name);
+    const res=await gasReq({action:'getResidentsBoth',sheetActive:'ケア管理_利用者',sheetDischarged:'ケア管理_退所者'});
+    residents=(res.residents||[]).filter(r=>r&&r.name);
+    discharged=(res.discharged||[]).filter(r=>r&&r.name);
   }catch(e){residents=[];discharged=[];}
   renderList();
 }
