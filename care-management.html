@@ -252,6 +252,7 @@ function checkPW(){
             <input type="month" id="teiki_report_month" onchange="loadTeikiData()">
           </div>
         </div>
+        <div class="banner-info" id="banner-info" style="display:none;width:100%;font-size:11px;color:var(--muted);margin-top:4px;padding-top:6px;border-top:1px solid var(--mgray);line-height:1.8;"></div>
       </div>
 
       <!-- アセスメント -->
@@ -675,6 +676,7 @@ async function selectResident(id){
     document.getElementById('tk_doctor').value=r.doctor||'';
     renderList();
     await loadAllData(id);
+    updateBannerInfo();
     formLoaded=true;
     document.getElementById('main-body').scrollTop=0;
   } finally {
@@ -931,6 +933,7 @@ function setupFieldSync(){
     const el=document.getElementById(id);
     if(el) el.addEventListener('input',()=>{
       doctorIds.forEach(oid=>{if(oid!==id){document.getElementById(oid).value=el.value;}});
+      updateBannerInfo();
     });
   });
   const cmIds=['mn_cm','tk_cm'];
@@ -940,6 +943,29 @@ function setupFieldSync(){
       cmIds.forEach(oid=>{if(oid!==id){document.getElementById(oid).value=el.value;}});
     });
   });
+  // ↓ アセスメントの基本情報（住所・家族構成・緊急連絡先）をどのタブを開いていても
+  //   バナー部分に常時表示するための同期処理
+  ['as_address','as_family','as_emergency'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('input',updateBannerInfo);
+  });
+}
+
+function updateBannerInfo(){
+  const addr=document.getElementById('as_address').value.trim();
+  const fam=document.getElementById('as_family').value.trim();
+  const emg=document.getElementById('as_emergency').value.trim();
+  const parts=[];
+  if(addr) parts.push('🏠 住所：'+addr);
+  if(fam) parts.push('👪 家族構成：'+fam);
+  if(emg) parts.push('📞 緊急連絡先：'+emg);
+  const el=document.getElementById('banner-info');
+  if(parts.length){
+    el.innerHTML=parts.join('<br>');
+    el.style.display='block';
+  } else {
+    el.style.display='none';
+  }
 }
 
 function showToast(msg){
