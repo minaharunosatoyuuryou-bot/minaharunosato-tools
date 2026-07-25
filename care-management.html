@@ -495,7 +495,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyoA64aMwOkQ57RPNdwhH27
 async function gasReq(payload){
   // saveRecord・saveResidentsはデータが大きくなりURLの文字数制限を超えるため、
   // POST（Content-Type: text/plain でCORSのpreflightを回避）で送信する
-  if(payload.action==='saveRecord' || payload.action==='saveResidents'){
+  if(payload.action==='saveRecord' || payload.action==='saveResidents' || payload.action==='saveResidentAll'){
     const res = await fetch(GAS_URL, {
       method: 'POST',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
@@ -709,30 +709,42 @@ function applyData(d){
   });
 }
 
+// ↓ 高速化版：アセスメント・月次報告・定期巡回報告を1回の通信でまとめて取得する
 async function loadAllData(id){
+  document.getElementById('tk_month_display').value=document.getElementById('teiki_report_month').value;
   try{
-    const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(id)+'_base'});
-    if(res.data) applyData(res.data);
+    const mnMonth=document.getElementById('report_month').value;
+    const tkMonth=document.getElementById('teiki_report_month').value;
+    const res=await gasReq({action:'getResidentAll',sheet:'ケア管理_記録',id:String(id),mnMonth:mnMonth,tkMonth:tkMonth});
+    if(res.base) applyData(res.base);
+    if(res.mn) applyMonthlyData(res.mn);
+    if(res.tk) applyTeikiData(res.tk);
   }catch(e){}
-  await loadMonthlyData();
-  await loadTeikiData();
 }
 
+function applyMonthlyData(data){
+  MN_TEXT.filter(id=>id!=='mn_doctor'&&id!=='mn_cm').forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.value=data[id];});
+  MN_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.checked=data[id];});
+  if(data.mn_adl) data.mn_adl.forEach((a,i)=>{
+    const s1=document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+    const s2=document.querySelector(`.adl-s2[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+    const ta=document.querySelector(`.adl-ta[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+    if(s1)s1.value=a.s1;if(s2)s2.value=a.s2;if(ta)ta.value=a.ta;
+  });
+}
+
+function applyTeikiData(data){
+  TK_TEXT.filter(id=>id!=='tk_doctor'&&id!=='tk_cm').forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.value=data[id];});
+  TK_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.checked=data[id];});
+}
+
+// 報告月を切り替えた時だけ、その月のデータを再取得する（利用者選択時はloadAllDataでまとめて取得済み）
 async function loadMonthlyData(){
   if(!currentId) return;
   const month=document.getElementById('report_month').value;
   try{
     const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(currentId)+'_mn_'+month});
-    if(res.data){
-      MN_TEXT.filter(id=>id!=='mn_doctor'&&id!=='mn_cm').forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.value=res.data[id];});
-      MN_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.checked=res.data[id];});
-      if(res.data.mn_adl) res.data.mn_adl.forEach((a,i)=>{
-        const s1=document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
-        const s2=document.querySelector(`.adl-s2[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
-        const ta=document.querySelector(`.adl-ta[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
-        if(s1)s1.value=a.s1;if(s2)s2.value=a.s2;if(ta)ta.value=a.ta;
-      });
-    }
+    if(res.data) applyMonthlyData(res.data);
   }catch(e){}
 }
 
@@ -742,13 +754,11 @@ async function loadTeikiData(){
   document.getElementById('tk_month_display').value=month;
   try{
     const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(currentId)+'_tk_'+month});
-    if(res.data){
-      TK_TEXT.filter(id=>id!=='tk_doctor'&&id!=='tk_cm').forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.value=res.data[id];});
-      TK_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&res.data[id]!==undefined)el.checked=res.data[id];});
-    }
+    if(res.data) applyTeikiData(res.data);
   }catch(e){}
 }
 
+// ↓ 高速化版：アセスメント・月次報告・定期巡回報告を1回の通信でまとめて保存する
 async function saveData(silent=false){
   if(!currentId) return;
   const d=collectData();
@@ -757,14 +767,12 @@ async function saveData(silent=false){
   const baseData={};
   [...AS_TEXT,...AS_CHECK,...SV_TEXT,...SV_CHECK,...PH_TEXT].forEach(id=>{baseData[id]=d[id];});
   baseData.as_adl=d.as_adl;
-  await gasReq({action:'saveRecord',sheet:'ケア管理_記録',id:String(currentId)+'_base',data:baseData});
   const mnData={};
   [...MN_TEXT,...MN_CHECK].forEach(id=>{mnData[id]=d[id];});
   mnData.mn_adl=d.mn_adl;
-  await gasReq({action:'saveRecord',sheet:'ケア管理_記録',id:String(currentId)+'_mn_'+mnMonth,data:mnData});
   const tkData={};
   [...TK_TEXT,...TK_CHECK].forEach(id=>{tkData[id]=d[id];});
-  await gasReq({action:'saveRecord',sheet:'ケア管理_記録',id:String(currentId)+'_tk_'+tkMonth,data:tkData});
+  await gasReq({action:'saveResidentAll',sheet:'ケア管理_記録',id:String(currentId),mnMonth:mnMonth,tkMonth:tkMonth,baseData:baseData,mnData:mnData,tkData:tkData});
   if(!silent) showToast('✓ 保存しました');
   renderList();
 }
