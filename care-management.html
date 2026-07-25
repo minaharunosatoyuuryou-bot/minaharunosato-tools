@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -520,6 +521,10 @@ async function saveResidentsSplit(sheetName, data){
 }
 
 let residents=[], discharged=[], currentId=null, editingId=null, currentSideTab='active', currentDocTab='assess';
+// ↓ 利用者切り替え時の保存事故防止用フラグ
+//   formLoaded: 現在表示中の利用者のデータ読み込みが完了しているか
+//   switching : 利用者の切り替え処理が進行中かどうか（連打・連続クリックによる多重実行を防ぐ）
+let formLoaded=false, switching=false;
 
 const ADL_ITEMS_AS=['寝返り','起き上がり','立ち上がり','移乗','歩行・移動','食事','服薬','排泄','整容','更衣','入浴','意思疎通','電話','買い物','金銭管理'];
 const ADL_AS_STATUS=['自立','見守り','一部介助','全介助','実施なし'];
@@ -641,26 +646,40 @@ function resetForm(){
   ['as_date','sv_date','mn_date','tk_date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
 }
 
-function selectResident(id){
-  if(currentId&&currentId!==id) saveData(true);
-  currentId=id;
-  resetForm();
-  const r=[...residents,...discharged].find(x=>x.id===id);
-  document.getElementById('no-select').style.display='none';
-  document.getElementById('form-area').style.display='block';
-  document.getElementById('banner-name').textContent=r.name+(r.kana?'　'+r.kana:'');
-  const badges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')+(r.svcDay?'<span class="svc-badge badge-day">デイサービス</span>':'')+(r.svcTeiki?'<span class="svc-badge badge-teiki">定期巡回</span>':'');
-  document.getElementById('banner-meta').innerHTML=(r.care||'')+(r.room?'　'+r.room+'号室':'')+' '+badges;
-  document.getElementById('mn-sec-day').style.display=r.svcDay?'block':'none';
-  document.getElementById('as_address').value=r.address||'';
-  document.getElementById('as_doctor').value=r.doctor||'';
-  document.getElementById('mn_cm').value=r.cm||'';
-  document.getElementById('mn_doctor').value=r.doctor||'';
-  document.getElementById('tk_cm').value=r.cm||'';
-  document.getElementById('tk_doctor').value=r.doctor||'';
-  renderList();
-  loadAllData(id);
-  document.getElementById('main-body').scrollTop=0;
+// ===== 利用者切り替え（保存事故防止版） =====
+// 修正点：
+// 1) switching フラグで多重実行（連打・連続クリック）をブロック
+// 2) formLoaded フラグで「前の利用者のデータ読み込みが完了している場合のみ」保存する
+//    → 読み込み中に次の人へ切り替えても、空欄の状態を保存してしまうことがなくなる
+// 3) await でデータ読み込みの完了を待ってから次の操作に進む
+async function selectResident(id){
+  if(switching) return;
+  switching=true;
+  try{
+    if(currentId&&currentId!==id&&formLoaded) await saveData(true);
+    currentId=id;
+    formLoaded=false;
+    resetForm();
+    const r=[...residents,...discharged].find(x=>x.id===id);
+    document.getElementById('no-select').style.display='none';
+    document.getElementById('form-area').style.display='block';
+    document.getElementById('banner-name').textContent=r.name+(r.kana?'　'+r.kana:'');
+    const badges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')+(r.svcDay?'<span class="svc-badge badge-day">デイサービス</span>':'')+(r.svcTeiki?'<span class="svc-badge badge-teiki">定期巡回</span>':'');
+    document.getElementById('banner-meta').innerHTML=(r.care||'')+(r.room?'　'+r.room+'号室':'')+' '+badges;
+    document.getElementById('mn-sec-day').style.display=r.svcDay?'block':'none';
+    document.getElementById('as_address').value=r.address||'';
+    document.getElementById('as_doctor').value=r.doctor||'';
+    document.getElementById('mn_cm').value=r.cm||'';
+    document.getElementById('mn_doctor').value=r.doctor||'';
+    document.getElementById('tk_cm').value=r.cm||'';
+    document.getElementById('tk_doctor').value=r.doctor||'';
+    renderList();
+    await loadAllData(id);
+    formLoaded=true;
+    document.getElementById('main-body').scrollTop=0;
+  } finally {
+    switching=false;
+  }
 }
 
 function collectData(){
@@ -693,8 +712,8 @@ async function loadAllData(id){
     const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(id)+'_base'});
     if(res.data) applyData(res.data);
   }catch(e){}
-  loadMonthlyData();
-  loadTeikiData();
+  await loadMonthlyData();
+  await loadTeikiData();
 }
 
 async function loadMonthlyData(){
