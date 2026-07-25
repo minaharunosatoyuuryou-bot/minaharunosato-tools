@@ -973,6 +973,25 @@ function showToast(msg){
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2200);
 }
+
+// ===== 印刷・PDF出力時に、入力欄の文字が枠外で切れないようにする =====
+// 印刷直前に全てのテキストエリアを、書いてある文章の長さぴったりまで一時的に伸ばす。
+// 印刷が終わったら（印刷ダイアログを閉じたら）、画面編集時の元の見た目に戻す。
+function autosizeTextareasForPrint(){
+  document.querySelectorAll('textarea').forEach(t=>{
+    t.dataset.origHeight = t.style.height || '';
+    t.style.height = 'auto';
+    t.style.height = (t.scrollHeight + 2) + 'px';
+  });
+}
+function restoreTextareaHeights(){
+  document.querySelectorAll('textarea').forEach(t=>{
+    t.style.height = t.dataset.origHeight || '';
+    delete t.dataset.origHeight;
+  });
+}
+window.addEventListener('beforeprint', autosizeTextareasForPrint);
+window.addEventListener('afterprint', restoreTextareaHeights);
 </script>
 </body>
 </html>
