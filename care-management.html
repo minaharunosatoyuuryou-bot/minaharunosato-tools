@@ -152,6 +152,8 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
   .banner-name{font-size:12pt;}
   .print-title{display:block!important;text-align:center;font-size:13pt;font-weight:bold;margin-bottom:6pt;padding-bottom:4pt;border-bottom:1.5pt solid #1a3050;}
   .photo-thumb{width:80px;height:65px;}
+  /* 印刷時、未入力欄の「例：〜」などの薄いプレースホルダー文字を印刷しないようにする */
+  input::placeholder, textarea::placeholder{color:transparent!important;}
 }
 .print-title{display:none;}
 </style>
