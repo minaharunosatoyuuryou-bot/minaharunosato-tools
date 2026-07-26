@@ -595,6 +595,19 @@ function syncAdlToMonthly(){
   }
 }
 
+// アセスメント情報（ADL・主治医）とケアマネ名を、他タブに反映する処理をまとめたもの。
+// 利用者選択時だけでなく、タブを切り替えて月次報告・定期巡回報告のデータを
+// サーバーから読み込み直した直後にも必ず呼び出し、古いデータで上書きされないようにする。
+function syncCrossTabInfo(){
+  syncAdlToMonthly();
+  const docVal=document.getElementById('as_doctor').value;
+  document.getElementById('mn_doctor').value=docVal;
+  document.getElementById('tk_doctor').value=docVal;
+  const cmVal=document.getElementById('mn_cm').value || document.getElementById('tk_cm').value;
+  document.getElementById('mn_cm').value=cmVal;
+  document.getElementById('tk_cm').value=cmVal;
+}
+
 function switchSideTab(tab,btn){
   currentSideTab=tab;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -602,7 +615,7 @@ function switchSideTab(tab,btn){
   renderList();
 }
 
-function switchDocTab(tab,btn){
+async function switchDocTab(tab,btn){
   currentDocTab=tab;
   document.querySelectorAll('.doc-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -612,8 +625,10 @@ function switchDocTab(tab,btn){
   });
   document.getElementById('banner-month').style.display=tab==='monthly'?'block':'none';
   document.getElementById('banner-teiki-month').style.display=tab==='teiki'?'block':'none';
-  if(tab==='monthly'&&currentId) loadMonthlyData();
-  if(tab==='teiki'&&currentId) loadTeikiData();
+  // ↓ 月次報告・定期巡回報告のタブに切り替えた時、サーバーの古いデータを読み込んだ直後に
+  //   必ずsyncCrossTabInfo()を呼び直し、アセスメントの内容が上書きされて消えないようにする
+  if(tab==='monthly'&&currentId){ await loadMonthlyData(); syncCrossTabInfo(); }
+  if(tab==='teiki'&&currentId){ await loadTeikiData(); syncCrossTabInfo(); }
 }
 
 // ↓ 高速化版：在籍中・退所者の両方を1回の通信でまとめて取得する
@@ -736,18 +751,7 @@ async function loadAllData(id){
     if(res.base) applyData(res.base);
     if(res.mn) applyMonthlyData(res.mn);
     if(res.tk) applyTeikiData(res.tk);
-    // ↓ アセスメントのADLを、常に月次報告のADL（共通項目）より優先して反映する
-    syncAdlToMonthly();
-    // ↓ アセスメントの主治医欄を、常に他タブの主治医欄より優先する
-    //   （利用者情報＝名簿の主治医ではなく、アセスメントで書いた最新の主治医を正とする）
-    const docVal=document.getElementById('as_doctor').value;
-    document.getElementById('mn_doctor').value=docVal;
-    document.getElementById('tk_doctor').value=docVal;
-    // ↓ ケアマネジャー名も同様に、月次報告・定期巡回報告のどちらかに入力があれば
-    //   両方のタブで統一して表示する（片方だけ書いても、もう片方に反映される）
-    const cmVal=document.getElementById('mn_cm').value || document.getElementById('tk_cm').value;
-    document.getElementById('mn_cm').value=cmVal;
-    document.getElementById('tk_cm').value=cmVal;
+    syncCrossTabInfo();
   }catch(e){}
 }
 
