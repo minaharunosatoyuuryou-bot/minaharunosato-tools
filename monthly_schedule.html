@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -88,9 +89,19 @@ table.sch th,table.sch td{border:1px solid #ccc;padding:0}
 .dsum-row .sn{text-align:left;padding:2px 5px;font-size:9px;position:sticky;left:0}
 
 /* シフト選択ポップ */
-.shift-pop{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;background:#fff;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:9999!important;padding:10px;display:block;min-width:280px;max-height:75vh;overflow-y:auto}
-.shift-opt{padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;display:flex;align-items:center;gap:8px;border:1px solid #ddd;margin-bottom:3px}
+.shift-pop{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important;background:#fff;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:9999!important;padding:10px;display:block;min-width:300px;max-width:94vw;max-height:80vh;overflow-y:auto}
+.shift-opt{position:relative;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;display:flex;align-items:center;gap:8px;border:1px solid #ddd;margin-bottom:3px}
 .shift-opt:hover{opacity:.8}
+.sp-badge{position:absolute;top:-6px;left:-6px;background:#263238;color:#fff;font-size:9px;font-weight:bold;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.35);pointer-events:none;z-index:2}
+.sp-hint{font-size:9px;color:#999;text-align:center;padding:6px 2px 0}
+.sp-sec{font-size:10px;font-weight:bold;color:#555;padding:8px 2px 4px;border-top:1px dashed #ddd;margin-top:4px;display:flex;align-items:center;gap:4px}
+.sp-sec:first-of-type{border-top:none;margin-top:0}
+.sp-sec-sub{font-size:9px;font-weight:normal;color:#888}
+.sp-pair-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;padding:4px 6px;background:#fafafa;border-radius:5px;border:1px solid #eee}
+.sp-pair-time{font-size:10px;font-weight:bold;color:#333;min-width:96px}
+.sp-pair-btn{flex:1;padding:6px 4px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;text-align:center;border:1px solid #ddd}
+.sp-pair-btn:hover{opacity:.8}
+.sp-normal-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
 
 /* ===== 部署タブ：月間時間帯表 ===== */
 .mtl-wrap{background:#fff}
@@ -902,27 +913,115 @@ function updateDaySum(d){
 }
 
 // シフトポップ
+// 兼任職員が「その日は分割せず1サービスに専念する」場合の時間帯ペア（巡回⇔デイ）
+const SPLIT_PAIRS=[
+  {label:'早番',time:'7:00〜16:00',pat:'早巡',day:'早デ'},
+  {label:'A番', time:'8:00〜17:00',pat:'A巡', day:'Aデ'},
+  {label:'B番', time:'9:00〜18:00',pat:'B巡', day:'Bデ'},
+  {label:'遅番',time:'10:00〜19:00',pat:'遅巡',day:'遅デ'},
+];
+const REST_KEYS=['休','有','有2','研','欠'];
+
+// 数字キーのショートカット（よく使う区分を1〜9・0キーに割り当て。0＝空白クリア）
+const NUM_SHORTCUTS={'1':'日','2':'早','3':'遅','4':'夜','5':'明','6':'休','7':'有','8':'研','9':'欠','0':''};
+let popNumMap={};
+document.addEventListener('keydown',e=>{
+  const pop=document.getElementById('shiftPop');
+  if(!pop||pop.classList.contains('hidden'))return;
+  if(e.key==='Escape'){closeShiftPop();return;}
+  if(Object.prototype.hasOwnProperty.call(popNumMap,e.key)){
+    e.preventDefault();
+    setShift(popNumMap[e.key]);
+  }
+});
+
 function openShiftPop(e,sid,d,cell){
   e.stopPropagation();activeCell={sid,d,cell};
   const pop=document.getElementById('shiftPop');pop.innerHTML='';
 
   // タイトルとXボタン
   const title=document.createElement('div');
-  title.style.cssText='grid-column:span 4;font-size:11px;font-weight:bold;color:#263238;padding:2px 4px 8px;border-bottom:1px solid #eee;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center';
+  title.style.cssText='font-size:11px;font-weight:bold;color:#263238;padding:2px 4px 8px;border-bottom:1px solid #eee;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center';
   title.innerHTML='勤務区分を選択 <span onclick="closeShiftPop()" style="cursor:pointer;color:#999;font-size:16px;line-height:1">✕</span>';
   pop.appendChild(title);
+
+  popNumMap={};
+  const revNum={};Object.entries(NUM_SHORTCUTS).forEach(([digit,code])=>{revNum[code]=digit});
+
   // 空白クリア
   const clrDiv=document.createElement('div');clrDiv.className='shift-opt';
-  clrDiv.style.cssText='background:#f5f5f5;color:#555;margin-bottom:6px;border:1px solid #ccc';
+  clrDiv.style.cssText='background:#f5f5f5;color:#555;margin:4px 0 2px;border:1px solid #ccc';
   clrDiv.innerHTML='<span style="font-size:13px">⬜</span><span>空白（クリア）</span>';
   clrDiv.onclick=()=>setShift('');pop.appendChild(clrDiv);
+  popNumMap['0']='';
+  const clrBadge=document.createElement('div');clrBadge.className='sp-badge';clrBadge.textContent='0';clrDiv.appendChild(clrBadge);
+
   const currentShifts=settings.customShifts||SHIFTS;
-  currentShifts.forEach(s=>{
-    const div=document.createElement('div');div.className='shift-opt';
-    div.style.cssText=`background:${s.c};color:${s.t};border-color:${s.c}`;
-    div.innerHTML=`<span style="font-size:13px;font-weight:bold;min-width:28px;text-align:center">${s.k}</span><span style="font-size:10px;opacity:.9">${s.label||''} ${s.h>0?`(${s.h}h)`:''}</span>`;
-    div.onclick=()=>setShift(s.k);pop.appendChild(div);
-  });
+  const byKey={};currentShifts.forEach(s=>byKey[s.k]=s);
+  const splitKeys=new Set();SPLIT_PAIRS.forEach(p=>{splitKeys.add(p.pat);splitKeys.add(p.day)});
+
+  // ① 通常勤務（分割記号・休暇以外）
+  const normal=currentShifts.filter(s=>!splitKeys.has(s.k)&&!REST_KEYS.includes(s.k));
+  if(normal.length){
+    const sec=document.createElement('div');sec.className='sp-sec';sec.textContent='🕐 通常勤務';pop.appendChild(sec);
+    const grid=document.createElement('div');grid.className='sp-normal-grid';
+    normal.forEach(s=>{
+      const div=document.createElement('div');div.className='shift-opt';div.style.margin='0';
+      div.style.cssText+=`background:${s.c};color:${s.t};border-color:${s.c}`;
+      div.innerHTML=`<span style="font-size:13px;font-weight:bold;min-width:26px;text-align:center">${s.k}</span><span style="font-size:9px;opacity:.9">${s.label||''}${s.h>0?`(${s.h}h)`:''}</span>`;
+      div.onclick=()=>setShift(s.k);
+      if(revNum[s.k]){popNumMap[revNum[s.k]]=s.k;const b=document.createElement('div');b.className='sp-badge';b.textContent=revNum[s.k];div.appendChild(b);}
+      grid.appendChild(div);
+    });
+    pop.appendChild(grid);
+  }
+
+  // ② 兼任職員：時間帯を選んで「🚐定期巡回」か「🏠デイ」かを選択
+  const pairsAvailable=SPLIT_PAIRS.filter(p=>byKey[p.pat]||byKey[p.day]);
+  if(pairsAvailable.length){
+    const sec=document.createElement('div');sec.className='sp-sec';
+    sec.innerHTML='🚐↔️🏠 兼任：この日はどちらに専念？ <span class="sp-sec-sub">（時間帯は共通、担当だけ選択）</span>';
+    pop.appendChild(sec);
+    pairsAvailable.forEach(p=>{
+      const row=document.createElement('div');row.className='sp-pair-row';
+      const t=document.createElement('div');t.className='sp-pair-time';t.textContent=`${p.label} ${p.time}`;row.appendChild(t);
+      const patS=byKey[p.pat],dayS=byKey[p.day];
+      if(patS){
+        const b=document.createElement('div');b.className='sp-pair-btn';
+        b.style.cssText=`background:${patS.c};color:${patS.t};border-color:${patS.c}`;
+        b.innerHTML=`🚐 定期巡回<br><span style="font-size:9px;font-weight:normal">${p.pat}</span>`;
+        b.onclick=()=>setShift(p.pat);row.appendChild(b);
+      }
+      if(dayS){
+        const b=document.createElement('div');b.className='sp-pair-btn';
+        b.style.cssText=`background:${dayS.c};color:${dayS.t};border-color:${dayS.c}`;
+        b.innerHTML=`🏠 デイ・有料等<br><span style="font-size:9px;font-weight:normal">${p.day}</span>`;
+        b.onclick=()=>setShift(p.day);row.appendChild(b);
+      }
+      pop.appendChild(row);
+    });
+  }
+
+  // ③ 休暇・その他
+  const rest=currentShifts.filter(s=>REST_KEYS.includes(s.k));
+  if(rest.length){
+    const sec=document.createElement('div');sec.className='sp-sec';sec.textContent='🏖 休暇・その他';pop.appendChild(sec);
+    const grid=document.createElement('div');grid.className='sp-normal-grid';
+    rest.forEach(s=>{
+      const div=document.createElement('div');div.className='shift-opt';div.style.margin='0';
+      div.style.cssText+=`background:${s.c};color:${s.t};border-color:${s.c}`;
+      div.innerHTML=`<span style="font-size:13px;font-weight:bold;min-width:26px;text-align:center">${s.k}</span><span style="font-size:9px;opacity:.9">${s.label||''}</span>`;
+      div.onclick=()=>setShift(s.k);
+      if(revNum[s.k]){popNumMap[revNum[s.k]]=s.k;const b=document.createElement('div');b.className='sp-badge';b.textContent=revNum[s.k];div.appendChild(b);}
+      grid.appendChild(div);
+    });
+    pop.appendChild(grid);
+  }
+
+  const hint=document.createElement('div');hint.className='sp-hint';
+  hint.textContent='💡 番号のバッジがある区分は、キーボードの数字キーを押すだけで入力できます（0＝空白）';
+  pop.appendChild(hint);
+
   document.getElementById('popOverlay').classList.remove('hidden');
   pop.classList.remove('hidden');
 }
