@@ -564,6 +564,11 @@ function buildADL(tbodyId,items,isAssess){
     s1.className='adl-s1';s1.dataset.idx=i;s1.dataset.tbl=tbodyId;
     const ta=document.createElement('textarea');
     ta.placeholder='備考';ta.className='adl-ta';ta.dataset.idx=i;ta.dataset.tbl=tbodyId;ta.rows=1;
+    // ↓ アセスメントのADL（状況・備考）を、月次報告のADL（共通する項目）へリアルタイムで反映する
+    if(isAssess && i<ADL_ITEMS_MN.length){
+      s1.addEventListener('change',syncAdlToMonthly);
+      ta.addEventListener('input',syncAdlToMonthly);
+    }
     tr.innerHTML=`<td class="ilbl">${label}</td>`;
     const td1=document.createElement('td');td1.appendChild(s1);tr.appendChild(td1);
     if(!isAssess){
@@ -575,6 +580,19 @@ function buildADL(tbodyId,items,isAssess){
     const td3=document.createElement('td');td3.appendChild(ta);tr.appendChild(td3);
     tbody.appendChild(tr);
   });
+}
+
+// アセスメントのADL（状況・備考）を、月次報告のADL（共通する12項目）にコピーする。
+// 「前月比」欄は月次報告だけの項目なので、ここでは触らない。
+function syncAdlToMonthly(){
+  for(let i=0;i<ADL_ITEMS_MN.length;i++){
+    const asS1=document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="as-adl-tbody"]`);
+    const asTa=document.querySelector(`.adl-ta[data-idx="${i}"][data-tbl="as-adl-tbody"]`);
+    const mnS1=document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+    const mnTa=document.querySelector(`.adl-ta[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
+    if(asS1&&mnS1) mnS1.value=asS1.value;
+    if(asTa&&mnTa) mnTa.value=asTa.value;
+  }
 }
 
 function switchSideTab(tab,btn){
@@ -718,6 +736,8 @@ async function loadAllData(id){
     if(res.base) applyData(res.base);
     if(res.mn) applyMonthlyData(res.mn);
     if(res.tk) applyTeikiData(res.tk);
+    // ↓ アセスメントのADLを、常に月次報告のADL（共通項目）より優先して反映する
+    syncAdlToMonthly();
     // ↓ アセスメントの主治医欄を、常に他タブの主治医欄より優先する
     //   （利用者情報＝名簿の主治医ではなく、アセスメントで書いた最新の主治医を正とする）
     const docVal=document.getElementById('as_doctor').value;
