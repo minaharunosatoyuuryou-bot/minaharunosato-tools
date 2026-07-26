@@ -924,24 +924,19 @@ const SPLIT_PAIRS=[
 ];
 const REST_KEYS=['休','有','有4','日/有','研','欠'];
 
-// 数字キーのショートカット（よく使う区分を1〜9・0キーに割り当て。0＝空白クリア）
-const NUM_SHORTCUTS={'1':'日','2':'早','3':'遅','4':'夜','5':'明','6':'休','7':'有','8':'研','9':'欠','0':''};
-// アルファベットキーのショートカット（時間帯違いのA/Bパターン用）
-const ALPHA_SHORTCUTS={'a':'日A','b':'日B'};
-let popNumMap={};
+// 全区分に「上から順」で数字→アルファベットのショートカットキーを自動割り当て
+// 1,2,3...9,0,a,b,c...z の順（クリア/空白はBackspaceキー固定）
+const SEQ_KEYS='1234567890abcdefghijklmnopqrstuvwxyz'.split('');
+let popKeyMap={};
 document.addEventListener('keydown',e=>{
   const pop=document.getElementById('shiftPop');
   if(!pop||pop.classList.contains('hidden'))return;
   if(e.key==='Escape'){closeShiftPop();return;}
-  if(Object.prototype.hasOwnProperty.call(popNumMap,e.key)){
-    e.preventDefault();
-    setShift(popNumMap[e.key]);
-    return;
-  }
+  if(e.key==='Backspace'){e.preventDefault();setShift('');return;}
   const lk=e.key.toLowerCase();
-  if(Object.prototype.hasOwnProperty.call(ALPHA_SHORTCUTS,lk)){
+  if(Object.prototype.hasOwnProperty.call(popKeyMap,lk)){
     e.preventDefault();
-    setShift(ALPHA_SHORTCUTS[lk]);
+    setShift(popKeyMap[lk]);
   }
 });
 
@@ -955,21 +950,29 @@ function openShiftPop(e,sid,d,cell){
   title.innerHTML='勤務区分を選択 <span onclick="closeShiftPop()" style="cursor:pointer;color:#999;font-size:16px;line-height:1">✕</span>';
   pop.appendChild(title);
 
-  popNumMap={};
-  const revNum={};Object.entries(NUM_SHORTCUTS).forEach(([digit,code])=>{revNum[code]=digit});
-  const revAlpha={};Object.entries(ALPHA_SHORTCUTS).forEach(([letter,code])=>{revAlpha[code]=letter.toUpperCase()});
+  const currentShifts=settings.customShifts||SHIFTS;
+  const byKey={};currentShifts.forEach(s=>byKey[s.k]=s);
+  const splitKeys=new Set();SPLIT_PAIRS.forEach(p=>{splitKeys.add(p.pat);splitKeys.add(p.day)});
+
+  // 上から順にキーを割り当て（一覧の並び順＝設定タブの勤務区分カスタマイズと同じ順）
+  popKeyMap={};
+  const keyByCode={};
+  currentShifts.forEach((s,i)=>{
+    if(SEQ_KEYS[i]){keyByCode[s.k]=SEQ_KEYS[i];popKeyMap[SEQ_KEYS[i]]=s.k;}
+  });
+  function badgeFor(code){
+    const key=keyByCode[code];if(!key)return null;
+    const b=document.createElement('div');
+    b.className='sp-badge'+(/[a-z]/.test(key)?' sp-badge-alpha':'');
+    b.textContent=key;
+    return b;
+  }
 
   // 空白クリア
   const clrDiv=document.createElement('div');clrDiv.className='shift-opt';
   clrDiv.style.cssText='background:#f5f5f5;color:#555;margin:4px 0 2px;border:1px solid #ccc';
-  clrDiv.innerHTML='<span style="font-size:13px">⬜</span><span>空白（クリア）</span>';
+  clrDiv.innerHTML='<span style="font-size:13px">⬜</span><span>空白（クリア）</span><span style="margin-left:auto;font-size:9px;color:#999;font-weight:normal">Backspace</span>';
   clrDiv.onclick=()=>setShift('');pop.appendChild(clrDiv);
-  popNumMap['0']='';
-  const clrBadge=document.createElement('div');clrBadge.className='sp-badge';clrBadge.textContent='0';clrDiv.appendChild(clrBadge);
-
-  const currentShifts=settings.customShifts||SHIFTS;
-  const byKey={};currentShifts.forEach(s=>byKey[s.k]=s);
-  const splitKeys=new Set();SPLIT_PAIRS.forEach(p=>{splitKeys.add(p.pat);splitKeys.add(p.day)});
 
   // ① 通常勤務（分割記号・休暇以外）
   const normal=currentShifts.filter(s=>!splitKeys.has(s.k)&&!REST_KEYS.includes(s.k));
@@ -981,8 +984,7 @@ function openShiftPop(e,sid,d,cell){
       div.style.cssText+=`background:${s.c};color:${s.t};border-color:${s.c}`;
       div.innerHTML=`<span style="font-size:13px;font-weight:bold;min-width:26px;text-align:center">${s.k}</span><span style="font-size:9px;opacity:.9">${s.label||''}${s.h>0?`(${s.h}h)`:''}</span>`;
       div.onclick=()=>setShift(s.k);
-      if(revNum[s.k]){popNumMap[revNum[s.k]]=s.k;const b=document.createElement('div');b.className='sp-badge';b.textContent=revNum[s.k];div.appendChild(b);}
-      else if(revAlpha[s.k]){const b=document.createElement('div');b.className='sp-badge sp-badge-alpha';b.textContent=revAlpha[s.k];div.appendChild(b);}
+      const b=badgeFor(s.k);if(b)div.appendChild(b);
       grid.appendChild(div);
     });
     pop.appendChild(grid);
@@ -999,16 +1001,16 @@ function openShiftPop(e,sid,d,cell){
       const t=document.createElement('div');t.className='sp-pair-time';t.textContent=`${p.label} ${p.time}`;row.appendChild(t);
       const patS=byKey[p.pat],dayS=byKey[p.day];
       if(patS){
-        const b=document.createElement('div');b.className='sp-pair-btn';
-        b.style.cssText=`background:${patS.c};color:${patS.t};border-color:${patS.c}`;
+        const b=document.createElement('div');b.className='sp-pair-btn';b.style.position='relative';
+        b.style.cssText+=`background:${patS.c};color:${patS.t};border-color:${patS.c}`;
         b.innerHTML=`🚐 定期巡回<br><span style="font-size:9px;font-weight:normal">${p.pat}</span>`;
-        b.onclick=()=>setShift(p.pat);row.appendChild(b);
+        b.onclick=()=>setShift(p.pat);const bg=badgeFor(p.pat);if(bg)b.appendChild(bg);row.appendChild(b);
       }
       if(dayS){
-        const b=document.createElement('div');b.className='sp-pair-btn';
-        b.style.cssText=`background:${dayS.c};color:${dayS.t};border-color:${dayS.c}`;
+        const b=document.createElement('div');b.className='sp-pair-btn';b.style.position='relative';
+        b.style.cssText+=`background:${dayS.c};color:${dayS.t};border-color:${dayS.c}`;
         b.innerHTML=`🏠 デイ・有料等<br><span style="font-size:9px;font-weight:normal">${p.day}</span>`;
-        b.onclick=()=>setShift(p.day);row.appendChild(b);
+        b.onclick=()=>setShift(p.day);const bg=badgeFor(p.day);if(bg)b.appendChild(bg);row.appendChild(b);
       }
       pop.appendChild(row);
     });
@@ -1024,14 +1026,14 @@ function openShiftPop(e,sid,d,cell){
       div.style.cssText+=`background:${s.c};color:${s.t};border-color:${s.c}`;
       div.innerHTML=`<span style="font-size:13px;font-weight:bold;min-width:26px;text-align:center">${s.k}</span><span style="font-size:9px;opacity:.9">${s.label||''}</span>`;
       div.onclick=()=>setShift(s.k);
-      if(revNum[s.k]){popNumMap[revNum[s.k]]=s.k;const b=document.createElement('div');b.className='sp-badge';b.textContent=revNum[s.k];div.appendChild(b);}
+      const b=badgeFor(s.k);if(b)div.appendChild(b);
       grid.appendChild(div);
     });
     pop.appendChild(grid);
   }
 
   const hint=document.createElement('div');hint.className='sp-hint';
-  hint.textContent='💡 番号のバッジ＝数字キー、A/Bのバッジ＝アルファベットキーで直接入力できます（0＝空白）';
+  hint.textContent='💡 バッジの数字・アルファベットキーで直接入力できます（クリアはBackspaceキー）';
   pop.appendChild(hint);
 
   document.getElementById('popOverlay').classList.remove('hidden');
