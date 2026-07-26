@@ -563,7 +563,7 @@ function buildADL(tbodyId,items,isAssess){
     (isAssess?ADL_AS_STATUS:ADL_ASSIST).forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;s1.appendChild(op);});
     s1.className='adl-s1';s1.dataset.idx=i;s1.dataset.tbl=tbodyId;
     const ta=document.createElement('textarea');
-    ta.placeholder='備考';ta.className='adl-ta';ta.dataset.idx=i;ta.dataset.tbl=tbodyId;
+    ta.placeholder='備考';ta.className='adl-ta';ta.dataset.idx=i;ta.dataset.tbl=tbodyId;ta.rows=1;
     tr.innerHTML=`<td class="ilbl">${label}</td>`;
     const td1=document.createElement('td');td1.appendChild(s1);tr.appendChild(td1);
     if(!isAssess){
