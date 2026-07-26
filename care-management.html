@@ -495,7 +495,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyoA64aMwOkQ57RPNdwhH27
 async function gasReq(payload){
   // saveRecord・saveResidentsはデータが大きくなりURLの文字数制限を超えるため、
   // POST（Content-Type: text/plain でCORSのpreflightを回避）で送信する
-  if(payload.action==='saveRecord' || payload.action==='saveResidents' || payload.action==='saveResidentAll'){
+  if(payload.action==='saveRecord' || payload.action==='saveResidents' || payload.action==='saveResidentAll' || payload.action==='saveOneResident' || payload.action==='clearResidents'){
     const res = await fetch(GAS_URL, {
       method: 'POST',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
