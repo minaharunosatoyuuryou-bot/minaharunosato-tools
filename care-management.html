@@ -322,13 +322,10 @@ function checkPW(){
           <div class="row r2"><div class="lbl">開催理由</div><div class="val"><div class="cg"><label class="ci"><input type="checkbox" id="sv_reason1"> 新規</label><label class="ci"><input type="checkbox" id="sv_reason2"> 更新</label><label class="ci"><input type="checkbox" id="sv_reason3"> 区分変更</label><label class="ci"><input type="checkbox" id="sv_reason4"> 状態変化</label><label class="ci"><input type="checkbox" id="sv_reason5"> サービス変更</label><label class="ci"><input type="checkbox" id="sv_reason6"> その他</label></div></div></div>
         </div>
         <div class="sec">
-          <div class="sh sh-b">■ 出席者</div>
-          <div class="row r2"><div class="lbl">出席者一覧</div><div class="val"><textarea id="sv_attendees" placeholder="例：&#10;ケアマネジャー：○○CM&#10;施設相談員：○○&#10;担当介護職：○○&#10;ご本人・ご家族：○○様" style="min-height:80px;"></textarea></div></div>
-        </div>
-        <div class="sec">
           <div class="sh sh-b">■ 検討内容</div>
-          <div class="row r2"><div class="lbl">利用者の状況</div><div class="val"><textarea id="sv_status" placeholder="現在の心身状況・生活状況の報告"></textarea></div></div>
-          <div class="row r2"><div class="lbl">ケアプランの内容</div><div class="val"><textarea id="sv_plan" placeholder="ケアプランの目標・サービス内容の説明"></textarea></div></div>
+          <div class="row r2"><div class="lbl">課題分析</div><div class="val"><textarea id="sv_status" placeholder="現在の心身状況・生活課題の分析"></textarea></div></div>
+          <div class="row r2"><div class="lbl">長期目標</div><div class="val"><textarea id="sv_plan_long" placeholder="ケアプランの長期目標"></textarea></div></div>
+          <div class="row r2"><div class="lbl">短期目標</div><div class="val"><textarea id="sv_plan_short" placeholder="ケアプランの短期目標"></textarea></div></div>
           <div class="row r2"><div class="lbl">各担当者からの意見</div><div class="val"><textarea id="sv_opinions" placeholder="各サービス担当者からの意見・情報提供"></textarea></div></div>
           <div class="row r2"><div class="lbl">検討・協議内容</div><div class="val"><textarea id="sv_discussion" placeholder="会議で話し合った内容・課題・対応策"></textarea></div></div>
         </div>
@@ -535,7 +532,7 @@ const ADL_CHANGE=['改善','変化なし','悪化','未確認'];
 
 const AS_TEXT=['as_date','as_author','as_address','as_family','as_doctor','as_emergency','as_history','as_current','as_disability','as_rank','as_dementia_rank','as_sore_risk','as_medicine','as_health_note','as_comm','as_vision','as_hearing','as_cognition','as_comm_note','as_sleep','as_nutrition','as_oral','as_swallow','as_hobby','as_life_note','as_housing','as_family_support','as_visit','as_family_note','as_wish_self','as_wish_family','as_services','as_needs','as_assessment'];
 const AS_CHECK=['as_bpsd1','as_bpsd2','as_bpsd3','as_bpsd4','as_bpsd5','as_bpsd6'];
-const SV_TEXT=['sv_date','sv_time','sv_place','sv_facilitator','sv_attendees','sv_status','sv_plan','sv_opinions','sv_discussion','sv_decisions','sv_actions','sv_next','sv_note'];
+const SV_TEXT=['sv_date','sv_time','sv_place','sv_facilitator','sv_status','sv_plan_long','sv_plan_short','sv_opinions','sv_discussion','sv_decisions','sv_actions','sv_next','sv_note'];
 const SV_CHECK=['sv_reason1','sv_reason2','sv_reason3','sv_reason4','sv_reason5','sv_reason6','sv_change_yes','sv_change_no'];
 const MN_TEXT=['mn_date','mn_reporter','mn_cm','mn_doctor','mn_overall','mn_change','mn_summary','mn_changes','mn_temp','mn_bp','mn_pulse','mn_weight','mn_health','mn_food','mn_food_amount','mn_med','mn_daily_note','mn_incident','mn_family_contact','mn_family_visit','mn_family_note','mn_cm_note','mn_next','mn_author','mn_day_count','mn_day_absent','mn_day_program','mn_day_note'];
 const MN_CHECK=['mn_toilet1','mn_toilet2','mn_toilet3','mn_toilet4','mn_fall_yes','mn_fall_no','mn_sore_yes','mn_sore_no','mn_day_bath_yes','mn_day_bath_no'];
