@@ -93,6 +93,7 @@ table.sch th,table.sch td{border:1px solid #ccc;padding:0}
 .shift-opt{position:relative;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;display:flex;align-items:center;gap:8px;border:1px solid #ddd;margin-bottom:3px}
 .shift-opt:hover{opacity:.8}
 .sp-badge{position:absolute;top:-6px;left:-6px;background:#263238;color:#fff;font-size:9px;font-weight:bold;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.35);pointer-events:none;z-index:2}
+.sp-badge.sp-badge-alpha{background:#00695C}
 .sp-hint{font-size:9px;color:#999;text-align:center;padding:6px 2px 0}
 .sp-sec{font-size:10px;font-weight:bold;color:#555;padding:8px 2px 4px;border-top:1px dashed #ddd;margin-top:4px;display:flex;align-items:center;gap:4px}
 .sp-sec:first-of-type{border-top:none;margin-top:0}
@@ -924,6 +925,8 @@ const REST_KEYS=['休','有','有2','研','欠'];
 
 // 数字キーのショートカット（よく使う区分を1〜9・0キーに割り当て。0＝空白クリア）
 const NUM_SHORTCUTS={'1':'日','2':'早','3':'遅','4':'夜','5':'明','6':'休','7':'有','8':'研','9':'欠','0':''};
+// アルファベットキーのショートカット（時間帯違いのA/Bパターン用）
+const ALPHA_SHORTCUTS={'a':'日A','b':'日B'};
 let popNumMap={};
 document.addEventListener('keydown',e=>{
   const pop=document.getElementById('shiftPop');
@@ -932,6 +935,12 @@ document.addEventListener('keydown',e=>{
   if(Object.prototype.hasOwnProperty.call(popNumMap,e.key)){
     e.preventDefault();
     setShift(popNumMap[e.key]);
+    return;
+  }
+  const lk=e.key.toLowerCase();
+  if(Object.prototype.hasOwnProperty.call(ALPHA_SHORTCUTS,lk)){
+    e.preventDefault();
+    setShift(ALPHA_SHORTCUTS[lk]);
   }
 });
 
@@ -947,6 +956,7 @@ function openShiftPop(e,sid,d,cell){
 
   popNumMap={};
   const revNum={};Object.entries(NUM_SHORTCUTS).forEach(([digit,code])=>{revNum[code]=digit});
+  const revAlpha={};Object.entries(ALPHA_SHORTCUTS).forEach(([letter,code])=>{revAlpha[code]=letter.toUpperCase()});
 
   // 空白クリア
   const clrDiv=document.createElement('div');clrDiv.className='shift-opt';
@@ -971,6 +981,7 @@ function openShiftPop(e,sid,d,cell){
       div.innerHTML=`<span style="font-size:13px;font-weight:bold;min-width:26px;text-align:center">${s.k}</span><span style="font-size:9px;opacity:.9">${s.label||''}${s.h>0?`(${s.h}h)`:''}</span>`;
       div.onclick=()=>setShift(s.k);
       if(revNum[s.k]){popNumMap[revNum[s.k]]=s.k;const b=document.createElement('div');b.className='sp-badge';b.textContent=revNum[s.k];div.appendChild(b);}
+      else if(revAlpha[s.k]){const b=document.createElement('div');b.className='sp-badge sp-badge-alpha';b.textContent=revAlpha[s.k];div.appendChild(b);}
       grid.appendChild(div);
     });
     pop.appendChild(grid);
@@ -1019,7 +1030,7 @@ function openShiftPop(e,sid,d,cell){
   }
 
   const hint=document.createElement('div');hint.className='sp-hint';
-  hint.textContent='💡 番号のバッジがある区分は、キーボードの数字キーを押すだけで入力できます（0＝空白）';
+  hint.textContent='💡 番号のバッジ＝数字キー、A/Bのバッジ＝アルファベットキーで直接入力できます（0＝空白）';
   pop.appendChild(hint);
 
   document.getElementById('popOverlay').classList.remove('hidden');
