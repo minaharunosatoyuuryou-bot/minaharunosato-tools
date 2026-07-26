@@ -719,11 +719,21 @@ async function loadAllData(id){
     if(res.base) applyData(res.base);
     if(res.mn) applyMonthlyData(res.mn);
     if(res.tk) applyTeikiData(res.tk);
+    // ↓ アセスメントの主治医欄を、常に他タブの主治医欄より優先する
+    //   （利用者情報＝名簿の主治医ではなく、アセスメントで書いた最新の主治医を正とする）
+    const docVal=document.getElementById('as_doctor').value;
+    document.getElementById('mn_doctor').value=docVal;
+    document.getElementById('tk_doctor').value=docVal;
+    // ↓ ケアマネジャー名も同様に、月次報告・定期巡回報告のどちらかに入力があれば
+    //   両方のタブで統一して表示する（片方だけ書いても、もう片方に反映される）
+    const cmVal=document.getElementById('mn_cm').value || document.getElementById('tk_cm').value;
+    document.getElementById('mn_cm').value=cmVal;
+    document.getElementById('tk_cm').value=cmVal;
   }catch(e){}
 }
 
 function applyMonthlyData(data){
-  MN_TEXT.filter(id=>id!=='mn_doctor'&&id!=='mn_cm').forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.value=data[id];});
+  MN_TEXT.filter(id=>id!=='mn_doctor').forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.value=data[id];});
   MN_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.checked=data[id];});
   if(data.mn_adl) data.mn_adl.forEach((a,i)=>{
     const s1=document.querySelector(`.adl-s1[data-idx="${i}"][data-tbl="mn-adl-tbody"]`);
@@ -734,7 +744,7 @@ function applyMonthlyData(data){
 }
 
 function applyTeikiData(data){
-  TK_TEXT.filter(id=>id!=='tk_doctor'&&id!=='tk_cm').forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.value=data[id];});
+  TK_TEXT.filter(id=>id!=='tk_doctor').forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.value=data[id];});
   TK_CHECK.forEach(id=>{const el=document.getElementById(id);if(el&&data[id]!==undefined)el.checked=data[id];});
 }
 
