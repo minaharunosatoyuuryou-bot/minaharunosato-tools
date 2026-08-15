@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -195,6 +196,7 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 <div class="tabs">
   <div class="tab t-all active" onclick="setTab('all',this)">📋 全員（シフト）</div>
   <div class="tab t-pats" onclick="setTab('pats',this)">🚐 定期巡回のみ</div>
+  <div class="tab t-op" onclick="setTab('op',this)">🛎 オペレーター配置確認</div>
   <div class="tab t-day" onclick="setTab('tl',this)">🕐 時間帯（全サービス）</div>
   <div class="tab t-set" onclick="setTab('set',this)">⚙️ 設定</div>
 </div>
@@ -206,6 +208,9 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 
 <!-- 定期巡回のみ：シンプル出勤表 -->
 <div id="v-pats" class="hidden"></div>
+
+<!-- 定期巡回：オペレーター配置確認（1時間ごとの厳密判定） -->
+<div id="v-op" class="hidden"></div>
 
 
 <!-- 時間帯（全サービス統合） -->
@@ -299,7 +304,8 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">職種</th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">資格</th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">入職日</th>
-          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">勤務形態</th><th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">勤務形態</th>
+          <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">勤務形態</th>
+          <th style="background:#4A148C;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">🛎OP可<br><span style="font-weight:normal;font-size:8px">(定期巡回オペレーター担当可)</span></th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">状態</th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">表示</th>
           <th style="background:#455A64;color:#fff;padding:4px 8px;font-size:10px;border:1px solid #ccc">操作</th>
@@ -585,21 +591,23 @@ function init(){
 function setTab(t,el){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  ['all','pats','tl','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
+  ['all','pats','op','tl','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
   const vid=t==='day'||t==='fac'||t==='pat'?'tl':t;
   document.getElementById('v-'+vid).classList.remove('hidden');
   if(vid==='tl') buildMtlAll();
   if(vid==='pats') buildPatSimpleTable();
+  if(vid==='op') buildOperatorCheckView();
   if(t==='sum'){buildSumTable();buildTotalStats();}
   if(t==='set') buildSettings();
 }
 
 function showView(v){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  ['all','pats','tl','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
+  ['all','pats','op','tl','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
   document.getElementById('v-'+v).classList.remove('hidden');
   if(v==='sum'){buildSumTable();buildTotalStats();}
   if(v==='pats') buildPatSimpleTable();
+  if(v==='op') buildOperatorCheckView();
 }
 
 function changeMonth(d){
@@ -765,6 +773,156 @@ function patDaySvcTag(sid,d){
     if(dom&&dom[1]>0)return dom[0];
   }
   return null;
+}
+
+// ===== オペレーター判定用ヘルパー =====
+// ①介護福祉士かどうか（settings.staffQualで確定。未設定＝不明は「該当しない」扱いにする＝安全側）
+function isKfs(sid){
+  const s=STAFF.find(x=>x.id===sid)||(settings.extraStaff||[]).find(x=>x.id===sid);
+  const q=(settings.staffQual&&settings.staffQual[sid])||(s&&s.qual)||'';
+  return q==='介護福祉士';
+}
+// ②オペレーター担当可能かどうか（settings.staffOpOkで確定。未設定＝不明は「不可」扱いにする＝安全側）
+function isOpOk(sid){
+  return !!(settings.staffOpOk&&settings.staffOpOk[sid]);
+}
+
+// ③ある日・ある時刻（checkH、0.5h刻み）に、その職員が実際に「定期巡回」として配置されているかを判定
+// 優先順位：(a)時間帯タブでの手動塗り分け（tlData）＞(b)終日1サービス専念記号（早巡/早デ等）＞
+//           (c)兼任職員の分割ルール（早/日A/遅/日B）＞(d)通常のシフト時間帯（専任職員がそのまま定期巡回）
+function getHourlyPatSvc(sid,d,checkH){
+  const s=STAFF.find(x=>x.id===sid)||(settings.extraStaff||[]).find(x=>x.id===sid);
+  if(!s)return null;
+  const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';
+  if(!k||['休','有','有4','明','欠','研'].includes(k))return null;
+
+  // (a) 時間帯タブでの手動塗り分けを最優先
+  const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  if(tlData[dateStr]&&tlData[dateStr][sid]){
+    const painted=tlData[dateStr][sid][checkH];
+    if(painted!==undefined&&painted!=='')return painted==='pat'?'pat':painted;
+  }
+
+  // (b) 終日1サービス専念記号（早巡/早デ 等）
+  const fix=PURE_SVC_FIX[k];
+  const auto=SHIFT_AUTO[k];
+  if(fix==='pat'){
+    if(auto&&checkH>=auto.start&&checkH<auto.end)return 'pat';
+    return null;
+  }
+  if(fix==='other')return null; // 終日その人本来のサービス専念＝定期巡回ではない
+
+  // (c) 兼任職員（デイ⇔定期巡回）の時間帯分割ルール（早/日A/遅/日B）
+  if(s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
+    const seg=SHIFT_SPLIT_RULE[k].find(sg=>checkH>=sg.start&&checkH<sg.end);
+    if(seg)return seg.svc==='pat'?'pat':(seg.svc==='none'?null:seg.svc);
+    return null;
+  }
+
+  // (d) 定期巡回専任職員が通常のシフト記号（早/日A/遅/日B 等）で勤務している場合＝その時間帯全体が定期巡回
+  if(auto&&checkH>=auto.start&&checkH<auto.end){
+    if(s.svc==='pat')return 'pat';
+    return null; // デイ専任・有料専任の職員が通常シフトで働いているだけなら定期巡回配置ではない
+  }
+  return null;
+}
+
+// ===== 定期巡回：オペレーター配置確認（8:00〜18:00を1時間ごとに厳密判定） =====
+const OP_CHECK_START=8, OP_CHECK_END=18;
+let opCheckDay=null;
+
+function computeOperatorRows(d){
+  const members=getActiveStaff().filter(s=>s.conc.includes('pat'));
+  const rows=[];
+  for(let h=OP_CHECK_START;h<OP_CHECK_END;h++){
+    const checkH=h+0.5; // 時間帯の中間時刻で判定（16:30などの端境目にも対応）
+    const assigned=members.filter(s=>getHourlyPatSvc(s.id,d,checkH)==='pat');
+    const candidates=assigned.filter(s=>isKfs(s.id)&&isOpOk(s.id));
+    rows.push({
+      h,label:`${fmtHour(h)}〜${fmtHour(h+1)}`,
+      assigned,candidates,count:candidates.length,
+      ok:candidates.length>0
+    });
+  }
+  return rows;
+}
+
+function buildOperatorCheckView(){
+  const wrap=document.getElementById('v-op');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  if(opCheckDay===null||opCheckDay<1||opCheckDay>days)opCheckDay=1;
+
+  const banner=document.createElement('div');banner.className='pats-banner';
+  banner.innerHTML=`🛎 オペレーター候補にできるのは、その時間に<b>「定期巡回として配置されている」＋「介護福祉士」＋「オペレーター担当可能」</b>の3条件をすべて満たす職員だけです。<br>
+    デイ・有料に勤務中の介護福祉士は、その時間帯のオペレーター人数には含めません。資格・オペレーター可否は「⚙️設定」タブの職員管理で確認・修正できます。`;
+  wrap.appendChild(banner);
+
+  // 日付ナビ
+  const nav=document.createElement('div');
+  nav.style.cssText='display:flex;align-items:center;gap:8px;margin:0 14px 10px;flex-wrap:wrap';
+  const mkBtn=(txt,fn)=>{const b=document.createElement('button');b.className='btn b-blue';b.style.cssText='padding:4px 10px;font-size:12px';b.textContent=txt;b.onclick=fn;return b;};
+  nav.appendChild(mkBtn('◀ 前日',()=>{if(opCheckDay>1){opCheckDay--;buildOperatorCheckView();}}));
+  const sel=document.createElement('select');
+  sel.style.cssText='font-size:12px;padding:4px 8px;border:1px solid #ccc;border-radius:4px';
+  for(let d=1;d<=days;d++){
+    const wd=new Date(curY,curM-1,d).getDay();
+    const o=document.createElement('option');o.value=d;o.textContent=`${d}日（${WD[wd]}）`;
+    if(d===opCheckDay)o.selected=true;
+    sel.appendChild(o);
+  }
+  sel.onchange=()=>{opCheckDay=+sel.value;buildOperatorCheckView();};
+  nav.appendChild(sel);
+  nav.appendChild(mkBtn('翌日 ▶',()=>{if(opCheckDay<days){opCheckDay++;buildOperatorCheckView();}}));
+  wrap.appendChild(nav);
+
+  // 月間サマリー（不足がある日を一覧）
+  const shortDays=[];
+  for(let d=1;d<=days;d++){
+    const rows=computeOperatorRows(d);
+    if(rows.some(r=>!r.ok))shortDays.push(d);
+  }
+  const sumDiv=document.createElement('div');
+  sumDiv.style.cssText='margin:0 14px 12px;padding:8px 12px;border-radius:6px;font-size:12px;'+
+    (shortDays.length?'background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A':'background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7');
+  sumDiv.innerHTML=shortDays.length
+    ? `⚠️ 今月「オペレーター不足」の時間帯がある日：${shortDays.map(d=>`<span style="cursor:pointer;text-decoration:underline;font-weight:bold" onclick="opCheckDay=${d};buildOperatorCheckView()">${d}日</span>`).join('、')}`
+    : `✅ 今月は全日、8:00〜18:00のオペレーター配置に不足はありません。`;
+  wrap.appendChild(sumDiv);
+
+  // 対象日の1時間ごと判定テーブル
+  const rows=computeOperatorRows(opCheckDay);
+  const tblWrap=document.createElement('div');tblWrap.style.cssText='margin:0 14px 20px;overflow-x:auto';
+  const tbl=document.createElement('table');
+  tbl.style.cssText='border-collapse:collapse;font-size:12px;width:100%;min-width:640px;background:#fff';
+  tbl.innerHTML=`<thead><tr>
+      <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc;white-space:nowrap">時間帯</th>
+      <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">定期巡回配置職員</th>
+      <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">オペレーター候補</th>
+      <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">人数</th>
+      <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">判定</th>
+    </tr></thead>`;
+  const tbody=document.createElement('tbody');
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.style.background=r.ok?'#fff':'#FFEBEE';
+    const assignedTxt=r.assigned.length?r.assigned.map(s=>{
+      const tags=[];
+      if(!isKfs(s.id))tags.push('非・介護福祉士');
+      if(isKfs(s.id)&&!isOpOk(s.id))tags.push('OP不可設定');
+      return s.name+(tags.length?`<span style="color:#999;font-size:10px">（${tags.join('/')}）</span>`:'');
+    }).join('、'):'<span style="color:#999">配置なし</span>';
+    tr.innerHTML=`
+      <td style="padding:6px 10px;border:1px solid #ddd;font-weight:bold;white-space:nowrap">${r.label}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd">${assignedTxt}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd">${r.candidates.length?r.candidates.map(s=>s.name).join('、'):'<span style="color:#C62828">なし</span>'}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd;text-align:center;font-weight:bold">${r.count}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd;text-align:center;font-weight:bold;color:${r.ok?'#2E7D32':'#C62828'}">${r.ok?'OK':'⚠️ オペレーター不足'}</td>`;
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+  tblWrap.appendChild(tbl);
+  wrap.appendChild(tblWrap);
 }
 
 function buildPatSimpleTable(){
@@ -1424,6 +1582,8 @@ let settings={
   staffRate:{},      // {staffId: rate}
   staffStatus:{},    // {staffId: {active:true/false, retired:false, retireDate:''}}
   staffForm:{},      // {staffId: '常'/'非'/'パート'など}
+  staffQual:{},       // {staffId: '介護福祉士' 等の保有資格}
+  staffOpOk:{},        // {staffId: true/false} 定期巡回オペレーター担当が可能かどうか（本人の可否設定。資格や配置とは別軸）
   extraStaff:[],     // 追加職員
   customShifts:null, // カスタム勤務区分（nullなら既定値使用）
 };
@@ -1431,6 +1591,10 @@ let settings={
 STAFF.forEach(s=>{
   settings.staffRate[s.id]=s.id==='inagara'?0.75:1.0;
   settings.staffStatus[s.id]={active:true,retired:false,retireDate:''};
+  // 資格・オペレーター可否の初期値は、元の役職表記（role）に明記されている場合のみ設定する。
+  // 「介護福祉士」等の資格情報は勝手に推測しない＝未設定のスタッフは、設定タブで必ず本人の実際の資格を確認・入力すること。
+  if(/介護福祉士/.test(s.role||''))settings.staffQual[s.id]='介護福祉士';
+  if(/\/OP\b|OP$|OP\//.test(s.role||''))settings.staffOpOk[s.id]=true;
 });
 
 // 有効職員を返す（退職・非表示を除外）
@@ -1526,6 +1690,10 @@ function buildSettings(){
           <select onchange="updateStaffForm('${s.id}',this.value)" style="font-size:10px;padding:2px 4px;border:1px solid #ccc;border-radius:3px">
             ${['常','非','パート','嘱託','派遣'].map(f=>`<option value="${f}" ${curForm===f?'selected':''}>${f}</option>`).join('')}
           </select>
+        </td>
+        <td style="padding:4px 8px;border:1px solid #eee;text-align:center">
+          <input type="checkbox" ${isOpOk(s.id)?'checked':''} onchange="updateStaffOpOk('${s.id}',this.checked)" title="定期巡回のオペレーター担当が可能な職員だけチェック">
+          ${curQual!=='介護福祉士'?'<br><span style="font-size:8px;color:#C62828">資格が介護福祉士でないためオペレーター候補にはなりません</span>':''}
         </td>
         <td style="padding:4px 8px;border:1px solid #eee;font-size:10px;text-align:center">
           ${st.retired?`<span style="color:#E53935;font-weight:bold">退職</span><br><span style="font-size:9px;color:#999">${st.retireDate||''}</span>`:'<span style="color:#43A047">在職</span>'}
@@ -1641,6 +1809,11 @@ function updateStaffHire(id,hire){
 function updateStaffQual(id,qual){
   if(!settings.staffQual)settings.staffQual={};
   settings.staffQual[id]=qual;
+  buildSettings();
+}
+function updateStaffOpOk(id,ok){
+  if(!settings.staffOpOk)settings.staffOpOk={};
+  settings.staffOpOk[id]=ok;
 }
 function updateStaffForm(id,form){
   if(!settings.staffForm)settings.staffForm={};
