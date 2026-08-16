@@ -552,7 +552,7 @@ const SVC_FULL={day:'デイサービス',fac:'有料老人ホーム',pat:'定期
 const STAFF=[
   // デイ専任
   {id:'mitsumata',name:'三ッ股 久美子',role:'デイ管理者',   svc:'day',conc:['day']},
-  {id:'takeo',    name:'竹尾 登美代',  role:'相談員/介護',  svc:'day',conc:['day']},
+  {id:'takeo',    name:'竹尾 登美代',  role:'相談員/介護',  svc:'day',conc:['day','pat']},
   {id:'kuramoto', name:'栗本 花梨',    role:'相談員/OP',    svc:'day',conc:['day','pat']},
   {id:'ueno_k',   name:'上野 和代',    role:'介護',         svc:'day',conc:['day']},
   {id:'kitomi',   name:'キトミ',       role:'介護',         svc:'day',conc:['day','pat']},
@@ -836,23 +836,63 @@ function getHourlyPatSvc(sid,d,checkH){
   return null;
 }
 
-// ===== 定期巡回：オペレーター配置確認（8:00〜18:00を1時間ごとに厳密判定） =====
+// ===== 定期巡回：オペレーター配置確認（30分刻みで自動判定＋自動配置） =====
 const OP_CHECK_START=8, OP_CHECK_END=18;
+const OP_SLOT_STEP=0.5; // 30分刻み（勤務記号の分割時刻（16:30等）にも正確に対応するため）
 let opCheckDay=null;
 
-function computeOperatorRows(d){
+// 公平ローテーション：連続して担当できる間は同じ職員を継続させ（不要な細切れ交代を避ける）、
+// 交代がどうしても必要な場面（担当者が候補から外れる等）でのみ、その日まだ選ばれていない職員を優先して自動配置する
+function assignOperatorSlots(d){
   const members=getActiveStaff().filter(s=>s.conc.includes('pat'));
-  const rows=[];
-  for(let h=OP_CHECK_START;h<OP_CHECK_END;h++){
-    const checkH=h+0.5; // 時間帯の中間時刻で判定（16:30などの端境目にも対応）
+  const slots=[];
+  for(let t=OP_CHECK_START;t<OP_CHECK_END;t+=OP_SLOT_STEP){
+    const checkH=t+OP_SLOT_STEP/2; // スロット中間時刻で判定
     const assigned=members.filter(s=>getHourlyPatSvc(s.id,d,checkH)==='pat');
     const candidates=assigned.filter(s=>isKfs(s.id)&&isOpOk(s.id));
-    rows.push({
-      h,label:`${fmtHour(h)}〜${fmtHour(h+1)}`,
-      assigned,candidates,count:candidates.length,
-      ok:candidates.length>0
-    });
+    slots.push({t,assigned,candidates,chosen:null});
   }
+  const pickCount={};
+  let current=null; // 直前スロットの担当者（継続できるなら優先して引き継ぐ）
+  slots.forEach(slot=>{
+    if(!slot.candidates.length){slot.chosen=null;current=null;return;}
+    if(current&&slot.candidates.some(c=>c.id===current.id)){
+      slot.chosen=current; // 引き続き担当可能なら交代せず継続
+    }else{
+      let best=slot.candidates[0];
+      for(const c of slot.candidates){
+        if((pickCount[c.id]||0)<(pickCount[best.id]||0))best=c;
+      }
+      slot.chosen=best;
+      current=best;
+    }
+    pickCount[slot.chosen.id]=(pickCount[slot.chosen.id]||0)+1;
+  });
+  return slots;
+}
+
+// 連続する30分スロットのうち「配置職員の顔ぶれ」と「自動選出されたオペレーター」が同じ区間をまとめて、
+// 表示用の行（時間帯の範囲）に変換する
+function computeOperatorRows(d){
+  const slots=assignOperatorSlots(d);
+  const rows=[];
+  slots.forEach(slot=>{
+    const key=slot.assigned.map(s=>s.id).sort().join(',')+'|'+(slot.chosen?slot.chosen.id:'');
+    const last=rows[rows.length-1];
+    if(last&&last._key===key){
+      last.end=slot.t+OP_SLOT_STEP;
+    }else{
+      rows.push({
+        start:slot.t,end:slot.t+OP_SLOT_STEP,_key:key,
+        assigned:slot.assigned,candidates:slot.candidates,chosen:slot.chosen
+      });
+    }
+  });
+  rows.forEach(r=>{
+    r.label=`${fmtHour(r.start)}〜${fmtHour(r.end)}`;
+    r.count=r.chosen?1:0;
+    r.ok=!!r.chosen;
+  });
   return rows;
 }
 
@@ -863,8 +903,8 @@ function buildOperatorCheckView(){
   if(opCheckDay===null||opCheckDay<1||opCheckDay>days)opCheckDay=1;
 
   const banner=document.createElement('div');banner.className='pats-banner';
-  banner.innerHTML=`🛎 オペレーター候補にできるのは、その時間に<b>「定期巡回として配置されている」＋「介護福祉士」＋「オペレーター担当可能」</b>の3条件をすべて満たす職員だけです。<br>
-    デイ・有料に勤務中の介護福祉士は、その時間帯のオペレーター人数には含めません。資格・オペレーター可否は「⚙️設定」タブの職員管理で確認・修正できます。`;
+  banner.innerHTML=`🛎 勤務記号（早・日A・遅・B巡 等）を入力するだけで、8:00〜18:00の各時間帯の<b>定期巡回配置職員</b>と<b>オペレーター担当者</b>を自動で判定・自動配置します。時間帯ごとの手入力は不要です。<br>
+    オペレーター担当者にできるのは、その時間に<b>「定期巡回として配置されている」＋「介護福祉士」＋「オペレーター担当可能」</b>の3条件をすべて満たす職員だけです（デイ・有料勤務中は対象外）。複数候補がいる場合は、その日にまだ選ばれていない職員を優先して自動的に割り振ります。資格・オペレーター可否は「⚙️設定」タブの職員管理で確認・修正できます。`;
   wrap.appendChild(banner);
 
   // 日付ナビ
@@ -899,15 +939,15 @@ function buildOperatorCheckView(){
     : `✅ 今月は全日、8:00〜18:00のオペレーター配置に不足はありません。`;
   wrap.appendChild(sumDiv);
 
-  // 対象日の1時間ごと判定テーブル
+  // 対象日の自動判定・自動配置結果テーブル
   const rows=computeOperatorRows(opCheckDay);
   const tblWrap=document.createElement('div');tblWrap.style.cssText='margin:0 14px 20px;overflow-x:auto';
   const tbl=document.createElement('table');
-  tbl.style.cssText='border-collapse:collapse;font-size:12px;width:100%;min-width:640px;background:#fff';
+  tbl.style.cssText='border-collapse:collapse;font-size:12px;width:100%;min-width:680px;background:#fff';
   tbl.innerHTML=`<thead><tr>
       <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc;white-space:nowrap">時間帯</th>
       <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">定期巡回配置職員</th>
-      <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">オペレーター候補</th>
+      <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">オペレーター担当者（自動配置）</th>
       <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">人数</th>
       <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">判定</th>
     </tr></thead>`;
@@ -919,12 +959,13 @@ function buildOperatorCheckView(){
       const tags=[];
       if(!isKfs(s.id))tags.push('非・介護福祉士');
       if(isKfs(s.id)&&!isOpOk(s.id))tags.push('OP不可設定');
-      return s.name+(tags.length?`<span style="color:#999;font-size:10px">（${tags.join('/')}）</span>`:'');
+      const chosenMark=r.chosen&&r.chosen.id===s.id?'★':'';
+      return chosenMark+s.name+(tags.length?`<span style="color:#999;font-size:10px">（${tags.join('/')}）</span>`:'');
     }).join('、'):'<span style="color:#999">配置なし</span>';
     tr.innerHTML=`
       <td style="padding:6px 10px;border:1px solid #ddd;font-weight:bold;white-space:nowrap">${r.label}</td>
       <td style="padding:6px 10px;border:1px solid #ddd">${assignedTxt}</td>
-      <td style="padding:6px 10px;border:1px solid #ddd">${r.candidates.length?r.candidates.map(s=>s.name).join('、'):'<span style="color:#C62828">なし</span>'}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd;font-weight:bold">${r.chosen?r.chosen.name:'<span style="color:#C62828">担当者なし</span>'}</td>
       <td style="padding:6px 10px;border:1px solid #ddd;text-align:center;font-weight:bold">${r.count}</td>
       <td style="padding:6px 10px;border:1px solid #ddd;text-align:center;font-weight:bold;color:${r.ok?'#2E7D32':'#C62828'}">${r.ok?'OK':'⚠️ オペレーター不足'}</td>`;
     tbody.appendChild(tr);
