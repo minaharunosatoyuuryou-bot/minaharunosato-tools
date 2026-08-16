@@ -869,15 +869,24 @@ const OP_SLOT_STEP=0.5; // 30分刻み（勤務記号の分割時刻（16:30等�
 let opCheckDay=null;
 
 // 公平ローテーション：連続して担当できる間は同じ職員を継続させ（不要な細切れ交代を避ける）、
-// 交代がどうしても必要な場面（担当者が候補から外れる等）でのみ、その日まだ選ばれていない職員を優先して自動配置する
+// 交代がどうしても必要な場面（担当者が候補から外れる等）でのみ、その日まだ選ばれていない職員を優先して自動配置する。
+// さらに、通常の判定だけではオペレーターが1人もいない「不足」の時間帯が出た場合は、
+// その時間に本来「デイ」側担当になっている兼任職員（介護福祉士＋OP可）を定期巡回側へ振り替えて穴を埋める。
 function assignOperatorSlots(d){
   const members=getActiveStaff().filter(s=>s.conc.includes('pat'));
+  const dayPatMembers=getActiveStaff().filter(s=>s.conc.includes('day')&&s.conc.includes('pat'));
   const slots=[];
   for(let t=OP_CHECK_START;t<OP_CHECK_END;t+=OP_SLOT_STEP){
     const checkH=t+OP_SLOT_STEP/2; // スロット中間時刻で判定
     const assigned=members.filter(s=>getHourlyPatSvc(s.id,d,checkH)==='pat');
-    const candidates=assigned.filter(s=>isKfs(s.id)&&isOpOk(s.id));
-    slots.push({t,assigned,candidates,chosen:null});
+    let candidates=assigned.filter(s=>isKfs(s.id)&&isOpOk(s.id));
+    let extraFillers=[];
+    if(!candidates.length){
+      // ギャップ埋め：この時間「デイ」担当中の兼任職員のうち、介護福祉士＋OP可の人を定期巡回へ振替候補にする
+      extraFillers=dayPatMembers.filter(s=>getHourlyPatSvc(s.id,d,checkH)==='day'&&isKfs(s.id)&&isOpOk(s.id));
+      candidates=extraFillers;
+    }
+    slots.push({t,assigned:extraFillers.length?[...assigned,...extraFillers]:assigned,candidates,chosen:null,filled:extraFillers.map(s=>s.id)});
   }
   const pickCount={};
   let current=null; // 直前スロットの担当者（継続できるなら優先して引き継ぐ）
@@ -904,14 +913,14 @@ function computeOperatorRows(d){
   const slots=assignOperatorSlots(d);
   const rows=[];
   slots.forEach(slot=>{
-    const key=slot.assigned.map(s=>s.id).sort().join(',')+'|'+(slot.chosen?slot.chosen.id:'');
+    const key=slot.assigned.map(s=>s.id).sort().join(',')+'|'+(slot.chosen?slot.chosen.id:'')+'|'+slot.filled.join(',');
     const last=rows[rows.length-1];
     if(last&&last._key===key){
       last.end=slot.t+OP_SLOT_STEP;
     }else{
       rows.push({
         start:slot.t,end:slot.t+OP_SLOT_STEP,_key:key,
-        assigned:slot.assigned,candidates:slot.candidates,chosen:slot.chosen
+        assigned:slot.assigned,candidates:slot.candidates,chosen:slot.chosen,filled:slot.filled
       });
     }
   });
@@ -945,7 +954,8 @@ function buildOperatorCheckView(){
 
   const banner=document.createElement('div');banner.className='pats-banner';
   banner.innerHTML=`🛎 勤務記号（早・日A・遅・B巡 等）を入力するだけで、8:00〜18:00の各時間帯の<b>定期巡回配置職員</b>と<b>オペレーター担当者</b>を自動で判定・自動配置します。時間帯ごとの手入力は不要です。<br>
-    オペレーター担当者にできるのは、その時間に<b>「定期巡回として配置されている」＋「介護福祉士」＋「オペレーター担当可能」</b>の3条件をすべて満たす職員だけです（デイ・有料勤務中は対象外）。複数候補がいる場合は、その日にまだ選ばれていない職員を優先して自動的に割り振ります。資格・オペレーター可否は「⚙️設定」タブの職員管理で確認・修正できます。<br>
+    オペレーター担当者にできるのは、その時間に<b>「定期巡回として配置されている」＋「介護福祉士」＋「オペレーター担当可能」</b>の3条件をすべて満たす職員だけです（デイ・有料勤務中は対象外）。複数候補がいる場合は、その日にまだ選ばれていない職員を優先して自動的に割り振ります。<br>
+    🔄 通常の判定でオペレーターが1人もいない時間帯が出た場合は、その時間「デイ」側担当になっている兼任職員（介護福祉士・OP可）を自動的に定期巡回側へ振り替えて穴を埋めます（「デイから振替」と表示されます）。資格・オペレーター可否は「⚙️設定」タブの職員管理で確認・修正できます。<br>
     🌙 なお夜間（18:00〜翌8:00）はこの自動配置の対象外で、<b>牧 良子固定</b>です（この画面は日中8:00〜18:00のみを判定します）。`;
   wrap.appendChild(banner);
 
@@ -998,10 +1008,11 @@ function buildOperatorCheckView(){
     tr.style.background=r.ok?'#fff':'#FFEBEE';
     const assignedTxt=r.assigned.length?r.assigned.map(s=>{
       const chosenMark=r.chosen&&r.chosen.id===s.id?'★':'';
-      return chosenMark+s.name;
+      const filledMark=r.filled&&r.filled.includes(s.id)?'<span style="color:#E65100;font-size:9px">（デイから振替）</span>':'';
+      return chosenMark+s.name+filledMark;
     }).join('、'):'<span style="color:#999">配置なし</span>';
     const judgeTxt=r.ok
-      ? `<span style="color:#2E7D32">✅ OK</span>`
+      ? (r.filled&&r.filled.length?`<span style="color:#E65100">🔄 振替でOK</span>`:`<span style="color:#2E7D32">✅ OK</span>`)
       : `<span style="color:#C62828">⚠️ 不足</span><br><span style="font-weight:normal;font-size:11px;color:#C62828">${r.reason}</span>`;
     tr.innerHTML=`
       <td style="padding:6px 10px;border:1px solid #ddd;font-weight:bold;white-space:nowrap">${r.label}</td>
