@@ -484,6 +484,13 @@ const SHIFTS=[
   {k:'Bデ', label:'9:00〜18:00（休憩1h含む）',c:'#64B5F6',t:'#01579B',h:8},
 ];
 const SMAP={}; SHIFTS.forEach(s=>SMAP[s.k]=s);
+// 勤務区分マスタ（SMAP）を、既定値＋カスタム設定（settings.customShifts、あれば）から作り直す。
+// 設定の読み込み・保存のたびに必ず呼び出すこと（呼ばないと「有」の時間数などを編集しても
+// 再読み込み後は反映されず0時間表示に戻ってしまう）。
+function syncShiftMap(){
+  SHIFTS.forEach(s=>SMAP[s.k]=s); // まず既定値でリセット
+  if(settings.customShifts)settings.customShifts.forEach(s=>{if(s&&s.k)SMAP[s.k]=s;}); // カスタム値で上書き
+}
 
 // シフト記号→自動塗り時間帯（開始・終了を0.5h単位で）
 const SHIFT_AUTO={
@@ -1778,19 +1785,24 @@ function buildShiftEditTable(){
 function updateShift(i,key,val){
   if(!settings.customShifts)settings.customShifts=[...SHIFTS];
   settings.customShifts[i][key]=val;
-  settings.customShifts.forEach(s=>SMAP[s.k]=s);
+  syncShiftMap();
   buildShiftEditTable();
+  // 合計時間などが今すぐ画面に反映されるよう、表示中の表を再描画
+  buildSchTable();
+  buildPatSimpleTable();
 }
 
 function removeShift(i){
   if(!settings.customShifts)settings.customShifts=[...SHIFTS];
   settings.customShifts.splice(i,1);
+  syncShiftMap();
   buildShiftEditTable();
 }
 
 function addShiftRow(){
   if(!settings.customShifts)settings.customShifts=[...SHIFTS];
   settings.customShifts.push({k:'新',label:'新しい区分',h:8,c:'#E0E0E0',t:'#333333'});
+  syncShiftMap();
   buildShiftEditTable();
 }
 
@@ -1892,6 +1904,7 @@ async function loadSettings(){
     if(r.value)settings=JSON.parse(r.value);
     else{const l=localStorage.getItem(key);if(l)settings=JSON.parse(l);}
   }catch(e){const l=localStorage.getItem(key);if(l)settings=JSON.parse(l);}
+  syncShiftMap(); // 読み込んだ設定のカスタム勤務区分（h値など）を必ず反映する
 }
 
 // ===== 月間集計 =====
@@ -2267,6 +2280,7 @@ async function loadAll(){
   const ls1=localStorage.getItem(schKey);if(ls1){try{const d=JSON.parse(ls1);if(d&&Object.keys(d).length>0)schData=d;}catch(e){}}
   const ls2=localStorage.getItem(monthKey);if(ls2){try{const d=JSON.parse(ls2);if(d&&Object.keys(d).length>0)tlData=d;}catch(e){}}
   const ls3=localStorage.getItem(settingsKey);if(ls3){try{settings=JSON.parse(ls3);}catch(e){}}
+  syncShiftMap(); // ローカル保存分の設定（カスタム勤務区分のh値など）を反映
 
   // GASからfetchで取得
   async function gasGet(sheet,key){
@@ -2287,6 +2301,7 @@ async function loadAll(){
     if(v2){try{const d=JSON.parse(v2);if(d&&Object.keys(d).length>0){tlData=d;localStorage.setItem(monthKey,v2);}}catch(e){}}
     if(v3){try{const d=JSON.parse(v3);if(d)settings=d;}catch(e){}}
   }catch(e){console.log('GAS読み込み失敗:',e);}
+  syncShiftMap(); // GAS保存分の設定（カスタム勤務区分のh値など）を反映
 
   // 配置基準の「備考」は常に最新のコード側テキストを優先表示（過去保存データの古い備考で上書きされるのを防ぐ）
   if(settings.minStaff){
