@@ -784,6 +784,30 @@ function patDaySvcTag(sid,d){
   return null;
 }
 
+// その日、実際に何時間「定期巡回」に入っているか（h単位、休憩考慮なしの単純合計）
+function calcPatHoursForDay(sid,d){
+  const s=STAFF.find(x=>x.id===sid)||(settings.extraStaff||[]).find(x=>x.id===sid);
+  if(!s)return 0;
+  const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';
+  if(!k)return 0;
+  const fix=PURE_SVC_FIX[k];
+  const auto=SHIFT_AUTO[k];
+  if(fix==='pat')return auto?(auto.end-auto.start):0;
+  if(fix==='other')return 0;
+  if(s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
+    return SHIFT_SPLIT_RULE[k].filter(sg=>sg.svc==='pat').reduce((sum,sg)=>sum+(sg.end-sg.start),0);
+  }
+  if(auto){
+    if(s.svc==='pat')return auto.end-auto.start;
+    if(k==='夜'&&s.conc.includes('pat')&&isKfs(sid))return auto.end-auto.start;
+  }
+  return 0;
+}
+function fmtHoursShort(h){
+  if(!h)return '';
+  return (Number.isInteger(h)?h:h)+'h';
+}
+
 // ===== オペレーター判定用ヘルパー =====
 // ①介護福祉士かどうか（settings.staffQualで確定。未設定＝不明は「該当しない」扱いにする＝安全側）
 function isKfs(sid){
@@ -1077,6 +1101,12 @@ function buildPatSimpleTable(){
         const span=document.createElement('span');span.className='pats-svc-tag';
         span.textContent=`（${SVC_LBL[tag]}）`;span.style.color=sd?sd.t:'#555';
         td.appendChild(span);
+      }
+      const patH=calcPatHoursForDay(s.id,d);
+      if(patH>0){
+        const hspan=document.createElement('span');hspan.className='pats-svc-tag';
+        hspan.textContent=`🚐${fmtHoursShort(patH)}`;hspan.style.cssText='color:#4A148C;font-weight:bold;display:block;font-size:9px';
+        td.appendChild(hspan);
       }
       td.onclick=e=>openShiftPop(e,s.id,d,td);
       tr.appendChild(td);
@@ -1767,7 +1797,7 @@ function buildSettings(){
       const curQual=settings.staffQual&&settings.staffQual[s.id]?settings.staffQual[s.id]:(s.qual||'');
       const curRole=settings.staffRole&&settings.staffRole[s.id]?settings.staffRole[s.id]:(s.role||'');
       const curHire=settings.staffHire&&settings.staffHire[s.id]?settings.staffHire[s.id]:(s.hire||'');
-      const ROLE_OPTS=['管理者','デイ管理者','有料管理者','定巡管理者','オペレーター','生活相談員','相談員','介護福祉士','介護','介護補助','看護師','准看護師','機能訓練指導員','訪問看護師','訪問介護員','事務','調理','その他'];
+      const ROLE_OPTS=['管理者','デイ管理者','有料管理者','定巡管理者','オペレーター','生活相談員','相談員','介護福祉士','介護OP','介護','介護補助','看護師','准看護師','機能訓練指導員','訪問看護師','訪問介護員','事務','調理','その他'];
       const QUAL_OPTS=['介護福祉士','実務者研修修了','初任者研修修了','介護士','看護師','准看護師','社会福祉士','精神保健福祉士','理学療法士','作業療法士','言語聴覚士','管理栄養士','調理師','（なし）'];
       tr.innerHTML=`
         <td style="padding:4px 8px;border:1px solid #eee;font-size:11px;${nameStyle}">${s.conc&&s.conc.length>1?'★':''}${s.name}</td>
