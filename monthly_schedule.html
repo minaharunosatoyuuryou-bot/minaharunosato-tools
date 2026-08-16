@@ -831,6 +831,9 @@ function getHourlyPatSvc(sid,d,checkH){
   // (d) 定期巡回専任職員が通常のシフト記号（早/日A/遅/日B 等）で勤務している場合＝その時間帯全体が定期巡回
   if(auto&&checkH>=auto.start&&checkH<auto.end){
     if(s.svc==='pat')return 'pat';
+    // 夜勤（夜）は、本来の所属サービスがデイ／有料の職員でも、定期巡回にも入る職員（conc に'pat'あり）で
+    // 介護福祉士であれば、その夜勤時間は定期巡回配置とみなす
+    if(k==='夜'&&s.conc.includes('pat')&&isKfs(s.id))return 'pat';
     return null; // デイ専任・有料専任の職員が通常シフトで働いているだけなら定期巡回配置ではない
   }
   return null;
