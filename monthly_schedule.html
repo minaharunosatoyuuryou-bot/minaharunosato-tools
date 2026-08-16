@@ -1620,6 +1620,11 @@ STAFF.forEach(s=>{
   if(/介護福祉士/.test(s.role||''))settings.staffQual[s.id]='介護福祉士';
   if(/\/OP\b|OP$|OP\//.test(s.role||''))settings.staffOpOk[s.id]=true;
 });
+// 牧様よりご指定：定期巡回オペレーターを実際に担当する5名は、介護福祉士＋オペレーター担当可としてデフォルト設定する
+['maki','hiraoka','kuramoto','goto','kudo'].forEach(id=>{
+  settings.staffQual[id]='介護福祉士';
+  settings.staffOpOk[id]=true;
+});
 
 // 有効職員を返す（退職・非表示を除外）
 function getActiveStaff(){
