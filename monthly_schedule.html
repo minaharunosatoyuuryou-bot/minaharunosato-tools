@@ -1091,9 +1091,11 @@ const SPLIT_PAIRS=[
 ];
 const REST_KEYS=['休','有','有2','有4','有6','日/有','研','欠'];
 
-// 全区分に「上から順」で数字→アルファベットのショートカットキーを自動割り当て
-// 1,2,3...9,0,a,b,c...z の順（クリア/空白はBackspaceキー固定）
-const SEQ_KEYS='1234567890abcdefghijklmnopqrstuvwxyz'.split('');
+// ショートカットキー割り当て：0〜5は固定（0=休,1=早,2=日,3=遅,4=夜勤,5=明け）。
+// それ以外の特殊な勤務区分（日A・日B・早4・有給各種など）は、一覧の並び順にローマ字(a,b,c...)を自動割り当て。
+// （クリア/空白はBackspaceキー固定）
+const FIXED_NUM_KEYS={'休':'0','早':'1','日':'2','遅':'3','夜':'4','明':'5'};
+const ALPHA_KEYS='abcdefghijklmnopqrstuvwxyz'.split('');
 let popKeyMap={};
 document.addEventListener('keydown',e=>{
   const pop=document.getElementById('shiftPop');
@@ -1121,11 +1123,16 @@ function openShiftPop(e,sid,d,cell){
   const byKey={};currentShifts.forEach(s=>byKey[s.k]=s);
   const splitKeys=new Set();SPLIT_PAIRS.forEach(p=>{splitKeys.add(p.pat);splitKeys.add(p.day)});
 
-  // 上から順にキーを割り当て（一覧の並び順＝設定タブの勤務区分カスタマイズと同じ順）
+  // 0〜5は固定の勤務区分専用。それ以外は並び順にローマ字を割り当て
   popKeyMap={};
   const keyByCode={};
-  currentShifts.forEach((s,i)=>{
-    if(SEQ_KEYS[i]){keyByCode[s.k]=SEQ_KEYS[i];popKeyMap[SEQ_KEYS[i]]=s.k;}
+  let alphaIdx=0;
+  currentShifts.forEach(s=>{
+    if(FIXED_NUM_KEYS[s.k]){
+      keyByCode[s.k]=FIXED_NUM_KEYS[s.k];popKeyMap[FIXED_NUM_KEYS[s.k]]=s.k;
+    } else if(ALPHA_KEYS[alphaIdx]){
+      keyByCode[s.k]=ALPHA_KEYS[alphaIdx];popKeyMap[ALPHA_KEYS[alphaIdx]]=s.k;alphaIdx++;
+    }
   });
   function badgeFor(code){
     const key=keyByCode[code];if(!key)return null;
