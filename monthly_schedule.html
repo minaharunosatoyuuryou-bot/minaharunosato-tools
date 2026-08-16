@@ -1669,17 +1669,28 @@ let settings={
 // 未設定（undefined）のスタッフにだけデフォルト値を補う。設定の読み込み（loadSettings/loadAll）で
 // settingsオブジェクトが丸ごと保存データに置き換わった直後にも必ず呼び出すこと（呼ばないと、保存データが
 // 古い（この初期値追加より前に保存された）場合にデフォルトが消えてしまう）。
+//
+// 牧様よりご指定：定期巡回オペレーターを担当できるのは以下5名のみ。
+// 他の職員は、役職名に「OP」と付いていても自動ではオペレーター候補にしない
+// （設定タブの「🛎OP可」チェックで牧様が個別に追加することは今後も可能）。
+const OP_WHITELIST=['maki','hiraoka','kuramoto','goto','kudo'];
 function applyDefaultQualifications(){
   if(!settings.staffQual)settings.staffQual={};
   if(!settings.staffOpOk)settings.staffOpOk={};
+  // 資格（介護福祉士）は役職表記から分かる場合のみ補完（未設定の職員だけ）
   STAFF.forEach(s=>{
     if(settings.staffQual[s.id]===undefined&&/介護福祉士/.test(s.role||''))settings.staffQual[s.id]='介護福祉士';
-    if(settings.staffOpOk[s.id]===undefined&&/\/OP\b|OP$|OP\//.test(s.role||''))settings.staffOpOk[s.id]=true;
   });
-  // 牧様よりご指定：定期巡回オペレーターを実際に担当する5名は、介護福祉士＋オペレーター担当可としてデフォルト設定する
-  ['maki','hiraoka','kuramoto','goto','kudo'].forEach(id=>{
+  // 指定5名は介護福祉士・オペレーター担当可として常に確定
+  OP_WHITELIST.forEach(id=>{
     if(settings.staffQual[id]===undefined)settings.staffQual[id]='介護福祉士';
-    if(settings.staffOpOk[id]===undefined)settings.staffOpOk[id]=true;
+    settings.staffOpOk[id]=true;
+  });
+  // 5名以外で、役職名に「OP」と付いているために以前の仕組みで誤ってOP可になっていた職員を補正
+  STAFF.forEach(s=>{
+    if(!OP_WHITELIST.includes(s.id)&&/\/OP\b|OP$|OP\//.test(s.role||'')){
+      settings.staffOpOk[s.id]=false;
+    }
   });
 }
 // デフォルト倍率・状態
