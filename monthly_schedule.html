@@ -507,6 +507,7 @@ const SHIFT_AUTO={
   '早6':{start:7.0, end:13.0},
   '遅': {start:10.0,end:19.0},
   '夜': {start:17.0,end:34.0}, // 翌9時=24+9=33→34まで
+  '明': {start:0.0, end:9.0},  // 夜勤明け：朝の引き継ぎ時間帯（〜9:00）まで。実際の時刻が違う場合は要調整
   '早巡':{start:7.0, end:16.0},'早デ':{start:7.0, end:16.0},
   'A巡': {start:8.0, end:17.0},'Aデ': {start:8.0, end:17.0},
   '遅巡':{start:10.0,end:19.0},'遅デ':{start:10.0,end:19.0},
@@ -799,7 +800,7 @@ function calcPatHoursForDay(sid,d){
   }
   if(auto){
     if(s.svc==='pat')return auto.end-auto.start;
-    if(k==='夜'&&s.conc.includes('pat')&&isKfs(sid))return auto.end-auto.start;
+    if((k==='夜'||k==='明')&&s.conc.includes('pat')&&isKfs(sid))return auto.end-auto.start;
   }
   return 0;
 }
@@ -827,7 +828,9 @@ function getHourlyPatSvc(sid,d,checkH){
   const s=STAFF.find(x=>x.id===sid)||(settings.extraStaff||[]).find(x=>x.id===sid);
   if(!s)return null;
   const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';
-  if(!k||['休','有','有2','有4','有6','明','欠','研'].includes(k))return null;
+  // 「明け」（夜勤明け）は、介護福祉士なら朝の引き継ぎ時間帯まで定期巡回に入れるようにするため、
+  // ここでは除外せず(d)まで進める（休み扱いの他の記号は引き続き除外）
+  if(!k||['休','有','有2','有4','有6','欠','研'].includes(k))return null;
 
   // (a) 時間帯タブでの手動塗り分けを最優先
   const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -844,6 +847,12 @@ function getHourlyPatSvc(sid,d,checkH){
     return null;
   }
   if(fix==='other')return null; // 終日その人本来のサービス専念＝定期巡回ではない
+
+  // 「明け」は分割ルールの対象外。介護福祉士＋定期巡回にも入る職員のみ、下の(d)で判定する
+  if(k==='明'){
+    if(auto&&checkH>=auto.start&&checkH<auto.end&&s.conc.includes('pat')&&isKfs(s.id))return 'pat';
+    return null;
+  }
 
   // (c) 兼任職員（デイ⇔定期巡回）の時間帯分割ルール（早/日A/遅/日B）
   if(s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
@@ -2309,6 +2318,12 @@ function autoFillAll(svc,silent=false){
         HOURS.forEach(({h})=>{
           const seg=splitRule.find(sg=>h>=sg.start&&h<sg.end);
           tlData[dateStr][s.id][h]=seg?seg.svc:'none';
+        });
+      } else if(k==='明'){
+        // 夜勤明け：介護福祉士＋定期巡回にも入る職員のみ、朝の引き継ぎ時間帯を定期巡回として塗る。それ以外はnone（休み扱い）
+        const canPat=s.conc.includes('pat')&&isKfs(s.id);
+        HOURS.forEach(({h})=>{
+          tlData[dateStr][s.id][h]=(canPat&&auto&&h>=auto.start&&h<auto.end)?'pat':'none';
         });
       } else if(auto){
         HOURS.forEach(({h})=>{
