@@ -892,8 +892,22 @@ function computeOperatorRows(d){
     r.label=`${fmtHour(r.start)}〜${fmtHour(r.end)}`;
     r.count=r.chosen?1:0;
     r.ok=!!r.chosen;
+    r.reason=buildShortageReason(r);
   });
   return rows;
+}
+
+// 不足になっている理由を、人が読んで分かる文章にする
+function buildShortageReason(r){
+  if(r.ok)return '';
+  if(!r.assigned.length)return 'この時間帯に定期巡回として配置されている職員がいません（勤務表を確認してください）';
+  const why=r.assigned.map(s=>{
+    if(!isKfs(s.id))return `${s.name}さん＝介護福祉士ではない`;
+    if(!isOpOk(s.id))return `${s.name}さん＝介護福祉士だが「OP可」設定がオフ`;
+    return null;
+  }).filter(Boolean);
+  if(why.length)return `定期巡回には配置されていますが、${why.join('／')}のため候補になれません`;
+  return 'オペレーター候補になれる職員がいません';
 }
 
 function buildOperatorCheckView(){
@@ -948,7 +962,6 @@ function buildOperatorCheckView(){
       <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc;white-space:nowrap">時間帯</th>
       <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">定期巡回配置職員</th>
       <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">オペレーター担当者（自動配置）</th>
-      <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">人数</th>
       <th style="background:#4A148C;color:#fff;padding:6px 10px;border:1px solid #ccc">判定</th>
     </tr></thead>`;
   const tbody=document.createElement('tbody');
@@ -956,18 +969,17 @@ function buildOperatorCheckView(){
     const tr=document.createElement('tr');
     tr.style.background=r.ok?'#fff':'#FFEBEE';
     const assignedTxt=r.assigned.length?r.assigned.map(s=>{
-      const tags=[];
-      if(!isKfs(s.id))tags.push('非・介護福祉士');
-      if(isKfs(s.id)&&!isOpOk(s.id))tags.push('OP不可設定');
       const chosenMark=r.chosen&&r.chosen.id===s.id?'★':'';
-      return chosenMark+s.name+(tags.length?`<span style="color:#999;font-size:10px">（${tags.join('/')}）</span>`:'');
+      return chosenMark+s.name;
     }).join('、'):'<span style="color:#999">配置なし</span>';
+    const judgeTxt=r.ok
+      ? `<span style="color:#2E7D32">✅ OK</span>`
+      : `<span style="color:#C62828">⚠️ 不足</span><br><span style="font-weight:normal;font-size:11px;color:#C62828">${r.reason}</span>`;
     tr.innerHTML=`
       <td style="padding:6px 10px;border:1px solid #ddd;font-weight:bold;white-space:nowrap">${r.label}</td>
       <td style="padding:6px 10px;border:1px solid #ddd">${assignedTxt}</td>
       <td style="padding:6px 10px;border:1px solid #ddd;font-weight:bold">${r.chosen?r.chosen.name:'<span style="color:#C62828">担当者なし</span>'}</td>
-      <td style="padding:6px 10px;border:1px solid #ddd;text-align:center;font-weight:bold">${r.count}</td>
-      <td style="padding:6px 10px;border:1px solid #ddd;text-align:center;font-weight:bold;color:${r.ok?'#2E7D32':'#C62828'}">${r.ok?'OK':'⚠️ オペレーター不足'}</td>`;
+      <td style="padding:6px 10px;border:1px solid #ddd;font-weight:bold">${judgeTxt}</td>`;
     tbody.appendChild(tr);
   });
   tbl.appendChild(tbody);
@@ -1652,20 +1664,30 @@ let settings={
   extraStaff:[],     // 追加職員
   customShifts:null, // カスタム勤務区分（nullなら既定値使用）
 };
+// 資格・オペレーター可否の初期値を補完する。
+// 「本人が設定タブで既に何か設定済み（＝settings.staffQual[id]に値がある）」の場合は絶対に上書きしない。
+// 未設定（undefined）のスタッフにだけデフォルト値を補う。設定の読み込み（loadSettings/loadAll）で
+// settingsオブジェクトが丸ごと保存データに置き換わった直後にも必ず呼び出すこと（呼ばないと、保存データが
+// 古い（この初期値追加より前に保存された）場合にデフォルトが消えてしまう）。
+function applyDefaultQualifications(){
+  if(!settings.staffQual)settings.staffQual={};
+  if(!settings.staffOpOk)settings.staffOpOk={};
+  STAFF.forEach(s=>{
+    if(settings.staffQual[s.id]===undefined&&/介護福祉士/.test(s.role||''))settings.staffQual[s.id]='介護福祉士';
+    if(settings.staffOpOk[s.id]===undefined&&/\/OP\b|OP$|OP\//.test(s.role||''))settings.staffOpOk[s.id]=true;
+  });
+  // 牧様よりご指定：定期巡回オペレーターを実際に担当する5名は、介護福祉士＋オペレーター担当可としてデフォルト設定する
+  ['maki','hiraoka','kuramoto','goto','kudo'].forEach(id=>{
+    if(settings.staffQual[id]===undefined)settings.staffQual[id]='介護福祉士';
+    if(settings.staffOpOk[id]===undefined)settings.staffOpOk[id]=true;
+  });
+}
 // デフォルト倍率・状態
 STAFF.forEach(s=>{
   settings.staffRate[s.id]=s.id==='inagara'?0.75:1.0;
   settings.staffStatus[s.id]={active:true,retired:false,retireDate:''};
-  // 資格・オペレーター可否の初期値は、元の役職表記（role）に明記されている場合のみ設定する。
-  // 「介護福祉士」等の資格情報は勝手に推測しない＝未設定のスタッフは、設定タブで必ず本人の実際の資格を確認・入力すること。
-  if(/介護福祉士/.test(s.role||''))settings.staffQual[s.id]='介護福祉士';
-  if(/\/OP\b|OP$|OP\//.test(s.role||''))settings.staffOpOk[s.id]=true;
 });
-// 牧様よりご指定：定期巡回オペレーターを実際に担当する5名は、介護福祉士＋オペレーター担当可としてデフォルト設定する
-['maki','hiraoka','kuramoto','goto','kudo'].forEach(id=>{
-  settings.staffQual[id]='介護福祉士';
-  settings.staffOpOk[id]=true;
-});
+applyDefaultQualifications();
 
 // 有効職員を返す（退職・非表示を除外）
 function getActiveStaff(){
@@ -1968,6 +1990,7 @@ async function loadSettings(){
     else{const l=localStorage.getItem(key);if(l)settings=JSON.parse(l);}
   }catch(e){const l=localStorage.getItem(key);if(l)settings=JSON.parse(l);}
   syncShiftMap(); // 読み込んだ設定のカスタム勤務区分（h値など）を必ず反映する
+  applyDefaultQualifications(); // 保存データが古く未設定でも、資格・OP可デフォルトが消えないようにする
 }
 
 // ===== 月間集計 =====
@@ -2350,6 +2373,7 @@ async function loadAll(){
   const ls2=localStorage.getItem(monthKey);if(ls2){try{const d=JSON.parse(ls2);if(d&&Object.keys(d).length>0)tlData=d;}catch(e){}}
   const ls3=localStorage.getItem(settingsKey);if(ls3){try{settings=JSON.parse(ls3);}catch(e){}}
   syncShiftMap(); // ローカル保存分の設定（カスタム勤務区分のh値など）を反映
+  applyDefaultQualifications(); // 保存データが古く未設定でも、資格・OP可デフォルトが消えないようにする
 
   // GASからfetchで取得
   async function gasGet(sheet,key){
@@ -2371,6 +2395,7 @@ async function loadAll(){
     if(v3){try{const d=JSON.parse(v3);if(d)settings=d;}catch(e){}}
   }catch(e){console.log('GAS読み込み失敗:',e);}
   syncShiftMap(); // GAS保存分の設定（カスタム勤務区分のh値など）を反映
+  applyDefaultQualifications(); // 保存データが古く未設定でも、資格・OP可デフォルトが消えないようにする
 
   // 配置基準の「備考」は常に最新のコード側テキストを優先表示（過去保存データの古い備考で上書きされるのを防ぐ）
   if(settings.minStaff){
