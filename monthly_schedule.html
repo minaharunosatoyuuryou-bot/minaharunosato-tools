@@ -47,14 +47,18 @@ body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
 table.pats{border-collapse:collapse;white-space:nowrap}
 table.pats th,table.pats td{border:1px solid #ccc;padding:0}
 .pats-th-name{width:130px;min-width:130px;background:#4A148C;color:#fff;font-size:12px;text-align:center;padding:5px;position:sticky;left:0;z-index:3}
-.pats-th-d{width:46px;min-width:46px;font-size:11px;text-align:center;padding:4px 1px;background:#37474F;color:#fff}
+.pats-th-d{width:78px;min-width:78px;font-size:11px;text-align:center;padding:4px 1px;background:#37474F;color:#fff}
 .pats-th-d .dn{font-size:13px;font-weight:bold}.pats-th-d .dw{font-size:9px}
 .pats-th-d.sat{background:#0D47A1}.pats-th-d.sun{background:#B71C1C}
 .pats-name{background:#F3E5F5;font-size:13px;font-weight:bold;padding:5px 8px;position:sticky;left:0;z-index:1;white-space:nowrap}
 .pats-name .conc-badge{color:#E65100;font-size:9px;font-weight:bold;display:block}
-.pats-cell{width:46px;height:44px;text-align:center;cursor:pointer;font-size:15px;font-weight:bold;vertical-align:middle}
+.pats-cell{width:78px;height:64px;text-align:center;cursor:pointer;font-size:13px;font-weight:bold;vertical-align:middle;padding:0}
 .pats-cell.sat{background:#EEF0FB}.pats-cell.sun{background:#FFF5F5}
 .pats-svc-tag{font-size:8px;display:block;font-weight:normal;opacity:.85;margin-top:1px}
+.pats-split{display:flex;flex-direction:column;width:100%;height:64px}
+.pats-split-part{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:bold;line-height:1.25;gap:1px}
+.pats-split-part .pk{font-size:9px;font-weight:normal;opacity:.9}
+.pats-split-rest{display:flex;align-items:center;justify-content:center;height:64px;font-size:14px;font-weight:bold}
 .pats-count-row td{font-size:16px;font-weight:bold;text-align:center;padding:5px 0;color:#fff}
 .pats-count-name{background:#4A148C!important;color:#fff!important}
 
@@ -1035,6 +1039,40 @@ function buildOperatorCheckView(){
   wrap.appendChild(tblWrap);
 }
 
+// セル表示用：その日の勤務内訳を「🚐定期巡回」「🏠デイ/有料」に分けたセグメント配列で返す
+// （1〜2個。空なら休み等）
+function buildPatCellSegments(sid,d,k){
+  const s=STAFF.find(x=>x.id===sid);
+  if(!s||!k)return [];
+  const fix=PURE_SVC_FIX[k];
+  const auto=SHIFT_AUTO[k];
+  const dayLbl=SVC_LBL[s.svc]||'デイ/有料';
+  if(fix==='pat'&&auto)return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
+  if(fix==='other'&&auto)return [{icon:'🏠',label:dayLbl,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#E3F2FD',t:'#1565C0'}];
+  if(k==='夜'&&auto){
+    if(s.conc.includes('pat')&&isKfs(sid))return [{icon:'🚐',label:'夜勤(定期巡回)',time:`${fmtHour(auto.start)}〜翌${fmtHour(auto.end-24)}`,c:'#EDE7F6',t:'#4A148C'}];
+    return [{icon:'🌙',label:'夜勤',time:`${fmtHour(auto.start)}〜翌${fmtHour(auto.end-24)}`,c:'#F3E5F5',t:'#6A1B9A'}];
+  }
+  if(k==='明'&&auto){
+    if(s.conc.includes('pat')&&isKfs(sid))return [{icon:'🚐',label:'明け(定期巡回)',time:`〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
+    return [{icon:'💤',label:'夜勤明け',time:'',c:'#F3E5F5',t:'#6A1B9A'}];
+  }
+  if(s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
+    const segs=[];
+    SHIFT_SPLIT_RULE[k].forEach(sg=>{
+      if(sg.svc==='none')return;
+      if(sg.svc==='pat')segs.push({icon:'🚐',label:'定期巡回',time:`${fmtHour(sg.start)}〜${fmtHour(sg.end)}`,c:'#EDE7F6',t:'#4A148C'});
+      else segs.push({icon:'🏠',label:dayLbl,time:`${fmtHour(sg.start)}〜${fmtHour(sg.end)}`,c:'#E3F2FD',t:'#1565C0'});
+    });
+    return segs;
+  }
+  if(auto){
+    if(s.svc==='pat')return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
+    return [{icon:'🏠',label:dayLbl,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#E3F2FD',t:'#1565C0'}];
+  }
+  return []; // 休み等（呼び出し側で処理）
+}
+
 function buildPatSimpleTable(){
   const wrap=document.getElementById('v-pats');
   if(!wrap)return;
@@ -1114,19 +1152,22 @@ function buildPatSimpleTable(){
       const td=document.createElement('td');
       td.className=`pats-cell${wc}`;
       td.id=`pc_${s.id}_${d}`;
-      td.innerHTML=k;
-      if(sd){td.style.background=sd.c;td.style.color=sd.t;}
-      const tag=patDaySvcTag(s.id,d);
-      if(tag&&tag!=='pat'&&k&&!['休','有','有2','有4','有6','明','欠','研'].includes(k)){
-        const span=document.createElement('span');span.className='pats-svc-tag';
-        span.textContent=`（${SVC_LBL[tag]}）`;span.style.color=sd?sd.t:'#555';
-        td.appendChild(span);
-      }
-      const patH=calcPatHoursForDay(s.id,d);
-      if(patH>0){
-        const hspan=document.createElement('span');hspan.className='pats-svc-tag';
-        hspan.textContent=`🚐${fmtHoursShort(patH)}`;hspan.style.cssText='color:#4A148C;font-weight:bold;display:block;font-size:9px';
-        td.appendChild(hspan);
+      const segs=buildPatCellSegments(s.id,d,k);
+      if(k&&segs.length){
+        const box=document.createElement('div');box.className='pats-split';
+        segs.forEach(sg=>{
+          const part=document.createElement('div');part.className='pats-split-part';
+          part.style.cssText=`background:${sg.c};color:${sg.t}`;
+          part.innerHTML=`<span>${sg.icon}${sg.label}</span>${sg.time?`<span class="pk">${sg.time}</span>`:''}`;
+          box.appendChild(part);
+        });
+        td.appendChild(box);
+      }else if(k){
+        // 休み・有給・研修・欠勤等：大きく記号のみ表示
+        const rest=document.createElement('div');rest.className='pats-split-rest';
+        rest.textContent=k;
+        if(sd){rest.style.background=sd.c;rest.style.color=sd.t;}
+        td.appendChild(rest);
       }
       td.onclick=e=>openShiftPop(e,s.id,d,td);
       tr.appendChild(td);
