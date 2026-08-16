@@ -1141,6 +1141,14 @@ function openShiftPop(e,sid,d,cell){
     b.textContent=key;
     return b;
   }
+  // バッジキー順（0,1,2...9,a,b,c...）に並べ替えるための比較関数
+  function byBadgeOrder(a,b){
+    const ka=keyByCode[a.k],kb=keyByCode[b.k];
+    if(!ka&&!kb)return 0; if(!ka)return 1; if(!kb)return -1;
+    const na=/[0-9]/.test(ka),nb=/[0-9]/.test(kb);
+    if(na&&!nb)return -1; if(!na&&nb)return 1;
+    return ka.localeCompare(kb);
+  }
 
   // 空白クリア
   const clrDiv=document.createElement('div');clrDiv.className='shift-opt';
@@ -1148,8 +1156,8 @@ function openShiftPop(e,sid,d,cell){
   clrDiv.innerHTML='<span style="font-size:13px">⬜</span><span>空白（クリア）</span><span style="margin-left:auto;font-size:9px;color:#999;font-weight:normal">Backspace</span>';
   clrDiv.onclick=()=>setShift('');pop.appendChild(clrDiv);
 
-  // ① 通常勤務（分割記号・休暇以外）
-  const normal=currentShifts.filter(s=>!splitKeys.has(s.k)&&!REST_KEYS.includes(s.k));
+  // ① 通常勤務（分割記号・休暇以外）バッジ番号順（0,1,2...a,b,c...）に並べ替えて表示
+  const normal=currentShifts.filter(s=>!splitKeys.has(s.k)&&!REST_KEYS.includes(s.k)).sort(byBadgeOrder);
   if(normal.length){
     const sec=document.createElement('div');sec.className='sp-sec';sec.textContent='🕐 通常勤務';pop.appendChild(sec);
     const grid=document.createElement('div');grid.className='sp-normal-grid';
@@ -1190,8 +1198,8 @@ function openShiftPop(e,sid,d,cell){
     });
   }
 
-  // ③ 休暇・その他
-  const rest=currentShifts.filter(s=>REST_KEYS.includes(s.k));
+  // ③ 休暇・その他　こちらもバッジ番号順に並べ替え
+  const rest=currentShifts.filter(s=>REST_KEYS.includes(s.k)).sort(byBadgeOrder);
   if(rest.length){
     const sec=document.createElement('div');sec.className='sp-sec';sec.textContent='🏖 休暇・その他';pop.appendChild(sec);
     const grid=document.createElement('div');grid.className='sp-normal-grid';
