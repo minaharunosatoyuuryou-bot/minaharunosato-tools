@@ -469,7 +469,9 @@ const SHIFTS=[
   {k:'明', label:'夜勤明け',    c:'#E1BEE7',t:'#6A1B9A',h:0},
   {k:'休', label:'公休',        c:'#FFCDD2',t:'#B71C1C',h:0},
   {k:'有', label:'有給休暇',    c:'#FFF9C4',t:'#F57F17',h:0},
-  {k:'有4',label:'有給半日(4h)', c:'#FFF59D',t:'#F57F17',h:0},
+  {k:'有2',label:'有給2h(8:30〜10:30)', c:'#FFF7C0',t:'#F57F17',h:2},
+  {k:'有4',label:'有給4h(8:30〜12:30)', c:'#FFF59D',t:'#F57F17',h:4},
+  {k:'有6',label:'有給6h(8:30〜14:30)', c:'#FFF17A',t:'#F57F17',h:6},
   {k:'日/有',label:'半日勤務+半日有給(8h扱い)',c:'#FFE0B2',t:'#E65100',h:8},
   {k:'研', label:'研修',        c:'#B2DFDB',t:'#004D40',h:0},
   {k:'欠', label:'欠勤',        c:'#FFCCBC',t:'#BF360C',h:0},
@@ -716,7 +718,7 @@ function buildSchTable(){
       td.style.background=SVC_CLR[svc];td.style.color='#fff';
       const cnt=mems.filter(s=>{
         const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
-        if(!k||['休','有','有4','明','夜','欠','研'].includes(k))return false;
+        if(!k||['休','有','有2','有4','有6','明','夜','欠','研'].includes(k))return false;
         const fix=PURE_SVC_FIX[k];
         if(fix==='pat')return svc==='pat';   // 終日定期巡回専念→定巡のみカウント
         if(fix==='other')return svc!=='pat'; // 終日その人の本来サービス専念→デイ/有料側でカウント
@@ -801,7 +803,7 @@ function getHourlyPatSvc(sid,d,checkH){
   const s=STAFF.find(x=>x.id===sid)||(settings.extraStaff||[]).find(x=>x.id===sid);
   if(!s)return null;
   const k=schData[sid]?schData[sid][d]||schData[sid][String(d)]||'':'';
-  if(!k||['休','有','有4','明','欠','研'].includes(k))return null;
+  if(!k||['休','有','有2','有4','有6','明','欠','研'].includes(k))return null;
 
   // (a) 時間帯タブでの手動塗り分けを最優先
   const dateStr=`${curY}-${String(curM).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -1014,7 +1016,7 @@ function buildPatSimpleTable(){
       td.innerHTML=k;
       if(sd){td.style.background=sd.c;td.style.color=sd.t;}
       const tag=patDaySvcTag(s.id,d);
-      if(tag&&tag!=='pat'&&k&&!['休','有','有4','明','欠','研'].includes(k)){
+      if(tag&&tag!=='pat'&&k&&!['休','有','有2','有4','有6','明','欠','研'].includes(k)){
         const span=document.createElement('span');span.className='pats-svc-tag';
         span.textContent=`（${SVC_LBL[tag]}）`;span.style.color=sd?sd.t:'#555';
         td.appendChild(span);
@@ -1044,7 +1046,7 @@ function setPatsCountCell(td,d,members){
   members=members||getPatOrderedMembers();
   const cnt=members.filter(s=>{
     const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
-    if(!k||['休','有','有4','明','夜','欠','研'].includes(k))return false;
+    if(!k||['休','有','有2','有4','有6','明','夜','欠','研'].includes(k))return false;
     if(PURE_SVC_FIX[k]==='other')return false; // 「◯(デイ)」の日は今日は定巡なし
     return true;
   }).length;
@@ -1069,7 +1071,7 @@ function updateDaySum(d){
     const mems=STAFF.filter(s=>s.svc===svc);
     const cnt=mems.filter(s=>{
       const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
-      if(!k||['休','有','有4','明','夜','欠','研'].includes(k))return false;
+      if(!k||['休','有','有2','有4','有6','明','夜','欠','研'].includes(k))return false;
       const fix=PURE_SVC_FIX[k];
       if(fix==='pat')return svc==='pat';
       if(fix==='other')return svc!=='pat';
@@ -1087,7 +1089,7 @@ const SPLIT_PAIRS=[
   {label:'B番', time:'9:00〜18:00',pat:'B巡', day:'Bデ'},
   {label:'遅番',time:'10:00〜19:00',pat:'遅巡',day:'遅デ'},
 ];
-const REST_KEYS=['休','有','有4','日/有','研','欠'];
+const REST_KEYS=['休','有','有2','有4','有6','日/有','研','欠'];
 
 // 全区分に「上から順」で数字→アルファベットのショートカットキーを自動割り当て
 // 1,2,3...9,0,a,b,c...z の順（クリア/空白はBackspaceキー固定）
@@ -1239,7 +1241,7 @@ function setShift(k){
     pc.innerHTML=k;
     if(sd){pc.style.background=sd.c;pc.style.color=sd.t}else{pc.style.background='';pc.style.color=''}
     const tag=patDaySvcTag(sid,d);
-    if(tag&&tag!=='pat'&&k&&!['休','有','有4','明','欠','研'].includes(k)){
+    if(tag&&tag!=='pat'&&k&&!['休','有','有2','有4','有6','明','欠','研'].includes(k)){
       const span=document.createElement('span');span.className='pats-svc-tag';
       span.textContent=`（${SVC_LBL[tag]}）`;span.style.color=sd?sd.t:'#555';
       pc.appendChild(span);
@@ -1346,7 +1348,7 @@ function updateMtlCell(td,svc,sid,dateStr){
   if(['休','明','欠'].includes(k)){
     td.style.background='#FFCDD2';td.style.color='#B71C1C';td.textContent='休';return;
   }
-  if(['有','有4'].includes(k)){
+  if(['有','有2','有4','有6'].includes(k)){
     td.style.background='#FFF9C4';td.style.color='#F57F17';td.textContent='有';return;
   }
   if(['研'].includes(k)){
@@ -1923,7 +1925,10 @@ function buildSumTable(){
     for(let d=1;d<=31;d++){
       const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
       if(['休','明','欠'].includes(k))kyuDays++;
-      if(['有','有4'].includes(k))yuuDays++;
+      if(k==='有')yuuDays++;
+      else if(k==='有2')yuuDays+=0.25;
+      else if(k==='有4')yuuDays+=0.5;
+      else if(k==='有6')yuuDays+=0.75;
       if(k==='日/有')yuuDays+=0.5;
     }
     const tr=document.createElement('tr');
@@ -1962,7 +1967,10 @@ function buildTotalStats(){
     for(let d=1;d<=31;d++){
       const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
       if(['休','明','欠'].includes(k))totals.kyu++;
-      if(['有','有4'].includes(k))totals.yuu++;
+      if(k==='有')totals.yuu++;
+      else if(k==='有2')totals.yuu+=0.25;
+      else if(k==='有4')totals.yuu+=0.5;
+      else if(k==='有6')totals.yuu+=0.75;
       if(k==='日/有')totals.yuu+=0.5;
     }
   });
@@ -2172,7 +2180,7 @@ function autoFillAll(svc,silent=false){
         });
       } else {
         // 休み・有・明・欠は全部none
-        if(['休','有','有4','明','欠','研','夜',''].includes(k)){
+        if(['休','有','有2','有4','有6','明','欠','研','夜',''].includes(k)){
           HOURS.forEach(({h})=>{tlData[dateStr][s.id][h]='none'});
         }
       }
