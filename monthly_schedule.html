@@ -1192,9 +1192,18 @@ function buildPatSimpleTable(){
 
 function setPatsCountCell(td,d,members){
   members=members||getPatOrderedMembers();
+  const isSunday=new Date(curY,curM-1,d).getDay()===0;
   const cnt=members.filter(s=>{
     const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
-    if(!k||['休','有','有2','有4','有6','明','夜','欠','研'].includes(k))return false;
+    if(!k)return false;
+    // 牧様（課長）は特別ルール：休みは常に除外。それ以外は「日曜日出勤」「日A」「夜勤」「明け」の
+    // いずれかの時だけ配置基準の人数にカウントする（他の平日の通常勤務はカウントしない）
+    if(s.id==='maki'){
+      if(['休','有','有2','有4','有6','欠','研'].includes(k))return false;
+      if(isSunday)return true;
+      return ['日A','夜','明'].includes(k);
+    }
+    if(['休','有','有2','有4','有6','明','夜','欠','研'].includes(k))return false;
     if(PURE_SVC_FIX[k]==='other')return false; // 「◯(デイ)」の日は今日は定巡なし
     return true;
   }).length;
