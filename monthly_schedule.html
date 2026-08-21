@@ -502,6 +502,16 @@ function syncShiftMap(){
   SHIFTS.forEach(s=>SMAP[s.k]=s); // まず既定値でリセット
   if(settings.customShifts)settings.customShifts.forEach(s=>{if(s&&s.k)SMAP[s.k]=s;}); // カスタム値で上書き
 }
+// settings.customShifts（保存済みのカスタム勤務区分一覧）に、コード側で新しく追加された既定の勤務記号
+// （例：R）がまだ無ければ追加する。これを呼ばないと、以前カスタム設定を保存したことがある環境では
+// 新しい既定の記号が勤務区分選択ポップアップに永遠に出てこない。
+function syncCustomShiftsWithDefaults(){
+  if(!settings.customShifts)return; // カスタム未保存＝常に最新のSHIFTSがそのまま使われるので対応不要
+  const existingKeys=new Set(settings.customShifts.map(s=>s.k));
+  SHIFTS.forEach(s=>{
+    if(!existingKeys.has(s.k))settings.customShifts.push({...s});
+  });
+}
 
 // シフト記号→自動塗り時間帯（開始・終了を0.5h単位で）
 const SHIFT_AUTO={
@@ -2226,6 +2236,7 @@ async function loadSettings(){
     if(r.value)settings=JSON.parse(r.value);
     else{const l=localStorage.getItem(key);if(l)settings=JSON.parse(l);}
   }catch(e){const l=localStorage.getItem(key);if(l)settings=JSON.parse(l);}
+  syncCustomShiftsWithDefaults(); // 保存済みカスタム設定に新しい既定の勤務記号（Rなど）を補完
   syncShiftMap(); // 読み込んだ設定のカスタム勤務区分（h値など）を必ず反映する
   applyDefaultQualifications(); // 保存データが古く未設定でも、資格・OP可デフォルトが消えないようにする
 }
@@ -2615,6 +2626,7 @@ async function loadAll(){
   const ls1=localStorage.getItem(schKey);if(ls1){try{const d=JSON.parse(ls1);if(d&&Object.keys(d).length>0)schData=d;}catch(e){}}
   const ls2=localStorage.getItem(monthKey);if(ls2){try{const d=JSON.parse(ls2);if(d&&Object.keys(d).length>0)tlData=d;}catch(e){}}
   const ls3=localStorage.getItem(settingsKey);if(ls3){try{settings=JSON.parse(ls3);}catch(e){}}
+  syncCustomShiftsWithDefaults(); // 保存済みカスタム設定に新しい既定の勤務記号（Rなど）を補完
   syncShiftMap(); // ローカル保存分の設定（カスタム勤務区分のh値など）を反映
   applyDefaultQualifications(); // 保存データが古く未設定でも、資格・OP可デフォルトが消えないようにする
 
@@ -2637,6 +2649,7 @@ async function loadAll(){
     if(v2){try{const d=JSON.parse(v2);if(d&&Object.keys(d).length>0){tlData=d;localStorage.setItem(monthKey,v2);}}catch(e){}}
     if(v3){try{const d=JSON.parse(v3);if(d)settings=d;}catch(e){}}
   }catch(e){console.log('GAS読み込み失敗:',e);}
+  syncCustomShiftsWithDefaults(); // 保存済みカスタム設定に新しい既定の勤務記号（Rなど）を補完
   syncShiftMap(); // GAS保存分の設定（カスタム勤務区分のh値など）を反映
   applyDefaultQualifications(); // 保存データが古く未設定でも、資格・OP可デフォルトが消えないようにする
 
