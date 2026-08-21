@@ -483,6 +483,7 @@ const SHIFTS=[
   {k:'日/有',label:'半日勤務+半日有給(8h扱い)',c:'#FFE0B2',t:'#E65100',h:8},
   {k:'研', label:'研修',        c:'#B2DFDB',t:'#004D40',h:0},
   {k:'欠', label:'欠勤',        c:'#FFCCBC',t:'#BF360C',h:0},
+  {k:'R',  label:'看護ラウンド（時間指定なし）',c:'#FFF3E0',t:'#E65100',h:8},
   // ↓ 兼任職員が「その日は分割せず1サービスに専念する」場合に使う記号
   {k:'早巡', label:'7:00〜16:00（休憩1h含む）',c:'#D1C4E9',t:'#4A148C',h:8},
   {k:'早デ',label:'7:00〜16:00（休憩1h含む）',c:'#BBDEFB',t:'#0D47A1',h:8},
@@ -516,6 +517,7 @@ const SHIFT_AUTO={
   '遅': {start:10.0,end:19.0},
   '夜': {start:17.0,end:34.0}, // 翌9時=24+9=33→34まで
   '明': {start:0.0, end:9.0},  // 夜勤明け：朝の引き継ぎ時間帯（〜9:00）まで。実際の時刻が違う場合は要調整
+  'R': {start:8.5, end:17.5},  // 看護ラウンド：時間の目安（実際のラウンド時刻は指定しない）
   '早巡':{start:7.0, end:16.0},'早デ':{start:7.0, end:16.0},
   'A巡': {start:8.0, end:17.0},'Aデ': {start:8.0, end:17.0},
   '遅巡':{start:10.0,end:19.0},'遅デ':{start:10.0,end:19.0},
@@ -1088,9 +1090,9 @@ function buildPatCellSegments(sid,d,k){
 // デイサービスのみタブ：対象職員（デイ・有料に関わる職員）を、看護師を先頭に並べて返す
 function getDayOrderedMembers(){
   const members=STAFF.filter(s=>s.conc.includes('day')||s.conc.includes('fac')||s.svc==='day'||s.svc==='fac');
-  const nurses=members.filter(s=>isNurseRole(s.id));
   const others=members.filter(s=>!isNurseRole(s.id));
-  return [...nurses,...others];
+  const nurses=members.filter(s=>isNurseRole(s.id));
+  return [...others,...nurses];
 }
 // 役職（設定タブで変更されていればそちらを優先）に「看護師」と付いているかどうか
 function isNurseRole(sid){
@@ -1109,6 +1111,8 @@ function buildDayCellSegments(sid,d,k){
   const dayIcon=nurse?'🩺':'🏠';
   const dayLabel=nurse?'R':(SVC_LBL[s.svc]||'デイ/有料');
   const dayColor=nurse?{c:'#FFF3E0',t:'#E65100'}:{c:'#E3F2FD',t:'#1565C0'};
+  // 「R」（看護ラウンド）は時間を指定せず、記号だけ大きく表示する
+  if(k==='R')return [{icon:'🩺',label:'R',time:'',c:'#FFF3E0',t:'#E65100'}];
   if(fix==='other'&&auto)return [{icon:dayIcon,label:dayLabel,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:dayColor.c,t:dayColor.t}];
   if(fix==='pat'&&auto)return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
   if(k==='夜'||k==='明')return [];
@@ -1134,8 +1138,8 @@ function buildDaySimpleTable(){
   wrap.innerHTML='';
 
   const banner=document.createElement('div');banner.className='pats-banner';
-  banner.innerHTML=`🏠 デイサービス・有料に関わる職員の勤務を、時間帯ごとに色分けして表示します。<b>看護師（役職に「看護師」を含む職員）</b>は、勤務時間を🩺<b>R</b>として表示します（ラウンド実施時刻は日によって変わるため、時間指定はせず区分のみ表示しています）。<br>
-    セルをクリックすると勤務記号を変更できます。看護師かどうかは「⚙️設定」タブの職員管理「役職」で設定・変更できます。`;
+  banner.innerHTML=`🏠 デイサービス・有料に関わる職員の勤務を、時間帯ごとに色分けして表示します。看護師の勤務セルをクリックし、勤務記号一覧から<b>「R」（看護ラウンド・時間指定なし）</b>を選ぶと、時間帯を出さずに🩺<b>R</b>とだけ表示されます。<br>
+    セルをクリックすると勤務記号を変更できます。看護師かどうかは「⚙️設定」タブの職員管理「役職」で設定・変更できます（看護師は一覧の一番下にまとめて表示されます）。`;
   wrap.appendChild(banner);
 
   const tblWrap=document.createElement('div');tblWrap.className='pats-wrap';
