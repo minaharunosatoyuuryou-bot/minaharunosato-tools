@@ -537,10 +537,11 @@ const SHIFT_AUTO={
 // 兼任職員（デイ⇔定期巡回）が「早/日A/遅/日B」で勤務する場合の時間帯内訳
 // （専任職員は対象外＝勤務時間全体が自分の所属サービスのまま）
 const SHIFT_SPLIT_RULE={
-  '早': [{start:7.0, end:8.5, svc:'pat'},{start:8.5, end:9.0, svc:'none'},{start:9.0, end:16.0, svc:'day'}],
-  '日A':[{start:8.0, end:9.0, svc:'pat'},{start:9.0, end:17.0, svc:'day'}],
+  // デイサービスの実営業時間は9:00〜16:30。それ以外の勤務時間帯はすべて定期巡回として配置する。
+  '早': [{start:7.0, end:9.0, svc:'pat'},{start:9.0, end:16.0, svc:'day'}],
+  '日A':[{start:8.0, end:9.0, svc:'pat'},{start:9.0, end:16.5, svc:'day'},{start:16.5,end:17.0, svc:'pat'}],
   '遅': [{start:10.0,end:16.5, svc:'day'},{start:16.5,end:19.0, svc:'pat'}],
-  '日B':[{start:9.0, end:16.5, svc:'pat'},{start:16.5,end:18.0, svc:'day'}],
+  '日B':[{start:9.0, end:16.5, svc:'day'},{start:16.5,end:18.0, svc:'pat'}],
 };
 
 // 「早巡」「早デ」等＝分割せず終日1サービスに専念する記号（固定サービス）
@@ -1299,7 +1300,7 @@ function buildPatSimpleTable(){
   const splitWrap=document.createElement('div');
   splitWrap.style.cssText='margin:0 14px 12px;background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px 14px;';
   splitWrap.innerHTML=`
-    <div style="font-size:11px;font-weight:bold;color:#4A148C;margin-bottom:6px;">📌 勤務シフト記号ごとの　定期巡回／デイ　振り分け早見表</div>
+    <div style="font-size:11px;font-weight:bold;color:#4A148C;margin-bottom:6px;">📌 勤務シフト記号ごとの　定期巡回／デイ　振り分け早見表　（デイサービスの実営業時間は9:00〜16:30。それ以外はすべて定期巡回）</div>
     <table style="border-collapse:collapse;font-size:11px;width:100%;max-width:640px">
       <thead><tr>
         <th style="background:#455A64;color:#fff;padding:4px 8px;border:1px solid #ccc;">シフト記号</th>
@@ -1308,10 +1309,10 @@ function buildPatSimpleTable(){
         <th style="background:#1565C0;color:#fff;padding:4px 8px;border:1px solid #ccc;">デイ</th>
       </tr></thead>
       <tbody>
-        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">早</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜16:00</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜8:30</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜16:00<br><span style="font-size:9px;color:#888;">（8:30〜9:00は移動等）</span></td></tr>
-        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">日A</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜17:00</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜9:00</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜17:00</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">早</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜16:00</td><td style="padding:3px 8px;border:1px solid #ccc;">7:00〜9:00</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜16:00</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">日A</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜17:00</td><td style="padding:3px 8px;border:1px solid #ccc;">8:00〜9:00 ／ 16:30〜17:00</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜16:30</td></tr>
         <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">遅</td><td style="padding:3px 8px;border:1px solid #ccc;">10:00〜19:00</td><td style="padding:3px 8px;border:1px solid #ccc;">16:30〜19:00</td><td style="padding:3px 8px;border:1px solid #ccc;">10:00〜16:30</td></tr>
-        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">日B</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜18:00</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜16:30</td><td style="padding:3px 8px;border:1px solid #ccc;">16:30〜18:00</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #ccc;font-weight:bold;">日B</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜18:00</td><td style="padding:3px 8px;border:1px solid #ccc;">16:30〜18:00</td><td style="padding:3px 8px;border:1px solid #ccc;">9:00〜16:30</td></tr>
       </tbody>
     </table>
     <div style="font-size:10px;color:#E65100;margin-top:6px;">※ デイサービスがその日の配置基準（必要人数）を満たしている場合は、デイ担当時間も含めて勤務時間全体を定期巡回にあてることがあります。</div>
