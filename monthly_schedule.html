@@ -202,6 +202,7 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
   <div class="tab t-pats" onclick="setTab('pats',this)">🚐 定期巡回のみ</div>
   <div class="tab t-op" onclick="setTab('op',this)">🛎 オペレーター配置確認</div>
   <div class="tab t-day2" onclick="setTab('day2',this)">🏠 デイサービスのみ</div>
+  <div class="tab t-counselor" onclick="setTab('counselor',this)">📋 相談員配置確認</div>
   <div class="tab t-day" onclick="setTab('tl',this)">🕐 時間帯（全サービス）</div>
   <div class="tab t-set" onclick="setTab('set',this)">⚙️ 設定</div>
 </div>
@@ -219,6 +220,9 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 
 <!-- デイサービスのみ：シンプル出勤表（看護師はラウンドをR表示） -->
 <div id="v-day2" class="hidden"></div>
+
+<!-- 相談員のみ：配置確認 -->
+<div id="v-counselor" class="hidden"></div>
 
 
 <!-- 時間帯（全サービス統合） -->
@@ -627,25 +631,27 @@ function init(){
 function setTab(t,el){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  ['all','pats','op','day2','tl','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
+  ['all','pats','op','day2','counselor','tl','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
   const vid=t==='day'||t==='fac'||t==='pat'?'tl':t;
   document.getElementById('v-'+vid).classList.remove('hidden');
   if(vid==='tl') buildMtlAll();
   if(vid==='pats') buildPatSimpleTable();
   if(vid==='op') buildOperatorCheckView();
   if(vid==='day2') buildDaySimpleTable();
+  if(vid==='counselor') buildCounselorTable();
   if(t==='sum'){buildSumTable();buildTotalStats();}
   if(t==='set') buildSettings();
 }
 
 function showView(v){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  ['all','pats','op','day2','tl','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
+  ['all','pats','op','day2','counselor','tl','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
   document.getElementById('v-'+v).classList.remove('hidden');
   if(v==='sum'){buildSumTable();buildTotalStats();}
   if(v==='pats') buildPatSimpleTable();
   if(v==='op') buildOperatorCheckView();
   if(v==='day2') buildDaySimpleTable();
+  if(v==='counselor') buildCounselorTable();
 }
 
 function changeMonth(d){
@@ -1097,12 +1103,13 @@ function buildPatCellSegments(sid,d,k){
   return []; // 休み等（呼び出し側で処理）
 }
 
-// デイサービスのみタブ：対象職員（デイ・有料に関わる職員）を、看護師を先頭に並べて返す
+// デイサービスのみタブ：対象職員（デイ・有料に関わる職員）を、通常職員→相談員→看護師の順に並べて返す
 function getDayOrderedMembers(){
   const members=STAFF.filter(s=>s.conc.includes('day')||s.conc.includes('fac')||s.svc==='day'||s.svc==='fac');
-  const others=members.filter(s=>!isNurseRole(s.id));
+  const normal=members.filter(s=>!isNurseRole(s.id)&&!isCounselorRole(s.id));
+  const counselors=members.filter(s=>!isNurseRole(s.id)&&isCounselorRole(s.id));
   const nurses=members.filter(s=>isNurseRole(s.id));
-  return [...others,...nurses];
+  return [...normal,...counselors,...nurses];
 }
 // 役職（設定タブで変更されていればそちらを優先）に「看護師」と付いているかどうか
 function isNurseRole(sid){
@@ -1110,6 +1117,13 @@ function isNurseRole(sid){
   if(!s)return false;
   const role=(settings.staffRole&&settings.staffRole[sid])||s.role||'';
   return /看護師/.test(role);
+}
+// 役職に「相談員」と付いているかどうか（生活相談員／相談員 いずれも対象）
+function isCounselorRole(sid){
+  const s=STAFF.find(x=>x.id===sid)||(settings.extraStaff||[]).find(x=>x.id===sid);
+  if(!s)return false;
+  const role=(settings.staffRole&&settings.staffRole[sid])||s.role||'';
+  return /相談員/.test(role);
 }
 // セル表示用：デイサービスのみタブのセグメント。看護師のデイ時間は「🩺R（ラウンド1h）」表示にする
 function buildDayCellSegments(sid,d,k){
@@ -1149,7 +1163,7 @@ function buildDaySimpleTable(){
 
   const banner=document.createElement('div');banner.className='pats-banner';
   banner.innerHTML=`🏠 デイサービス・有料に関わる職員の勤務を、時間帯ごとに色分けして表示します。看護師の勤務セルをクリックし、勤務記号一覧から<b>「R」（看護ラウンド・時間指定なし）</b>を選ぶと、時間帯を出さずに🩺<b>R</b>とだけ表示されます。<br>
-    セルをクリックすると勤務記号を変更できます。看護師かどうかは「⚙️設定」タブの職員管理「役職」で設定・変更できます（看護師は一覧の一番下にまとめて表示されます）。`;
+    セルをクリックすると勤務記号を変更できます。看護師・相談員かどうかは「⚙️設定」タブの職員管理「役職」で設定・変更できます（相談員は📋バッジ、看護師は🩺バッジで表示。看護師は一覧の一番下にまとめて表示されます）。`;
   wrap.appendChild(banner);
 
   const tblWrap=document.createElement('div');tblWrap.className='pats-wrap';
@@ -1170,7 +1184,7 @@ function buildDaySimpleTable(){
   members.forEach(s=>{
     const tr=document.createElement('tr');
     const tdN=document.createElement('td');tdN.className='pats-name';
-    tdN.innerHTML=`${s.name}${isNurseRole(s.id)?'<span class="conc-badge">🩺看護師</span>':(s.conc.length>1?'<span class="conc-badge">★兼任（'+SVC_FULL[s.svc]+'）</span>':'')}`;
+    tdN.innerHTML=`${s.name}${isNurseRole(s.id)?'<span class="conc-badge">🩺看護師</span>':isCounselorRole(s.id)?'<span class="conc-badge" style="color:#00695C">📋相談員</span>':(s.conc.length>1?'<span class="conc-badge">★兼任（'+SVC_FULL[s.svc]+'）</span>':'')}`;
     tr.appendChild(tdN);
     for(let d=1;d<=days;d++){
       const wd=new Date(curY,curM-1,d).getDay();
@@ -1201,6 +1215,94 @@ function buildDaySimpleTable(){
     }
     tbl.appendChild(tr);
   });
+
+  tblWrap.appendChild(tbl);wrap.appendChild(tblWrap);
+}
+
+// ===== 相談員のみ：配置確認（竹尾さん・栗本さんなど、役職に「相談員」を含む職員だけの出勤表） =====
+function buildCounselorTable(){
+  const wrap=document.getElementById('v-counselor');
+  if(!wrap)return;
+  wrap.innerHTML='';
+
+  const banner=document.createElement('div');banner.className='pats-banner';
+  banner.innerHTML=`📋 相談員（役職に「相談員」を含む職員）だけを抜き出した出勤表です。セルをクリックすると勤務記号を変更できます。<br>
+    相談員かどうかは「⚙️設定」タブの職員管理「役職」で設定・変更できます。`;
+  wrap.appendChild(banner);
+
+  const members=getActiveStaff().filter(s=>isCounselorRole(s.id));
+  if(!members.length){
+    const empty=document.createElement('div');
+    empty.style.cssText='margin:0 14px;padding:16px;color:#999;font-size:13px';
+    empty.textContent='現在、役職が「相談員」に設定されている職員がいません。⚙️設定タブの職員管理で役職を確認してください。';
+    wrap.appendChild(empty);
+    return;
+  }
+
+  const tblWrap=document.createElement('div');tblWrap.className='pats-wrap';
+  const tbl=document.createElement('table');tbl.className='pats';
+
+  const htr=document.createElement('tr');
+  const th0=document.createElement('th');th0.className='pats-th-name';th0.textContent='氏名';htr.appendChild(th0);
+  for(let d=1;d<=days;d++){
+    const wd=new Date(curY,curM-1,d).getDay();
+    const wc=wd===6?'sat':wd===0?'sun':'';
+    const th=document.createElement('th');th.className=`pats-th-d ${wc}`;
+    th.innerHTML=`<div class="dn">${d}</div><div class="dw">${WD[wd]}</div>`;
+    htr.appendChild(th);
+  }
+  tbl.appendChild(htr);
+
+  members.forEach(s=>{
+    const tr=document.createElement('tr');
+    const tdN=document.createElement('td');tdN.className='pats-name';
+    tdN.innerHTML=`${s.name}<span class="conc-badge" style="color:#00695C">📋相談員</span>`;
+    tr.appendChild(tdN);
+    for(let d=1;d<=days;d++){
+      const wd=new Date(curY,curM-1,d).getDay();
+      const wc=wd===6?' sat':wd===0?' sun':'';
+      const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
+      const sd=SMAP[k];
+      const td=document.createElement('td');
+      td.className=`pats-cell${wc}`;
+      td.id=`cc_${s.id}_${d}`;
+      const segs=buildDayCellSegments(s.id,d,k);
+      if(k&&segs.length){
+        const box=document.createElement('div');box.className='pats-split';
+        segs.forEach(sg=>{
+          const part=document.createElement('div');part.className='pats-split-part';
+          part.style.cssText=`background:${sg.c};color:${sg.t}`;
+          part.innerHTML=`<span>${sg.icon}${sg.label}</span>${sg.time?`<span class="pk">${sg.time}</span>`:''}`;
+          box.appendChild(part);
+        });
+        td.appendChild(box);
+      }else if(k){
+        const rest=document.createElement('div');rest.className='pats-split-rest';
+        rest.textContent=k;
+        if(sd){rest.style.background=sd.c;rest.style.color=sd.t;}
+        td.appendChild(rest);
+      }
+      td.onclick=e=>openShiftPop(e,s.id,d,td);
+      tr.appendChild(td);
+    }
+    tbl.appendChild(tr);
+  });
+
+  // 配置人数行（相談員が何名出勤しているか）
+  const tr2=document.createElement('tr');
+  const td0=document.createElement('td');td0.className='pats-name pats-count-name';td0.textContent='出勤人数';tr2.appendChild(td0);
+  for(let d=1;d<=days;d++){
+    const cnt=members.filter(s=>{
+      const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
+      return k&&!['休','有','有2','有4','有6','明','夜','欠','研'].includes(k);
+    }).length;
+    const td=document.createElement('td');
+    td.style.background=cnt>0?'#2E7D32':'#C62828';
+    td.textContent=cnt;
+    tr2.appendChild(td);
+  }
+  tr2.className='pats-count-row';
+  tbl.appendChild(tr2);
 
   tblWrap.appendChild(tbl);wrap.appendChild(tblWrap);
 }
