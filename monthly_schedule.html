@@ -538,6 +538,7 @@ const SHIFT_AUTO={
 // （専任職員は対象外＝勤務時間全体が自分の所属サービスのまま）
 const SHIFT_SPLIT_RULE={
   // デイサービスの実営業時間は9:00〜16:30。それ以外の勤務時間帯はすべて定期巡回として配置する。
+  '日': [{start:8.5, end:9.0, svc:'pat'},{start:9.0, end:16.5, svc:'day'},{start:16.5,end:17.5, svc:'pat'}],
   '早': [{start:7.0, end:9.0, svc:'pat'},{start:9.0, end:16.0, svc:'day'}],
   '日A':[{start:8.0, end:9.0, svc:'pat'},{start:9.0, end:16.5, svc:'day'},{start:16.5,end:17.0, svc:'pat'}],
   '遅': [{start:10.0,end:16.5, svc:'day'},{start:16.5,end:19.0, svc:'pat'}],
@@ -1163,7 +1164,14 @@ function buildDayCellSegments(sid,d,k){
   if(k==='R')return [{icon:'🩺',label:'R',time:'',c:'#FFF3E0',t:'#E65100'}];
   if(fix==='other'&&auto)return [{icon:dayIcon,label:dayLabel,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:dayColor.c,t:dayColor.t}];
   if(fix==='pat'&&auto)return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
-  if(k==='夜'||k==='明')return [];
+  if(k==='夜'&&auto){
+    if(s.conc.includes('pat')&&isKfs(sid))return [{icon:'🚐',label:'夜勤(定期巡回)',time:`${fmtHour(auto.start)}〜翌${fmtHour(auto.end-24)}`,c:'#EDE7F6',t:'#4A148C'}];
+    return [{icon:'🌙',label:'夜勤',time:`${fmtHour(auto.start)}〜翌${fmtHour(auto.end-24)}`,c:'#F3E5F5',t:'#6A1B9A'}];
+  }
+  if(k==='明'&&auto){
+    if(s.conc.includes('pat')&&isKfs(sid))return [{icon:'🚐',label:'明け(定期巡回)',time:`〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
+    return [{icon:'💤',label:'夜勤明け',time:'',c:'#F3E5F5',t:'#6A1B9A'}];
+  }
   if(s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
     const segs=[];
     SHIFT_SPLIT_RULE[k].forEach(sg=>{
