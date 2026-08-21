@@ -201,6 +201,7 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
   <div class="tab t-all active" onclick="setTab('all',this)">📋 全員（シフト）</div>
   <div class="tab t-pats" onclick="setTab('pats',this)">🚐 定期巡回のみ</div>
   <div class="tab t-op" onclick="setTab('op',this)">🛎 オペレーター配置確認</div>
+  <div class="tab t-day2" onclick="setTab('day2',this)">🏠 デイサービスのみ</div>
   <div class="tab t-day" onclick="setTab('tl',this)">🕐 時間帯（全サービス）</div>
   <div class="tab t-set" onclick="setTab('set',this)">⚙️ 設定</div>
 </div>
@@ -215,6 +216,9 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 
 <!-- 定期巡回：オペレーター配置確認（1時間ごとの厳密判定） -->
 <div id="v-op" class="hidden"></div>
+
+<!-- デイサービスのみ：シンプル出勤表（看護師はラウンドをR表示） -->
+<div id="v-day2" class="hidden"></div>
 
 
 <!-- 時間帯（全サービス統合） -->
@@ -605,23 +609,25 @@ function init(){
 function setTab(t,el){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  ['all','pats','op','tl','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
+  ['all','pats','op','day2','tl','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
   const vid=t==='day'||t==='fac'||t==='pat'?'tl':t;
   document.getElementById('v-'+vid).classList.remove('hidden');
   if(vid==='tl') buildMtlAll();
   if(vid==='pats') buildPatSimpleTable();
   if(vid==='op') buildOperatorCheckView();
+  if(vid==='day2') buildDaySimpleTable();
   if(t==='sum'){buildSumTable();buildTotalStats();}
   if(t==='set') buildSettings();
 }
 
 function showView(v){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  ['all','pats','op','tl','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
+  ['all','pats','op','day2','tl','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
   document.getElementById('v-'+v).classList.remove('hidden');
   if(v==='sum'){buildSumTable();buildTotalStats();}
   if(v==='pats') buildPatSimpleTable();
   if(v==='op') buildOperatorCheckView();
+  if(v==='day2') buildDaySimpleTable();
 }
 
 function changeMonth(d){
@@ -1071,6 +1077,112 @@ function buildPatCellSegments(sid,d,k){
     return [{icon:'🏠',label:dayLbl,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#E3F2FD',t:'#1565C0'}];
   }
   return []; // 休み等（呼び出し側で処理）
+}
+
+// デイサービスのみタブ：対象職員（デイ・有料に関わる職員）を、看護師を先頭に並べて返す
+function getDayOrderedMembers(){
+  const members=STAFF.filter(s=>s.conc.includes('day')||s.conc.includes('fac')||s.svc==='day'||s.svc==='fac');
+  const nurses=members.filter(s=>isNurseRole(s.id));
+  const others=members.filter(s=>!isNurseRole(s.id));
+  return [...nurses,...others];
+}
+// 役職（設定タブで変更されていればそちらを優先）に「看護師」と付いているかどうか
+function isNurseRole(sid){
+  const s=STAFF.find(x=>x.id===sid)||(settings.extraStaff||[]).find(x=>x.id===sid);
+  if(!s)return false;
+  const role=(settings.staffRole&&settings.staffRole[sid])||s.role||'';
+  return /看護師/.test(role);
+}
+// セル表示用：デイサービスのみタブのセグメント。看護師のデイ時間は「🩺R（ラウンド1h）」表示にする
+function buildDayCellSegments(sid,d,k){
+  const s=STAFF.find(x=>x.id===sid);
+  if(!s||!k)return [];
+  const nurse=isNurseRole(sid);
+  const fix=PURE_SVC_FIX[k];
+  const auto=SHIFT_AUTO[k];
+  const dayIcon=nurse?'🩺':'🏠';
+  const dayLabel=nurse?'R（ラウンド1h）':(SVC_LBL[s.svc]||'デイ/有料');
+  const dayColor=nurse?{c:'#FFF3E0',t:'#E65100'}:{c:'#E3F2FD',t:'#1565C0'};
+  if(fix==='other'&&auto)return [{icon:dayIcon,label:dayLabel,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:dayColor.c,t:dayColor.t}];
+  if(fix==='pat'&&auto)return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
+  if(k==='夜'||k==='明')return [];
+  if(s.conc.includes('day')&&s.conc.includes('pat')&&SHIFT_SPLIT_RULE[k]){
+    const segs=[];
+    SHIFT_SPLIT_RULE[k].forEach(sg=>{
+      if(sg.svc==='none')return;
+      if(sg.svc==='pat')segs.push({icon:'🚐',label:'定期巡回',time:`${fmtHour(sg.start)}〜${fmtHour(sg.end)}`,c:'#EDE7F6',t:'#4A148C'});
+      else segs.push({icon:dayIcon,label:dayLabel,time:`${fmtHour(sg.start)}〜${fmtHour(sg.end)}`,c:dayColor.c,t:dayColor.t});
+    });
+    return segs;
+  }
+  if(auto){
+    if(s.svc==='pat')return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
+    return [{icon:dayIcon,label:dayLabel,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:dayColor.c,t:dayColor.t}];
+  }
+  return [];
+}
+
+function buildDaySimpleTable(){
+  const wrap=document.getElementById('v-day2');
+  if(!wrap)return;
+  wrap.innerHTML='';
+
+  const banner=document.createElement('div');banner.className='pats-banner';
+  banner.innerHTML=`🏠 デイサービス・有料に関わる職員の勤務を、時間帯ごとに色分けして表示します。<b>看護師（役職に「看護師」を含む職員）</b>は、デイの時間を🩺<b>R（ラウンド1h）</b>として表示します（実施される巡回・健康観察の時間帯を示す表記で、通常のデイ介護とは区別しています）。<br>
+    セルをクリックすると勤務記号を変更できます。看護師かどうかは「⚙️設定」タブの職員管理「役職」で設定・変更できます。`;
+  wrap.appendChild(banner);
+
+  const tblWrap=document.createElement('div');tblWrap.className='pats-wrap';
+  const tbl=document.createElement('table');tbl.className='pats';
+  const members=getDayOrderedMembers();
+
+  const htr=document.createElement('tr');
+  const th0=document.createElement('th');th0.className='pats-th-name';th0.textContent='氏名';htr.appendChild(th0);
+  for(let d=1;d<=days;d++){
+    const wd=new Date(curY,curM-1,d).getDay();
+    const wc=wd===6?'sat':wd===0?'sun':'';
+    const th=document.createElement('th');th.className=`pats-th-d ${wc}`;
+    th.innerHTML=`<div class="dn">${d}</div><div class="dw">${WD[wd]}</div>`;
+    htr.appendChild(th);
+  }
+  tbl.appendChild(htr);
+
+  members.forEach(s=>{
+    const tr=document.createElement('tr');
+    const tdN=document.createElement('td');tdN.className='pats-name';
+    tdN.innerHTML=`${s.name}${isNurseRole(s.id)?'<span class="conc-badge">🩺看護師</span>':(s.conc.length>1?'<span class="conc-badge">★兼任（'+SVC_FULL[s.svc]+'）</span>':'')}`;
+    tr.appendChild(tdN);
+    for(let d=1;d<=days;d++){
+      const wd=new Date(curY,curM-1,d).getDay();
+      const wc=wd===6?' sat':wd===0?' sun':'';
+      const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
+      const sd=SMAP[k];
+      const td=document.createElement('td');
+      td.className=`pats-cell${wc}`;
+      td.id=`dc_${s.id}_${d}`;
+      const segs=buildDayCellSegments(s.id,d,k);
+      if(k&&segs.length){
+        const box=document.createElement('div');box.className='pats-split';
+        segs.forEach(sg=>{
+          const part=document.createElement('div');part.className='pats-split-part';
+          part.style.cssText=`background:${sg.c};color:${sg.t}`;
+          part.innerHTML=`<span>${sg.icon}${sg.label}</span>${sg.time?`<span class="pk">${sg.time}</span>`:''}`;
+          box.appendChild(part);
+        });
+        td.appendChild(box);
+      }else if(k){
+        const rest=document.createElement('div');rest.className='pats-split-rest';
+        rest.textContent=k;
+        if(sd){rest.style.background=sd.c;rest.style.color=sd.t;}
+        td.appendChild(rest);
+      }
+      td.onclick=e=>openShiftPop(e,s.id,d,td);
+      tr.appendChild(td);
+    }
+    tbl.appendChild(tr);
+  });
+
+  tblWrap.appendChild(tbl);wrap.appendChild(tblWrap);
 }
 
 function buildPatSimpleTable(){
