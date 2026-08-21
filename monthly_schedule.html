@@ -925,9 +925,9 @@ let opCheckDay=null;
 // さらに、通常の判定だけではオペレーターが1人もいない「不足」の時間帯が出た場合は、
 // その時間に本来「デイ」側担当になっている兼任職員（介護福祉士＋OP可）を定期巡回側へ振り替えて穴を埋める。
 function assignOperatorSlots(d){
-  const counselorToday=getCounselorForDay(d); // 本日のデイ相談員は、その日の定期巡回配置からは除外する
-  const members=getActiveStaff().filter(s=>s.conc.includes('pat')&&!(counselorToday&&s.id===counselorToday.id));
-  const dayPatMembers=getActiveStaff().filter(s=>s.conc.includes('day')&&s.conc.includes('pat')&&!(counselorToday&&s.id===counselorToday.id));
+  const counselorToday=getCounselorForDay(d); // 本日の相談員担当時間は、ギャップ埋めの振替対象から除外する
+  const members=getActiveStaff().filter(s=>s.conc.includes('pat'));
+  const dayPatMembers=getActiveStaff().filter(s=>s.conc.includes('day')&&s.conc.includes('pat'));
   const slots=[];
   for(let t=OP_CHECK_START;t<OP_CHECK_END;t+=OP_SLOT_STEP){
     const checkH=t+OP_SLOT_STEP/2; // スロット中間時刻で判定
@@ -936,7 +936,8 @@ function assignOperatorSlots(d){
     let extraFillers=[];
     if(!candidates.length){
       // ギャップ埋め：この時間「デイ」担当中の兼任職員のうち、介護福祉士＋OP可の人を定期巡回へ振替候補にする
-      extraFillers=dayPatMembers.filter(s=>getHourlyPatSvc(s.id,d,checkH)==='day'&&isKfs(s.id)&&isOpOk(s.id));
+      // （ただし本日の相談員担当者は、相談員業務中なので振替対象にしない）
+      extraFillers=dayPatMembers.filter(s=>getHourlyPatSvc(s.id,d,checkH)==='day'&&isKfs(s.id)&&isOpOk(s.id)&&!(counselorToday&&s.id===counselorToday.id));
       candidates=extraFillers;
     }
     slots.push({t,assigned:extraFillers.length?[...assigned,...extraFillers]:assigned,candidates,chosen:null,filled:extraFillers.map(s=>s.id)});
@@ -1081,23 +1082,23 @@ function buildOperatorCheckView(){
 
 // セル表示用：その日の勤務内訳を「🚐定期巡回」「🏠デイ/有料」に分けたセグメント配列で返す
 // （1〜2個。空なら休み等）
+// 本日の相談員に選ばれている職員は、勤務のうち「デイ／有料」部分だけを「相談員」表示に置き換える
+// （定期巡回部分はそのまま残す。デイが終わったら定期巡回、というような分割シフトを崩さないため）
+function relabelCounselorSegs(sid,d,segs){
+  if(!isCounselorRole(sid))return segs;
+  const todays=getCounselorForDay(d);
+  if(!todays||todays.id!==sid)return segs;
+  return segs.map(sg=>sg.icon==='🚐'?sg:{icon:'📋',label:'相談員',time:sg.time,c:'#E0F2F1',t:'#00695C'});
+}
+
 function buildPatCellSegments(sid,d,k){
   const s=STAFF.find(x=>x.id===sid);
   if(!s||!k)return [];
-  // 本日の相談員に選ばれている職員は、実際には定期巡回に入れない（時間が被るため）ので、
-  // 元の勤務記号が定期巡回混じりでも「相談員」表示に統一する
-  if(isCounselorRole(sid)){
-    const todays=getCounselorForDay(d);
-    if(todays&&todays.id===sid){
-      const auto0=SHIFT_AUTO[k];
-      return [{icon:'📋',label:'相談員（本日）',time:auto0?`${fmtHour(auto0.start)}〜${fmtHour(auto0.end)}`:'',c:'#E0F2F1',t:'#00695C'}];
-    }
-  }
   const fix=PURE_SVC_FIX[k];
   const auto=SHIFT_AUTO[k];
   const dayLbl=SVC_LBL[s.svc]||'デイ/有料';
   if(fix==='pat'&&auto)return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
-  if(fix==='other'&&auto)return [{icon:'🏠',label:dayLbl,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#E3F2FD',t:'#1565C0'}];
+  if(fix==='other'&&auto)return relabelCounselorSegs(sid,d,[{icon:'🏠',label:dayLbl,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#E3F2FD',t:'#1565C0'}]);
   if(k==='夜'&&auto){
     if(s.conc.includes('pat')&&isKfs(sid))return [{icon:'🚐',label:'夜勤(定期巡回)',time:`${fmtHour(auto.start)}〜翌${fmtHour(auto.end-24)}`,c:'#EDE7F6',t:'#4A148C'}];
     return [{icon:'🌙',label:'夜勤',time:`${fmtHour(auto.start)}〜翌${fmtHour(auto.end-24)}`,c:'#F3E5F5',t:'#6A1B9A'}];
@@ -1113,11 +1114,11 @@ function buildPatCellSegments(sid,d,k){
       if(sg.svc==='pat')segs.push({icon:'🚐',label:'定期巡回',time:`${fmtHour(sg.start)}〜${fmtHour(sg.end)}`,c:'#EDE7F6',t:'#4A148C'});
       else segs.push({icon:'🏠',label:dayLbl,time:`${fmtHour(sg.start)}〜${fmtHour(sg.end)}`,c:'#E3F2FD',t:'#1565C0'});
     });
-    return segs;
+    return relabelCounselorSegs(sid,d,segs);
   }
   if(auto){
     if(s.svc==='pat')return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
-    return [{icon:'🏠',label:dayLbl,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#E3F2FD',t:'#1565C0'}];
+    return relabelCounselorSegs(sid,d,[{icon:'🏠',label:dayLbl,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#E3F2FD',t:'#1565C0'}]);
   }
   return []; // 休み等（呼び出し側で処理）
 }
@@ -1146,14 +1147,6 @@ function isCounselorRole(sid){
 function buildDayCellSegments(sid,d,k){
   const s=STAFF.find(x=>x.id===sid);
   if(!s||!k)return [];
-  // 本日の相談員に選ばれている職員は「相談員」表示に統一（元の勤務記号が定期巡回混じりでも、その日は相談員専念）
-  if(isCounselorRole(sid)){
-    const todays=getCounselorForDay(d);
-    if(todays&&todays.id===sid){
-      const auto0=SHIFT_AUTO[k];
-      return [{icon:'📋',label:'相談員（本日）',time:auto0?`${fmtHour(auto0.start)}〜${fmtHour(auto0.end)}`:'',c:'#E0F2F1',t:'#00695C'}];
-    }
-  }
   const nurse=isNurseRole(sid);
   const fix=PURE_SVC_FIX[k];
   const auto=SHIFT_AUTO[k];
@@ -1162,7 +1155,7 @@ function buildDayCellSegments(sid,d,k){
   const dayColor=nurse?{c:'#FFF3E0',t:'#E65100'}:{c:'#E3F2FD',t:'#1565C0'};
   // 「R」（看護ラウンド）は時間を指定せず、記号だけ大きく表示する
   if(k==='R')return [{icon:'🩺',label:'R',time:'',c:'#FFF3E0',t:'#E65100'}];
-  if(fix==='other'&&auto)return [{icon:dayIcon,label:dayLabel,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:dayColor.c,t:dayColor.t}];
+  if(fix==='other'&&auto)return relabelCounselorSegs(sid,d,[{icon:dayIcon,label:dayLabel,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:dayColor.c,t:dayColor.t}]);
   if(fix==='pat'&&auto)return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
   if(k==='夜'&&auto){
     if(s.conc.includes('pat')&&isKfs(sid))return [{icon:'🚐',label:'夜勤(定期巡回)',time:`${fmtHour(auto.start)}〜翌${fmtHour(auto.end-24)}`,c:'#EDE7F6',t:'#4A148C'}];
@@ -1179,11 +1172,11 @@ function buildDayCellSegments(sid,d,k){
       if(sg.svc==='pat')segs.push({icon:'🚐',label:'定期巡回',time:`${fmtHour(sg.start)}〜${fmtHour(sg.end)}`,c:'#EDE7F6',t:'#4A148C'});
       else segs.push({icon:dayIcon,label:dayLabel,time:`${fmtHour(sg.start)}〜${fmtHour(sg.end)}`,c:dayColor.c,t:dayColor.t});
     });
-    return segs;
+    return relabelCounselorSegs(sid,d,segs);
   }
   if(auto){
     if(s.svc==='pat')return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
-    return [{icon:dayIcon,label:dayLabel,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:dayColor.c,t:dayColor.t}];
+    return relabelCounselorSegs(sid,d,[{icon:dayIcon,label:dayLabel,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:dayColor.c,t:dayColor.t}]);
   }
   return [];
 }
