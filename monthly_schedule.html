@@ -1082,6 +1082,15 @@ function buildOperatorCheckView(){
 function buildPatCellSegments(sid,d,k){
   const s=STAFF.find(x=>x.id===sid);
   if(!s||!k)return [];
+  // 本日の相談員に選ばれている職員は、実際には定期巡回に入れない（時間が被るため）ので、
+  // 元の勤務記号が定期巡回混じりでも「相談員」表示に統一する
+  if(isCounselorRole(sid)){
+    const todays=getCounselorForDay(d);
+    if(todays&&todays.id===sid){
+      const auto0=SHIFT_AUTO[k];
+      return [{icon:'📋',label:'相談員（本日）',time:auto0?`${fmtHour(auto0.start)}〜${fmtHour(auto0.end)}`:'',c:'#E0F2F1',t:'#00695C'}];
+    }
+  }
   const fix=PURE_SVC_FIX[k];
   const auto=SHIFT_AUTO[k];
   const dayLbl=SVC_LBL[s.svc]||'デイ/有料';
@@ -1135,6 +1144,14 @@ function isCounselorRole(sid){
 function buildDayCellSegments(sid,d,k){
   const s=STAFF.find(x=>x.id===sid);
   if(!s||!k)return [];
+  // 本日の相談員に選ばれている職員は「相談員」表示に統一（元の勤務記号が定期巡回混じりでも、その日は相談員専念）
+  if(isCounselorRole(sid)){
+    const todays=getCounselorForDay(d);
+    if(todays&&todays.id===sid){
+      const auto0=SHIFT_AUTO[k];
+      return [{icon:'📋',label:'相談員（本日）',time:auto0?`${fmtHour(auto0.start)}〜${fmtHour(auto0.end)}`:'',c:'#E0F2F1',t:'#00695C'}];
+    }
+  }
   const nurse=isNurseRole(sid);
   const fix=PURE_SVC_FIX[k];
   const auto=SHIFT_AUTO[k];
