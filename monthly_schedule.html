@@ -43,11 +43,11 @@ body{font-family:'Meiryo UI',sans-serif;background:#f0f2f5;font-size:12px}
 
 /* ===== 定期巡回のみ：シンプル出勤表 ===== */
 .pats-banner{background:#EDE7F6;border-left:4px solid #4A148C;padding:10px 14px;margin:12px 14px;font-size:12px;color:#333;border-radius:4px;line-height:1.6}
-.pats-wrap{overflow:auto;padding:0 14px 16px;background:#fff}
+.pats-wrap{overflow:auto;padding:0 14px 16px;background:#fff;max-height:80vh}
 table.pats{border-collapse:collapse;white-space:nowrap}
 table.pats th,table.pats td{border:1px solid #ccc;padding:0}
-.pats-th-name{width:130px;min-width:130px;background:#4A148C;color:#fff;font-size:12px;text-align:center;padding:5px;position:sticky;left:0;z-index:3}
-.pats-th-d{width:78px;min-width:78px;font-size:11px;text-align:center;padding:4px 1px;background:#37474F;color:#fff}
+.pats-th-name{width:130px;min-width:130px;background:#4A148C;color:#fff;font-size:12px;text-align:center;padding:5px;position:sticky;left:0;top:0;z-index:4}
+.pats-th-d{width:78px;min-width:78px;font-size:11px;text-align:center;padding:4px 1px;background:#37474F;color:#fff;position:sticky;top:0;z-index:2}
 .pats-th-d .dn{font-size:13px;font-weight:bold}.pats-th-d .dw{font-size:9px}
 .pats-th-d.sat{background:#0D47A1}.pats-th-d.sun{background:#B71C1C}
 .pats-name{background:#F3E5F5;font-size:13px;font-weight:bold;padding:5px 8px;position:sticky;left:0;z-index:1;white-space:nowrap}
@@ -63,16 +63,16 @@ table.pats th,table.pats td{border:1px solid #ccc;padding:0}
 .pats-count-name{background:#4A148C!important;color:#fff!important}
 
 /* ===== 全員タブ：月間シフト表 ===== */
-.sch-wrap{overflow:auto;padding:10px 14px;background:#fff}
+.sch-wrap{overflow:auto;padding:10px 14px;background:#fff;max-height:80vh}
 table.sch{border-collapse:collapse;white-space:nowrap}
 table.sch th,table.sch td{border:1px solid #ccc;padding:0}
-.th-svc{width:52px;min-width:52px;background:#263238;color:#fff;font-size:9px;text-align:center;padding:2px;position:sticky;left:0;z-index:3}
-.th-role{width:80px;min-width:80px;background:#37474F;color:#fff;font-size:9px;text-align:center;padding:2px;position:sticky;left:52px;z-index:3}
-.th-name{width:88px;min-width:88px;background:#455A64;color:#fff;font-size:10px;text-align:center;padding:2px;position:sticky;left:132px;z-index:3}
-.th-d{width:34px;min-width:34px;font-size:9px;text-align:center;padding:2px 1px;background:#37474F;color:#fff;cursor:pointer}
+.th-svc{width:52px;min-width:52px;background:#263238;color:#fff;font-size:9px;text-align:center;padding:2px;position:sticky;left:0;top:0;z-index:5}
+.th-role{width:80px;min-width:80px;background:#37474F;color:#fff;font-size:9px;text-align:center;padding:2px;position:sticky;left:52px;top:0;z-index:5}
+.th-name{width:88px;min-width:88px;background:#455A64;color:#fff;font-size:10px;text-align:center;padding:2px;position:sticky;left:132px;top:0;z-index:5}
+.th-d{width:34px;min-width:34px;font-size:9px;text-align:center;padding:2px 1px;background:#37474F;color:#fff;cursor:pointer;position:sticky;top:0;z-index:2}
 .th-d:hover{background:#546E7A}.th-d .dn{font-size:11px;font-weight:bold}.th-d .dw{font-size:8px}
 .th-d.sat{background:#0D47A1}.th-d.sun{background:#B71C1C}
-.th-total{width:34px;min-width:34px;background:#263238;color:#fff;font-size:9px;text-align:center;padding:2px}
+.th-total{width:34px;min-width:34px;background:#263238;color:#fff;font-size:9px;text-align:center;padding:2px;position:sticky;top:0;z-index:2}
 .td-svc{font-size:8px;text-align:center;padding:2px;position:sticky;left:0;z-index:1;font-weight:bold;color:#fff}
 .td-svc.sd{background:#1565C0}.td-svc.sf{background:#1B5E20}.td-svc.sp{background:#4A148C}
 .td-role{background:#ECEFF1;font-size:8px;text-align:center;padding:2px;position:sticky;left:52px;z-index:1;color:#555;white-space:nowrap;overflow:hidden;max-width:80px}
