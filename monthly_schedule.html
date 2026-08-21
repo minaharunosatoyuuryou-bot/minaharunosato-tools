@@ -1187,7 +1187,8 @@ function buildDaySimpleTable(){
 
   const banner=document.createElement('div');banner.className='pats-banner';
   banner.innerHTML=`🏠 デイサービス・有料に関わる職員の勤務を、時間帯ごとに色分けして表示します。看護師の勤務セルをクリックし、勤務記号一覧から<b>「R」（看護ラウンド・時間指定なし）</b>を選ぶと、時間帯を出さずに🩺<b>R</b>とだけ表示されます。<br>
-    セルをクリックすると勤務記号を変更できます。看護師は役職「⚙️設定」タブで設定・変更可、相談員は指定の6名（三ッ股・竹尾・栗本・牧・後藤・工藤）で固定です（相談員は📋バッジ、看護師は🩺バッジで表示。看護師は一覧の一番下にまとめて表示されます）。`;
+    セルをクリックすると勤務記号を変更できます。看護師は役職「⚙️設定」タブで設定・変更可、相談員は指定の6名（三ッ股・竹尾・栗本・牧・後藤・工藤）で固定です（相談員は📋バッジ、看護師は🩺バッジで表示。看護師は一覧の一番下にまとめて表示されます）。<br>
+    👥デイ人数・🏨有料人数は、その日の配置基準（⚙️設定タブで変更可。有料は基本1名以上）を満たしているかで緑/赤に色分けします。`;
   wrap.appendChild(banner);
 
   const tblWrap=document.createElement('div');tblWrap.className='pats-wrap';
@@ -1204,6 +1205,29 @@ function buildDaySimpleTable(){
     htr.appendChild(th);
   }
   tbl.appendChild(htr);
+
+  // 👥デイ人数／🏨有料人数（配置基準チェック）行：一番上に表示
+  const svcCountRow=(label,svcKey)=>{
+    const tr=document.createElement('tr');tr.className='pats-count-row';
+    const tdn=document.createElement('td');tdn.className='pats-name pats-count-name';tdn.textContent=label;tr.appendChild(tdn);
+    for(let d=1;d<=days;d++){
+      const isHol=isHolidayDay(d);
+      const min=isHol?settings.minStaff[svcKey].holiday:settings.minStaff[svcKey].weekday;
+      const cnt=members.filter(s=>{
+        if(s.svc!==svcKey)return false;
+        const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
+        return k&&!['休','有','有2','有4','有6','明','夜','欠','研'].includes(k);
+      }).length;
+      const td=document.createElement('td');
+      td.style.cssText='font-size:11px;font-weight:bold;text-align:center;padding:4px 2px';
+      td.style.background=cnt>=min?'#2E7D32':'#C62828';td.style.color='#fff';
+      td.textContent=cnt;
+      tr.appendChild(td);
+    }
+    return tr;
+  };
+  tbl.appendChild(svcCountRow('👥デイ人数','day'));
+  tbl.appendChild(svcCountRow('🏨有料人数','fac'));
 
   // 🎯本日の相談員（自動選出・1名だけ）行：一番上に表示
   const trC=document.createElement('tr');trC.className='pats-count-row';
@@ -1964,7 +1988,7 @@ function paintTl(svc,sid,h,dateStr,cell){
 const MONTHLY_HRS_DEFAULT={1:160,2:160,3:168,4:168,5:168,6:160,7:168,8:168,9:160,10:168,11:160,12:160};
 const MINSTAFF_DEFAULT={
   day:{weekday:3,holiday:2,note:'利用者25名→介護職員3名以上'},
-  fac:{weekday:3,holiday:3,note:'常時3名以上（目安）'},
+  fac:{weekday:1,holiday:1,note:'常時1名以上（目安）'},
   pat:{weekday:1,holiday:1,note:'日中オペレーター1名以上（8:00〜18:00）。定員に満たない日は有料の介護福祉士を定期巡回へ応援配置。夜間オペレーター（18:00〜翌8:00）は牧で固定。'},
 };
 let settings={
