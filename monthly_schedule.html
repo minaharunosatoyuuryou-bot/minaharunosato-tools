@@ -202,7 +202,6 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
   <div class="tab t-pats" onclick="setTab('pats',this)">🚐 定期巡回のみ</div>
   <div class="tab t-op" onclick="setTab('op',this)">🛎 オペレーター配置確認</div>
   <div class="tab t-day2" onclick="setTab('day2',this)">🏠 デイサービスのみ</div>
-  <div class="tab t-counselor" onclick="setTab('counselor',this)">📋 相談員配置確認</div>
   <div class="tab t-day" onclick="setTab('tl',this)">🕐 時間帯（全サービス）</div>
   <div class="tab t-set" onclick="setTab('set',this)">⚙️ 設定</div>
 </div>
@@ -220,9 +219,6 @@ table.tl th,table.tl td{border:1px solid #ccc;padding:0}
 
 <!-- デイサービスのみ：シンプル出勤表（看護師はラウンドをR表示） -->
 <div id="v-day2" class="hidden"></div>
-
-<!-- 相談員のみ：配置確認 -->
-<div id="v-counselor" class="hidden"></div>
 
 
 <!-- 時間帯（全サービス統合） -->
@@ -643,27 +639,25 @@ function init(){
 function setTab(t,el){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  ['all','pats','op','day2','counselor','tl','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
+  ['all','pats','op','day2','tl','sum','set'].forEach(v=>document.getElementById('v-'+v).classList.add('hidden'));
   const vid=t==='day'||t==='fac'||t==='pat'?'tl':t;
   document.getElementById('v-'+vid).classList.remove('hidden');
   if(vid==='tl') buildMtlAll();
   if(vid==='pats') buildPatSimpleTable();
   if(vid==='op') buildOperatorCheckView();
   if(vid==='day2') buildDaySimpleTable();
-  if(vid==='counselor') buildCounselorTable();
   if(t==='sum'){buildSumTable();buildTotalStats();}
   if(t==='set') buildSettings();
 }
 
 function showView(v){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  ['all','pats','op','day2','counselor','tl','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
+  ['all','pats','op','day2','tl','sum','set'].forEach(n=>document.getElementById('v-'+n).classList.add('hidden'));
   document.getElementById('v-'+v).classList.remove('hidden');
   if(v==='sum'){buildSumTable();buildTotalStats();}
   if(v==='pats') buildPatSimpleTable();
   if(v==='op') buildOperatorCheckView();
   if(v==='day2') buildDaySimpleTable();
-  if(v==='counselor') buildCounselorTable();
 }
 
 function changeMonth(d){
@@ -1192,6 +1186,24 @@ function buildDaySimpleTable(){
   }
   tbl.appendChild(htr);
 
+  // 🎯本日の相談員（自動選出・1名だけ）行：一番上に表示
+  const trC=document.createElement('tr');trC.className='pats-count-row';
+  const tdCn=document.createElement('td');tdCn.className='pats-name pats-count-name';tdCn.textContent='🎯相談員';trC.appendChild(tdCn);
+  for(let d=1;d<=days;d++){
+    const chosen=getCounselorForDay(d);
+    const td=document.createElement('td');
+    td.style.cssText='font-size:11px;font-weight:bold;text-align:center;padding:4px 2px';
+    if(chosen){
+      td.style.background=chosen.id==='maki'?'#FFF3E0':'#E0F2F1';
+      td.style.color=chosen.id==='maki'?'#E65100':'#00695C';
+      td.textContent=chosen.name;
+    }else{
+      td.style.background='#C62828';td.style.color='#fff';td.textContent='配置なし';
+    }
+    trC.appendChild(td);
+  }
+  tbl.appendChild(trC);
+
   members.forEach(s=>{
     const tr=document.createElement('tr');
     const tdN=document.createElement('td');tdN.className='pats-name';
@@ -1248,117 +1260,6 @@ function getCounselorForDay(d){
   return null;
 }
 
-function buildCounselorTable(){
-  const wrap=document.getElementById('v-counselor');
-  if(!wrap)return;
-  wrap.innerHTML='';
-
-  const banner=document.createElement('div');banner.className='pats-banner';
-  banner.innerHTML=`📋 デイサービスの相談員として配置できる<b>三ッ股・竹尾・栗本・牧・後藤・工藤</b>の6名だけを抜き出した出勤表です。セルをクリックすると勤務記号を変更できます。<br>
-    🎯 「本日の相談員担当」は、その日出勤していて<b>相談員をする時間が実際にある</b>職員の中から<b>三ッ股→竹尾→栗本→後藤→工藤→牧</b>の優先順で自動的に1名選びます（毎日1名で足ります。牧様はできるだけ他に誰もいない日だけの最後の砦です）。終日まるまる定期巡回に入っている日（早巡・A巡・遅巡・B巡）は、有料・デイ・定期巡回・相談員の時間が被らないよう、その職員は候補から外れます。`;
-  wrap.appendChild(banner);
-
-  const members=getActiveStaff().filter(s=>isCounselorRole(s.id));
-  if(!members.length){
-    const empty=document.createElement('div');
-    empty.style.cssText='margin:0 14px;padding:16px;color:#999;font-size:13px';
-    empty.textContent='現在、役職が「相談員」に設定されている職員がいません。⚙️設定タブの職員管理で役職を確認してください。';
-    wrap.appendChild(empty);
-    return;
-  }
-
-  const tblWrap=document.createElement('div');tblWrap.className='pats-wrap';
-  const tbl=document.createElement('table');tbl.className='pats';
-
-  const htr=document.createElement('tr');
-  const th0=document.createElement('th');th0.className='pats-th-name';th0.textContent='氏名';htr.appendChild(th0);
-  for(let d=1;d<=days;d++){
-    const wd=new Date(curY,curM-1,d).getDay();
-    const wc=wd===6?'sat':wd===0?'sun':'';
-    const th=document.createElement('th');th.className=`pats-th-d ${wc}`;
-    th.innerHTML=`<div class="dn">${d}</div><div class="dw">${WD[wd]}</div>`;
-    htr.appendChild(th);
-  }
-  tbl.appendChild(htr);
-
-  members.forEach(s=>{
-    const tr=document.createElement('tr');
-    const tdN=document.createElement('td');tdN.className='pats-name';
-    tdN.innerHTML=`${s.name}<span class="conc-badge" style="color:#00695C">📋相談員</span>`;
-    tr.appendChild(tdN);
-    for(let d=1;d<=days;d++){
-      const wd=new Date(curY,curM-1,d).getDay();
-      const wc=wd===6?' sat':wd===0?' sun':'';
-      const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
-      const sd=SMAP[k];
-      const td=document.createElement('td');
-      td.className=`pats-cell${wc}`;
-      td.id=`cc_${s.id}_${d}`;
-      const chosen=getCounselorForDay(d);
-      const segs=buildDayCellSegments(s.id,d,k);
-      if(k&&segs.length){
-        const box=document.createElement('div');box.className='pats-split';
-        if(chosen&&chosen.id===s.id){
-          const star=document.createElement('div');
-          star.style.cssText='font-size:9px;font-weight:bold;color:#E65100;text-align:center;padding-top:2px';
-          star.textContent='★本日の担当';
-          box.appendChild(star);
-        }
-        segs.forEach(sg=>{
-          const part=document.createElement('div');part.className='pats-split-part';
-          part.style.cssText=`background:${sg.c};color:${sg.t}`;
-          part.innerHTML=`<span>${sg.icon}${sg.label}</span>${sg.time?`<span class="pk">${sg.time}</span>`:''}`;
-          box.appendChild(part);
-        });
-        td.appendChild(box);
-      }else if(k){
-        const rest=document.createElement('div');rest.className='pats-split-rest';
-        rest.textContent=k;
-        if(sd){rest.style.background=sd.c;rest.style.color=sd.t;}
-        td.appendChild(rest);
-      }
-      td.onclick=e=>openShiftPop(e,s.id,d,td);
-      tr.appendChild(td);
-    }
-    tbl.appendChild(tr);
-  });
-
-  // 本日の相談員担当（自動選出）行
-  const tr3=document.createElement('tr');tr3.className='pats-count-row';
-  const td3n=document.createElement('td');td3n.className='pats-name pats-count-name';td3n.textContent='🎯本日の担当';tr3.appendChild(td3n);
-  for(let d=1;d<=days;d++){
-    const chosen=getCounselorForDay(d);
-    const td=document.createElement('td');
-    td.style.cssText='font-size:11px;font-weight:bold;text-align:center;padding:4px 2px';
-    if(chosen){
-      td.style.background=chosen.id==='maki'?'#FFF3E0':'#E0F2F1';
-      td.style.color=chosen.id==='maki'?'#E65100':'#00695C';
-      td.textContent=chosen.name;
-    }else{
-      td.style.background='#C62828';td.style.color='#fff';td.textContent='配置なし';
-    }
-    tr3.appendChild(td);
-  }
-  tbl.appendChild(tr3);
-
-  // 配置人数行（相談員が何名出勤しているか）
-  const tr2=document.createElement('tr');
-  const td0=document.createElement('td');td0.className='pats-name pats-count-name';td0.textContent='出勤人数';tr2.appendChild(td0);
-  for(let d=1;d<=days;d++){
-    const cnt=members.filter(s=>{
-      const k=schData[s.id]?schData[s.id][d]||schData[s.id][String(d)]||'':'';
-      return k&&!['休','有','有2','有4','有6','明','夜','欠','研'].includes(k);
-    }).length;
-    const td=document.createElement('td');
-    td.style.background=cnt>0?'#2E7D32':'#C62828';
-    td.textContent=cnt;
-    tr2.appendChild(td);
-  }
-  tr2.className='pats-count-row';
-  tbl.appendChild(tr2);
-
-  tblWrap.appendChild(tbl);wrap.appendChild(tblWrap);
-}
 
 function buildPatSimpleTable(){
   const wrap=document.getElementById('v-pats');
