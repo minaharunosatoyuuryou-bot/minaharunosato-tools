@@ -923,8 +923,9 @@ let opCheckDay=null;
 // さらに、通常の判定だけではオペレーターが1人もいない「不足」の時間帯が出た場合は、
 // その時間に本来「デイ」側担当になっている兼任職員（介護福祉士＋OP可）を定期巡回側へ振り替えて穴を埋める。
 function assignOperatorSlots(d){
-  const members=getActiveStaff().filter(s=>s.conc.includes('pat'));
-  const dayPatMembers=getActiveStaff().filter(s=>s.conc.includes('day')&&s.conc.includes('pat'));
+  const counselorToday=getCounselorForDay(d); // 本日のデイ相談員は、その日の定期巡回配置からは除外する
+  const members=getActiveStaff().filter(s=>s.conc.includes('pat')&&!(counselorToday&&s.id===counselorToday.id));
+  const dayPatMembers=getActiveStaff().filter(s=>s.conc.includes('day')&&s.conc.includes('pat')&&!(counselorToday&&s.id===counselorToday.id));
   const slots=[];
   for(let t=OP_CHECK_START;t<OP_CHECK_END;t+=OP_SLOT_STEP){
     const checkH=t+OP_SLOT_STEP/2; // スロット中間時刻で判定
@@ -1248,7 +1249,14 @@ const COUNSELOR_PRIORITY=['mitsumata','takeo','kuramoto','goto','kudo','maki'];
 // その日、実際に出勤していて、かつ「相談員として動ける時間が実際にある」職員を優先順位順に1名選ぶ。
 // 終日まるまる定期巡回（早巡・A巡・遅巡・B巡など）に入っている職員は、その日は相談員をする時間が
 // 物理的に無い（有料／デイ／定期巡回／相談員の時間帯が被ってしまう）ため候補から除外する。
+// 日曜日は特別ルール：牧様が出勤していれば、その日は牧様がデイサービスの相談員（優先順位を飛ばして確定）。
 function getCounselorForDay(d){
+  const isSunday=new Date(curY,curM-1,d).getDay()===0;
+  if(isSunday){
+    const maki=STAFF.find(x=>x.id==='maki');
+    const k=schData['maki']?schData['maki'][d]||schData['maki'][String(d)]||'':'';
+    if(maki&&k&&!['休','有','有2','有4','有6','明','夜','欠','研'].includes(k)&&PURE_SVC_FIX[k]!=='pat')return maki;
+  }
   for(const id of COUNSELOR_PRIORITY){
     const s=STAFF.find(x=>x.id===id);
     if(!s)continue;
