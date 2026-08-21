@@ -1118,12 +1118,10 @@ function isNurseRole(sid){
   const role=(settings.staffRole&&settings.staffRole[sid])||s.role||'';
   return /看護師/.test(role);
 }
-// 役職に「相談員」と付いているかどうか（生活相談員／相談員 いずれも対象）
+// デイサービスの相談員として配置できる職員（牧様よりご指定の6名固定リスト）
+const COUNSELOR_WHITELIST=['mitsumata','takeo','kuramoto','maki','goto','kudo'];
 function isCounselorRole(sid){
-  const s=STAFF.find(x=>x.id===sid)||(settings.extraStaff||[]).find(x=>x.id===sid);
-  if(!s)return false;
-  const role=(settings.staffRole&&settings.staffRole[sid])||s.role||'';
-  return /相談員/.test(role);
+  return COUNSELOR_WHITELIST.includes(sid);
 }
 // セル表示用：デイサービスのみタブのセグメント。看護師のデイ時間は「🩺R（ラウンド1h）」表示にする
 function buildDayCellSegments(sid,d,k){
@@ -1163,7 +1161,7 @@ function buildDaySimpleTable(){
 
   const banner=document.createElement('div');banner.className='pats-banner';
   banner.innerHTML=`🏠 デイサービス・有料に関わる職員の勤務を、時間帯ごとに色分けして表示します。看護師の勤務セルをクリックし、勤務記号一覧から<b>「R」（看護ラウンド・時間指定なし）</b>を選ぶと、時間帯を出さずに🩺<b>R</b>とだけ表示されます。<br>
-    セルをクリックすると勤務記号を変更できます。看護師・相談員かどうかは「⚙️設定」タブの職員管理「役職」で設定・変更できます（相談員は📋バッジ、看護師は🩺バッジで表示。看護師は一覧の一番下にまとめて表示されます）。`;
+    セルをクリックすると勤務記号を変更できます。看護師は役職「⚙️設定」タブで設定・変更可、相談員は指定の6名（三ッ股・竹尾・栗本・牧・後藤・工藤）で固定です（相談員は📋バッジ、看護師は🩺バッジで表示。看護師は一覧の一番下にまとめて表示されます）。`;
   wrap.appendChild(banner);
 
   const tblWrap=document.createElement('div');tblWrap.className='pats-wrap';
@@ -1226,8 +1224,7 @@ function buildCounselorTable(){
   wrap.innerHTML='';
 
   const banner=document.createElement('div');banner.className='pats-banner';
-  banner.innerHTML=`📋 相談員（役職に「相談員」を含む職員）だけを抜き出した出勤表です。セルをクリックすると勤務記号を変更できます。<br>
-    相談員かどうかは「⚙️設定」タブの職員管理「役職」で設定・変更できます。`;
+  banner.innerHTML=`📋 デイサービスの相談員として配置できる<b>三ッ股・竹尾・栗本・牧・後藤・工藤</b>の6名だけを抜き出した出勤表です。セルをクリックすると勤務記号を変更できます。`;
   wrap.appendChild(banner);
 
   const members=getActiveStaff().filter(s=>isCounselorRole(s.id));
