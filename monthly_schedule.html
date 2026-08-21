@@ -1231,13 +1231,27 @@ function buildDaySimpleTable(){
 }
 
 // ===== 相談員のみ：配置確認（竹尾さん・栗本さんなど、役職に「相談員」を含む職員だけの出勤表） =====
+// デイサービス相談員の優先順位：三ッ股→竹尾→栗本を優先。牧は他に誰もいない時の最後の砦
+const COUNSELOR_PRIORITY=['mitsumata','takeo','kuramoto','goto','kudo','maki'];
+// その日、実際に出勤している（休み等でない）優先順位トップの職員を1名選ぶ
+function getCounselorForDay(d){
+  for(const id of COUNSELOR_PRIORITY){
+    const s=STAFF.find(x=>x.id===id);
+    if(!s)continue;
+    const k=schData[id]?schData[id][d]||schData[id][String(d)]||'':'';
+    if(k&&!['休','有','有2','有4','有6','明','夜','欠','研'].includes(k))return s;
+  }
+  return null;
+}
+
 function buildCounselorTable(){
   const wrap=document.getElementById('v-counselor');
   if(!wrap)return;
   wrap.innerHTML='';
 
   const banner=document.createElement('div');banner.className='pats-banner';
-  banner.innerHTML=`📋 デイサービスの相談員として配置できる<b>三ッ股・竹尾・栗本・牧・後藤・工藤</b>の6名だけを抜き出した出勤表です。セルをクリックすると勤務記号を変更できます。`;
+  banner.innerHTML=`📋 デイサービスの相談員として配置できる<b>三ッ股・竹尾・栗本・牧・後藤・工藤</b>の6名だけを抜き出した出勤表です。セルをクリックすると勤務記号を変更できます。<br>
+    🎯 「本日の相談員担当」は、その日出勤している職員の中から<b>三ッ股→竹尾→栗本→後藤→工藤→牧</b>の優先順で自動的に1名選びます（毎日1名で足ります。牧様はできるだけ他に誰もいない日だけの最後の砦です）。`;
   wrap.appendChild(banner);
 
   const members=getActiveStaff().filter(s=>isCounselorRole(s.id));
@@ -1276,9 +1290,16 @@ function buildCounselorTable(){
       const td=document.createElement('td');
       td.className=`pats-cell${wc}`;
       td.id=`cc_${s.id}_${d}`;
+      const chosen=getCounselorForDay(d);
       const segs=buildDayCellSegments(s.id,d,k);
       if(k&&segs.length){
         const box=document.createElement('div');box.className='pats-split';
+        if(chosen&&chosen.id===s.id){
+          const star=document.createElement('div');
+          star.style.cssText='font-size:9px;font-weight:bold;color:#E65100;text-align:center;padding-top:2px';
+          star.textContent='★本日の担当';
+          box.appendChild(star);
+        }
         segs.forEach(sg=>{
           const part=document.createElement('div');part.className='pats-split-part';
           part.style.cssText=`background:${sg.c};color:${sg.t}`;
@@ -1297,6 +1318,24 @@ function buildCounselorTable(){
     }
     tbl.appendChild(tr);
   });
+
+  // 本日の相談員担当（自動選出）行
+  const tr3=document.createElement('tr');tr3.className='pats-count-row';
+  const td3n=document.createElement('td');td3n.className='pats-name pats-count-name';td3n.textContent='🎯本日の担当';tr3.appendChild(td3n);
+  for(let d=1;d<=days;d++){
+    const chosen=getCounselorForDay(d);
+    const td=document.createElement('td');
+    td.style.cssText='font-size:11px;font-weight:bold;text-align:center;padding:4px 2px';
+    if(chosen){
+      td.style.background=chosen.id==='maki'?'#FFF3E0':'#E0F2F1';
+      td.style.color=chosen.id==='maki'?'#E65100':'#00695C';
+      td.textContent=chosen.name;
+    }else{
+      td.style.background='#C62828';td.style.color='#fff';td.textContent='配置なし';
+    }
+    tr3.appendChild(td);
+  }
+  tbl.appendChild(tr3);
 
   // 配置人数行（相談員が何名出勤しているか）
   const tr2=document.createElement('tr');
