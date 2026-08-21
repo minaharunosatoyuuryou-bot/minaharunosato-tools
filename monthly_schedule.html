@@ -570,6 +570,12 @@ const STAFF=[
   {id:'gan',      name:'ガン',         role:'介護',         svc:'day',conc:['day']},
   {id:'dinda',    name:'ディンダ',     role:'介護',         svc:'day',conc:['day']},
   {id:'danisa',   name:'ダニサ',       role:'介護',         svc:'day',conc:['day']},
+  // デイ看護師（ラウンド：時間固定なし）
+  {id:'shudo',    name:'首藤 利香',    role:'看護師',       svc:'day',conc:['day']},
+  {id:'murata',   name:'村田 厚子',    role:'看護師',       svc:'day',conc:['day']},
+  {id:'shinoda',  name:'篠田 才吏',    role:'看護師',       svc:'day',conc:['day']},
+  {id:'sasaki',   name:'佐々木 正子',  role:'看護師',       svc:'day',conc:['day']},
+  {id:'hirohara', name:'廣原 良子',    role:'看護師',       svc:'day',conc:['day']},
   // 有料専任
   {id:'ueno_y',   name:'上野 由太佳',  role:'有料管理者',   svc:'fac',conc:['fac']},
   {id:'kudo',     name:'工藤 亜希子',  role:'介護/OP',      svc:'fac',conc:['fac','pat','day']},
@@ -1101,7 +1107,7 @@ function buildDayCellSegments(sid,d,k){
   const fix=PURE_SVC_FIX[k];
   const auto=SHIFT_AUTO[k];
   const dayIcon=nurse?'🩺':'🏠';
-  const dayLabel=nurse?'R（ラウンド1h）':(SVC_LBL[s.svc]||'デイ/有料');
+  const dayLabel=nurse?'R':(SVC_LBL[s.svc]||'デイ/有料');
   const dayColor=nurse?{c:'#FFF3E0',t:'#E65100'}:{c:'#E3F2FD',t:'#1565C0'};
   if(fix==='other'&&auto)return [{icon:dayIcon,label:dayLabel,time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:dayColor.c,t:dayColor.t}];
   if(fix==='pat'&&auto)return [{icon:'🚐',label:'定期巡回',time:`${fmtHour(auto.start)}〜${fmtHour(auto.end)}`,c:'#EDE7F6',t:'#4A148C'}];
@@ -1128,7 +1134,7 @@ function buildDaySimpleTable(){
   wrap.innerHTML='';
 
   const banner=document.createElement('div');banner.className='pats-banner';
-  banner.innerHTML=`🏠 デイサービス・有料に関わる職員の勤務を、時間帯ごとに色分けして表示します。<b>看護師（役職に「看護師」を含む職員）</b>は、デイの時間を🩺<b>R（ラウンド1h）</b>として表示します（実施される巡回・健康観察の時間帯を示す表記で、通常のデイ介護とは区別しています）。<br>
+  banner.innerHTML=`🏠 デイサービス・有料に関わる職員の勤務を、時間帯ごとに色分けして表示します。<b>看護師（役職に「看護師」を含む職員）</b>は、勤務時間を🩺<b>R</b>として表示します（ラウンド実施時刻は日によって変わるため、時間指定はせず区分のみ表示しています）。<br>
     セルをクリックすると勤務記号を変更できます。看護師かどうかは「⚙️設定」タブの職員管理「役職」で設定・変更できます。`;
   wrap.appendChild(banner);
 
