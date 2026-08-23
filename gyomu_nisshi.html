@@ -384,6 +384,11 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
   <!-- バイタル・食事・入浴 一覧表 -->
   <div class="card">
     <div class="card-title">バイタル・食事量・入浴</div>
+    <!-- 利用者選択エリア -->
+    <div style="background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:8px;margin-bottom:10px">
+      <div style="font-size:10px;color:var(--text-hint);font-weight:600;letter-spacing:.06em;margin-bottom:6px">本日の利用者を選択（タップで追加）</div>
+      <div id="vital-user-chips" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+    </div>
     <div class="vital-tbl-wrap">
       <table class="vital" id="vital-table">
         <thead>
@@ -397,13 +402,14 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
             <th style="width:52px">水分量<br>ml</th>
             <th style="width:52px">入浴<br>有無</th>
             <th style="width:52px">排便<br>有無</th>
+            <th style="width:28px"></th>
             <th>特記・様子</th>
           </tr>
         </thead>
         <tbody id="vital-body"></tbody>
       </table>
     </div>
-    <button class="vital-add-btn" onclick="addVitalRow()"><i class="ti ti-plus"></i> 利用者を追加</button>
+    <button class="vital-add-btn" onclick="addVitalRowManual()"><i class="ti ti-plus"></i> 手動で追加</button>
   </div>
 
   <div class="btn-row">
@@ -519,8 +525,7 @@ function refreshNameChips(){
   renderStaffChips('nc-kango','看護師','f-kango',false);
   renderStaffChips('nc-kaigo','介護職','f-kaigo',true);
   renderUserSuggestChips();
-  // バイタル表を利用者で再描画（既存データ保持）
-  rebuildVitalTable();
+  renderVitalUserChips();
 }
 
 function renderStaffChips(containerId,filterRole,targetInputId,multi){
@@ -657,9 +662,11 @@ function setTransportCards(containerId,data){
 // ===== バイタル表 =====
 function makeVitalRow(name,data){
   const d=data||{temp:'',bp:'',pulse:'',spo2:'',meal:'',water:'',bath:'',toilet:'',note:''};
+  const safeName=(name||'').replace(/'/g,'&#39;');
   const tr=document.createElement('tr');
+  tr.dataset.name=name||'';
   tr.innerHTML=`
-    <td class="name-cell">${name||''}様</td>
+    <td class="name-cell">${safeName}様</td>
     <td><input type="text" value="${d.temp||''}" placeholder="36.5"></td>
     <td><input type="text" value="${d.bp||''}" placeholder="120/80"></td>
     <td><input type="text" value="${d.pulse||''}" placeholder="70"></td>
@@ -684,24 +691,79 @@ function makeVitalRow(name,data){
       <option value="あり"${d.toilet==='あり'?' selected':''}>あり</option>
       <option value="なし"${d.toilet==='なし'?' selected':''}>なし</option>
     </select></td>
+    <td style="text-align:center;padding:2px">
+      <button onclick="removeVitalRow(this)" style="font-size:12px;color:var(--danger);background:none;border:none;cursor:pointer;padding:2px 4px">✕</button>
+    </td>
     <td class="note-cell"><input type="text" value="${d.note||''}" placeholder="特記事項など"></td>`;
-  tr.dataset.name=name||'';
   return tr;
 }
 
-function rebuildVitalTable(savedData){
-  const tb=document.getElementById('vital-body');
-  // 既存データを取得
-  const existing=getVitalData();
-  tb.innerHTML='';
-  // マスタ利用者を展開
-  master.users.forEach(u=>{
-    const prev=(savedData||existing).find(r=>r.name===u.name)||{};
-    tb.appendChild(makeVitalRow(u.name,prev));
+function removeVitalRow(btn){
+  const tr=btn.closest('tr');
+  const name=tr.dataset.name;
+  tr.remove();
+  // チップを未選択に戻す
+  document.querySelectorAll('#vital-user-chips .vc').forEach(c=>{
+    if(c.dataset.name===name) c.classList.remove('on');
   });
 }
 
-function addVitalRow(){
+function renderVitalUserChips(){
+  const wrap=document.getElementById('vital-user-chips');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  master.users.forEach(u=>{
+    const el=document.createElement('span');
+    el.className='vc';
+    el.dataset.name=u.name;
+    el.textContent=u.name+'様';
+    el.style.cssText='font-size:12px;font-family:inherit;padding:4px 11px;border:1px solid var(--border);border-radius:16px;cursor:pointer;background:var(--surface);color:var(--text-sub);user-select:none;transition:all .12s;display:inline-block';
+    el.onclick=()=>{
+      const already=document.querySelector(`#vital-body tr[data-name="${u.name}"]`);
+      if(already){
+        // すでにある→削除
+        already.remove();
+        el.classList.remove('on');
+        el.style.background='var(--surface)'; el.style.borderColor='var(--border)'; el.style.color='var(--text-sub)';
+      } else {
+        // 追加
+        const saved=_lastVitalData?((_lastVitalData).find(r=>r.name===u.name)||{}):{}; 
+        document.getElementById('vital-body').appendChild(makeVitalRow(u.name,saved));
+        el.classList.add('on');
+        el.style.background='var(--chip-sel-bg)'; el.style.borderColor='var(--chip-sel-border)'; el.style.color='var(--chip-sel-text)';
+      }
+    };
+    wrap.appendChild(el);
+  });
+}
+
+let _lastVitalData=null;
+
+function rebuildVitalTable(savedData){
+  _lastVitalData=savedData||null;
+  const tb=document.getElementById('vital-body');
+  tb.innerHTML='';
+  // チップを全部オフに
+  document.querySelectorAll('#vital-user-chips .vc').forEach(c=>{
+    c.classList.remove('on');
+    c.style.background='var(--surface)'; c.style.borderColor='var(--border)'; c.style.color='var(--text-sub)';
+  });
+  // 保存データがあればその利用者を展開
+  if(savedData && savedData.length>0){
+    savedData.forEach(d=>{
+      if(!d.name) return;
+      tb.appendChild(makeVitalRow(d.name,d));
+      // チップをonに
+      const chip=document.querySelector(`#vital-user-chips .vc[data-name="${d.name}"]`);
+      if(chip){
+        chip.classList.add('on');
+        chip.style.background='var(--chip-sel-bg)'; chip.style.borderColor='var(--chip-sel-border)'; chip.style.color='var(--chip-sel-text)';
+      }
+    });
+  }
+}
+
+function addVitalRowManual(){
   const name=prompt('利用者名を入力してください（「様」は不要）');
   if(!name) return;
   document.getElementById('vital-body').appendChild(makeVitalRow(name,null));
