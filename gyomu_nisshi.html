@@ -9,786 +9,816 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #f5f4f0;
-    --surface: #ffffff;
-    --border: #d8d6ce;
-    --border-light: #e8e6de;
-    --text: #1a1917;
-    --text-sub: #6b6a65;
-    --text-hint: #9b9a95;
-    --accent: #1d6fa4;
-    --accent-bg: #e8f2fa;
-    --accent-border: #a8cce8;
-    --success: #1d9e75;
-    --success-bg: #e1f5ee;
-    --danger: #c94040;
-    --chip-sel-bg: #dceef8;
-    --chip-sel-border: #7ab8d8;
-    --chip-sel-text: #155c8a;
-    --radius: 10px;
-    --radius-sm: 6px;
-  }
-  body {
-    font-family: 'Noto Sans JP', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-    min-height: 100vh;
-  }
-  /* ---- TOP BAR ---- */
-  .topbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 52px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .topbar-title { font-size: 16px; font-weight: 700; letter-spacing: 0.04em; }
-  .tab-row { display: flex; gap: 0; }
-  .tab {
-    padding: 6px 16px;
-    font-size: 13px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text-sub);
-    font-family: inherit;
-    transition: all 0.15s;
-  }
-  .tab:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
-  .tab:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-left: none; }
-  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 500; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--border:#d8d6ce;--border-light:#e8e6de;
+  --text:#1a1917;--text-sub:#6b6a65;--text-hint:#9b9a95;
+  --accent:#1d6fa4;--accent-bg:#e8f2fa;--accent-border:#a8cce8;
+  --success:#1d9e75;--danger:#c94040;
+  --chip-sel-bg:#dceef8;--chip-sel-border:#7ab8d8;--chip-sel-text:#155c8a;
+  --radius:10px;--radius-sm:6px;
+}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
 
-  /* ---- LAYOUT ---- */
-  .main { max-width: 720px; margin: 0 auto; padding: 1.25rem; }
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:16px;font-weight:700;letter-spacing:.04em}
+.tab-row{display:flex}
+.tab{padding:6px 13px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text-sub);font-family:inherit;transition:all .15s;border-left:none}
+.tab:first-child{border-left:1px solid var(--border);border-radius:var(--radius-sm) 0 0 var(--radius-sm)}
+.tab:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500}
 
-  /* ---- SECTION CARD ---- */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-  }
-  .card-title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: var(--text-hint);
-    text-transform: uppercase;
-    margin-bottom: 0.6rem;
-    padding-bottom: 0.4rem;
-    border-bottom: 1px solid var(--border-light);
-  }
+/* LAYOUT */
+.main{max-width:720px;margin:0 auto;padding:1rem}
 
-  /* ---- FIELDS ---- */
-  .field { display: flex; flex-direction: column; gap: 3px; }
-  .field label { font-size: 11px; color: var(--text-sub); font-weight: 500; }
-  .field input, .field textarea, .field select {
-    font-size: 14px;
-    font-family: inherit;
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: #fafaf8;
-    color: var(--text);
-    width: 100%;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .field input:focus, .field textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(29,111,164,0.12);
-    background: #fff;
-  }
-  .field textarea { resize: vertical; min-height: 44px; }
-  .field input[readonly] { background: var(--bg); color: var(--text-sub); cursor: default; }
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;margin-bottom:.5rem}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--text-hint);text-transform:uppercase;margin-bottom:.6rem;padding-bottom:.4rem;border-bottom:1px solid var(--border-light)}
 
-  .row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .row .field { flex: 1; min-width: 120px; }
-  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* FIELDS */
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:11px;color:var(--text-sub);font-weight:500}
+.field input,.field textarea,.field select{font-size:14px;font-family:inherit;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fafaf8;color:var(--text);width:100%;transition:border-color .15s,box-shadow .15s}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,111,164,.12);background:#fff}
+.field textarea{resize:vertical;min-height:44px}
+.field input[readonly]{background:var(--bg);color:var(--text-sub);cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .field{flex:1;min-width:120px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-  /* ---- TRANSPORT TABLE ---- */
-  .tbl-wrap { overflow-x: auto; margin-bottom: 6px; }
-  table.transport { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
-  table.transport th {
-    background: var(--bg);
-    color: var(--text-sub);
-    font-weight: 600;
-    font-size: 11px;
-    letter-spacing: 0.05em;
-    padding: 6px 8px;
-    border: 1px solid var(--border);
-    text-align: left;
-    white-space: nowrap;
-  }
-  table.transport td { border: 1px solid var(--border-light); padding: 3px 4px; }
-  table.transport td input {
-    font-size: 13px;
-    font-family: inherit;
-    padding: 4px 7px;
-    border: none;
-    background: transparent;
-    width: 100%;
-    color: var(--text);
-  }
-  table.transport td input:focus {
-    outline: none;
-    background: var(--accent-bg);
-    border-radius: 3px;
-  }
-  .add-row-btn {
-    font-size: 12px;
-    color: var(--accent);
-    cursor: pointer;
-    background: none;
-    border: none;
-    font-family: inherit;
-    padding: 4px 2px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .add-row-btn:hover { text-decoration: underline; }
+/* TRANSPORT TABLE */
+.tbl-wrap{overflow-x:auto;margin-bottom:6px}
+table.transport{width:100%;border-collapse:collapse;font-size:13px;min-width:460px}
+table.transport th{background:var(--bg);color:var(--text-sub);font-weight:600;font-size:11px;letter-spacing:.05em;padding:6px 8px;border:1px solid var(--border);text-align:left;white-space:nowrap}
+table.transport td{border:1px solid var(--border-light);padding:2px 3px}
+table.transport td input,table.transport td select{font-size:13px;font-family:inherit;padding:4px 6px;border:none;background:transparent;width:100%;color:var(--text)}
+table.transport td input:focus,table.transport td select:focus{outline:none;background:var(--accent-bg);border-radius:3px}
+.add-row-btn{font-size:12px;color:var(--accent);cursor:pointer;background:none;border:none;font-family:inherit;padding:4px 2px;display:flex;align-items:center;gap:4px}
+.add-row-btn:hover{text-decoration:underline}
 
-  /* ---- STATUS ITEMS ---- */
-  .status-list { display: flex; flex-direction: column; gap: 8px; }
-  .status-item { display: grid; grid-template-columns: 72px 1fr; gap: 8px; align-items: center; }
-  .status-lbl {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-sub);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .status-item input {
-    font-size: 13px;
-    font-family: inherit;
-    padding: 5px 9px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: #fafaf8;
-    color: var(--text);
-    width: 100%;
-  }
-  .status-item input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(29,111,164,0.12);
-    background: #fff;
-  }
+/* STATUS */
+.status-list{display:flex;flex-direction:column;gap:7px}
+.status-item{display:grid;grid-template-columns:72px 1fr;gap:8px;align-items:center}
+.status-lbl{font-size:12px;font-weight:600;color:var(--text-sub);white-space:nowrap}
+.status-item input{font-size:13px;font-family:inherit;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fafaf8;color:var(--text);width:100%}
+.status-item input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,111,164,.12);background:#fff}
 
-  /* ---- ACTIVITY CHIPS ---- */
-  .chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-  .chip {
-    font-size: 12px;
-    font-family: inherit;
-    padding: 5px 12px;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    cursor: pointer;
-    background: var(--bg);
-    color: var(--text-sub);
-    user-select: none;
-    transition: all 0.12s;
-  }
-  .chip:hover { border-color: var(--accent-border); color: var(--accent); }
-  .chip.on { background: var(--chip-sel-bg); border-color: var(--chip-sel-border); color: var(--chip-sel-text); font-weight: 500; }
+/* ACTIVITY CHIPS */
+.chip-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{font-size:12px;font-family:inherit;padding:5px 12px;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:var(--bg);color:var(--text-sub);user-select:none;transition:all .12s}
+.chip:hover{border-color:var(--accent-border);color:var(--accent)}
+.chip.on{background:var(--chip-sel-bg);border-color:var(--chip-sel-border);color:var(--chip-sel-text);font-weight:500}
 
-  /* ---- BUTTONS ---- */
-  .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light); }
-  .btn {
-    font-family: inherit;
-    font-size: 13px;
-    padding: 8px 20px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.12s;
-  }
-  .btn:hover { background: var(--bg); }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
-  .btn.primary:hover { opacity: 0.88; }
-  .btn.danger { color: var(--danger); border-color: #e8b8b8; }
-  .btn.danger:hover { background: #fdf0f0; }
+/* NAME CHIPS (勤務者・利用者選択) */
+.name-chip-area{background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:8px;margin-bottom:4px}
+.name-chip-area .lbl{font-size:10px;color:var(--text-hint);margin-bottom:5px;font-weight:600;letter-spacing:.06em}
+.name-chips{display:flex;flex-wrap:wrap;gap:5px}
+.nc{font-size:12px;font-family:inherit;padding:3px 10px;border:1px solid var(--border);border-radius:14px;cursor:pointer;background:var(--surface);color:var(--text-sub);user-select:none;transition:all .12s}
+.nc:hover{border-color:var(--accent-border);color:var(--accent)}
+.nc.on{background:var(--chip-sel-bg);border-color:var(--chip-sel-border);color:var(--chip-sel-text);font-weight:500}
+.selected-display{font-size:13px;color:var(--text);min-height:28px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fafaf8;cursor:text}
 
-  /* ---- HISTORY ---- */
-  .hist-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    margin-bottom: 8px;
-    cursor: pointer;
-    background: #fafaf8;
-    transition: all 0.12s;
-  }
-  .hist-item:hover { border-color: var(--accent-border); background: var(--accent-bg); }
-  .hist-date { font-weight: 700; font-size: 14px; }
-  .hist-meta { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
-  .hist-del { font-size: 12px; color: var(--danger); cursor: pointer; background: none; border: none; font-family: inherit; padding: 4px 8px; border-radius: var(--radius-sm); }
-  .hist-del:hover { background: #fdf0f0; }
-  .empty-msg { font-size: 13px; color: var(--text-hint); text-align: center; padding: 2rem 0; }
+/* BUTTONS */
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border-light)}
+.btn{font-family:inherit;font-size:13px;padding:8px 18px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .12s}
+.btn:hover{background:var(--bg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.btn.primary:hover{opacity:.88}
+.btn.danger{color:var(--danger);border-color:#e8b8b8}
+.btn.danger:hover{background:#fdf0f0}
+.btn.sm{font-size:12px;padding:5px 12px}
 
-  /* ---- TOAST ---- */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(12px);
-    background: var(--text);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 24px;
-    font-size: 13px;
-    opacity: 0;
-    transition: all 0.25s;
-    pointer-events: none;
-    z-index: 999;
-    white-space: nowrap;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast.ok { background: var(--success); }
-  .toast.err { background: var(--danger); }
+/* HISTORY */
+.hist-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;background:#fafaf8;transition:all .12s}
+.hist-item:hover{border-color:var(--accent-border);background:var(--accent-bg)}
+.hist-date{font-weight:700;font-size:14px}
+.hist-meta{font-size:12px;color:var(--text-sub);margin-top:2px}
+.hist-del{font-size:12px;color:var(--danger);cursor:pointer;background:none;border:none;font-family:inherit;padding:4px 8px;border-radius:var(--radius-sm)}
+.hist-del:hover{background:#fdf0f0}
+.empty-msg{font-size:13px;color:var(--text-hint);text-align:center;padding:2rem 0}
 
-  /* ---- PRINT ---- */
-  /* ---- 確認欄 ---- */
-  .kakunin-wrap {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-  }
-  .hanko-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-  .hanko-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-sub);
-    letter-spacing: 0.05em;
-  }
-  .hanko-area {
-    width: 52px;
-    height: 52px;
-    border: 1.5px solid var(--border);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    background: #fafaf8;
-    transition: border-color 0.15s;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-  .hanko-area:hover { border-color: var(--accent-border); }
-  .hanko-area.signed { border-color: #c94040; border-width: 2px; }
-  .hanko-inner {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    color: #c94040;
-    border: 1px solid #c94040;
-    opacity: 0;
-    transition: opacity 0.2s;
-    text-align: center;
-    line-height: 1.2;
-  }
-  .hanko-area.signed .hanko-inner { opacity: 1; }
-  .hanko-placeholder {
-    font-size: 9px;
-    color: var(--text-hint);
-    text-align: center;
-    line-height: 1.4;
-  }
-  .hanko-area.signed .hanko-placeholder { display: none; }
-  .hanko-date {
-    font-size: 10px;
-    color: var(--text-hint);
-    min-height: 14px;
-  }
-  .hanko-clear {
-    font-size: 10px;
-    color: var(--danger);
-    cursor: pointer;
-    background: none;
-    border: none;
-    font-family: inherit;
-    padding: 1px 4px;
-    visibility: hidden;
-  }
-  .hanko-box.signed-box .hanko-clear { visibility: visible; }
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--text);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;opacity:0;transition:all .25s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--success)}
+.toast.err{background:var(--danger)}
 
-  @media print {
-    @page { size: A4; margin: 10mm 12mm; }
-    .topbar, .btn-row, .add-row-btn, #pane-history { display: none !important; }
-    body { background: #fff; font-size: 11px; }
-    .main { padding: 0; max-width: 100%; }
-    .card { border: 0.5px solid #bbb; border-radius: 4px; padding: 5px 8px; margin-bottom: 4px; break-inside: avoid; }
-    .card-title { font-size: 9px; margin-bottom: 4px; padding-bottom: 3px; }
-    .field label { font-size: 9px; }
-    .field input, .field textarea, .status-item input {
-      font-size: 11px; padding: 2px 4px; border: 0.5px solid #ccc; background: #fff;
-    }
-    .field textarea { min-height: 36px; }
-    .grid3 { gap: 6px; }
-    .grid2 { gap: 6px; }
-    .row { gap: 6px; }
-    .status-list { gap: 4px; }
-    .status-item { grid-template-columns: 64px 1fr; gap: 4px; }
-    .status-lbl { font-size: 10px; }
-    table.transport { font-size: 10px; min-width: unset; }
-    table.transport th { font-size: 9px; padding: 3px 4px; }
-    table.transport td { padding: 1px 2px; }
-    table.transport td input { font-size: 10px; padding: 2px 4px; }
-    .chip { font-size: 10px; padding: 2px 7px; border-radius: 12px; }
-    .chip.on { border: 0.5px solid #999; background: #eee; color: #000; }
-    .hanko-area { width: 42px; height: 42px; }
-    .hanko-inner { width: 33px; height: 33px; font-size: 10px; }
-    .hanko-placeholder { display: none; }
-    .hanko-clear { display: none; }
-    .tbl-wrap { overflow: visible; }
-  }
+/* HANKO */
+.kakunin-wrap{display:flex;gap:20px;align-items:flex-start}
+.hanko-box{display:flex;flex-direction:column;align-items:center;gap:4px}
+.hanko-label{font-size:11px;font-weight:600;color:var(--text-sub);letter-spacing:.05em}
+.hanko-area{width:52px;height:52px;border:1.5px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fafaf8;transition:border-color .15s;overflow:hidden;flex-shrink:0}
+.hanko-area:hover{border-color:var(--accent-border)}
+.hanko-area.signed{border-color:#c94040;border-width:2px}
+.hanko-inner{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#c94040;border:1px solid #c94040;opacity:0;transition:opacity .2s;text-align:center;line-height:1.2}
+.hanko-area.signed .hanko-inner{opacity:1}
+.hanko-placeholder{font-size:9px;color:var(--text-hint);text-align:center;line-height:1.4}
+.hanko-area.signed .hanko-placeholder{display:none}
+.hanko-date{font-size:10px;color:var(--text-hint);min-height:14px}
+.hanko-clear{font-size:10px;color:var(--danger);cursor:pointer;background:none;border:none;font-family:inherit;padding:1px 4px;visibility:hidden}
+.hanko-box.signed-box .hanko-clear{visibility:visible}
 
-  @media (max-width: 520px) {
-    .grid3 { grid-template-columns: 1fr 1fr; }
-    .main { padding: 0.75rem; }
-    .topbar { padding: 0 0.75rem; }
-  }
+/* MASTER */
+.master-section{margin-bottom:1.2rem}
+.master-section-title{font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.master-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.master-item{display:flex;gap:6px;align-items:center}
+.master-item input{flex:1;font-size:13px;font-family:inherit;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fafaf8;color:var(--text)}
+.master-item input:focus{outline:none;border-color:var(--accent);background:#fff}
+.master-item select{flex:.8;font-size:12px;font-family:inherit;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fafaf8;color:var(--text)}
+.master-del{font-size:14px;color:var(--danger);cursor:pointer;background:none;border:none;padding:4px 6px;border-radius:4px;flex-shrink:0}
+.master-del:hover{background:#fdf0f0}
+.master-add-btn{font-size:12px;color:var(--accent);cursor:pointer;background:none;border:1px dashed var(--accent-border);border-radius:var(--radius-sm);font-family:inherit;padding:5px 12px;display:flex;align-items:center;gap:4px;transition:all .12s}
+.master-add-btn:hover{background:var(--accent-bg)}
+
+/* PRINT */
+@media print{
+  @page{size:A4;margin:10mm 12mm}
+  .topbar,.btn-row,.add-row-btn,#pane-history,#pane-master{display:none!important}
+  body{background:#fff;font-size:11px}
+  .main{padding:0;max-width:100%}
+  .card{border:.5px solid #bbb;border-radius:4px;padding:5px 8px;margin-bottom:4px;break-inside:avoid}
+  .card-title{font-size:9px;margin-bottom:4px;padding-bottom:3px}
+  .field label{font-size:9px}
+  .field input,.field textarea,.status-item input{font-size:11px;padding:2px 4px;border:.5px solid #ccc;background:#fff}
+  .field textarea{min-height:32px}
+  .grid3,.grid2,.row{gap:6px}
+  .status-list{gap:4px}
+  .status-item{grid-template-columns:64px 1fr;gap:4px}
+  .status-lbl{font-size:10px}
+  table.transport{font-size:10px;min-width:unset}
+  table.transport th{font-size:9px;padding:3px 4px}
+  table.transport td{padding:1px 2px}
+  table.transport td input,table.transport td select{font-size:10px;padding:2px 4px}
+  .chip{font-size:10px;padding:2px 7px;border-radius:12px}
+  .chip.on{border:.5px solid #999;background:#eee;color:#000}
+  .hanko-area{width:42px;height:42px}
+  .hanko-inner{width:33px;height:33px;font-size:10px}
+  .hanko-placeholder,.hanko-clear{display:none}
+  .tbl-wrap{overflow:visible}
+  .name-chip-area{display:none}
+  .selected-display{border:.5px solid #ccc;background:#fff;font-size:11px;padding:2px 4px}
+}
+@media(max-width:520px){
+  .grid3{grid-template-columns:1fr 1fr}
+  .main{padding:.75rem}
+  .topbar{padding:0 .75rem}
+}
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <span class="topbar-title">業務日誌</span>
-  <div style="display:flex;gap:8px;align-items:center">
-    <button class="btn" onclick="window.print()" style="font-size:12px;padding:5px 12px"><i class="ti ti-printer"></i> 印刷</button>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button class="btn sm" onclick="window.print()"><i class="ti ti-printer"></i> 印刷</button>
     <div class="tab-row">
       <button class="tab active" id="tab-input" onclick="switchTab('input')">記入</button>
       <button class="tab" id="tab-history" onclick="switchTab('history')">履歴</button>
+      <button class="tab" id="tab-master" onclick="switchTab('master')">マスタ</button>
     </div>
   </div>
 </div>
 
 <div class="main">
 
-  <!-- ===== 入力ペイン ===== -->
-  <div id="pane-input">
+<!-- ===== 記入ペイン ===== -->
+<div id="pane-input">
 
-    <!-- 基本情報 -->
-    <div class="card">
-      <div class="card-title">基本情報</div>
-      <div class="row">
-        <div class="field" style="flex:1.2;min-width:150px">
-          <label>日付</label>
-          <input type="date" id="f-date">
+  <!-- 基本情報 -->
+  <div class="card">
+    <div class="card-title">基本情報</div>
+    <div class="row">
+      <div class="field" style="flex:1.2;min-width:150px"><label>日付</label><input type="date" id="f-date"></div>
+      <div class="field" style="flex:.8;min-width:100px"><label>曜日</label><input type="text" id="f-youbi" readonly></div>
+      <div class="field" style="flex:2;min-width:160px">
+        <label>記入者</label>
+        <div class="name-chip-area">
+          <div class="lbl">職員を選択</div>
+          <div class="name-chips" id="nc-writer"></div>
         </div>
-        <div class="field" style="flex:0.8;min-width:100px">
-          <label>曜日</label>
-          <input type="text" id="f-youbi" readonly>
-        </div>
-        <div class="field" style="flex:2;min-width:160px">
-          <label>記入者</label>
-          <input type="text" id="f-writer" placeholder="例：三ッ股 久美子">
-        </div>
+        <input type="text" id="f-writer" placeholder="氏名を入力または上から選択">
       </div>
     </div>
+  </div>
 
-    <!-- 人員数 -->
-    <div class="card">
-      <div class="card-title">通所者人員数</div>
-      <div class="grid3">
-        <div class="field"><label>予定数（名）</label><input type="number" id="f-yotei" min="0" placeholder="0"></div>
-        <div class="field"><label>利用実数（名）</label><input type="number" id="f-jissuu" min="0" placeholder="0"></div>
-        <div class="field"><label>利用中止者（名）</label><input type="number" id="f-chushi" min="0" placeholder="0"></div>
-      </div>
+  <!-- 人員数 -->
+  <div class="card">
+    <div class="card-title">通所者人員数</div>
+    <div class="grid3">
+      <div class="field"><label>予定数（名）</label><input type="number" id="f-yotei" min="0" placeholder="0"></div>
+      <div class="field"><label>利用実数（名）</label><input type="number" id="f-jissuu" min="0" placeholder="0"></div>
+      <div class="field"><label>利用中止者（名）</label><input type="number" id="f-chushi" min="0" placeholder="0"></div>
     </div>
+  </div>
 
-    <!-- 勤務者 -->
-    <div class="card">
-      <div class="card-title">勤務者人員数</div>
-      <div class="grid3">
-        <div class="field"><label>相談員</label><input type="text" id="f-sodan" placeholder="氏名"></div>
-        <div class="field"><label>看護師</label><input type="text" id="f-kango" placeholder="氏名"></div>
-        <div class="field"><label>介護職</label><input type="text" id="f-kaigo" placeholder="氏名（複数可）"></div>
-      </div>
-    </div>
-
-    <!-- 送迎・迎え -->
-    <div class="card">
-      <div class="card-title">送迎 — 迎え</div>
-      <div class="tbl-wrap">
-        <table class="transport">
-          <thead><tr><th style="width:16%">車種</th><th style="width:18%">運転者</th><th style="width:18%">介護者</th><th>利用者</th></tr></thead>
-          <tbody id="mukae-body">
-            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
-            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <button class="add-row-btn" onclick="addRow('mukae-body')"><i class="ti ti-plus"></i> 行を追加</button>
-    </div>
-
-    <!-- 送迎・送り -->
-    <div class="card">
-      <div class="card-title">送迎 — 送り</div>
-      <div class="tbl-wrap">
-        <table class="transport">
-          <thead><tr><th style="width:16%">車種</th><th style="width:18%">運転者</th><th style="width:18%">介護者</th><th>利用者</th></tr></thead>
-          <tbody id="okuri-body">
-            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
-            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <button class="add-row-btn" onclick="addRow('okuri-body')"><i class="ti ti-plus"></i> 行を追加</button>
-    </div>
-
-    <!-- 利用者状況 -->
-    <div class="card">
-      <div class="card-title">利用者状況</div>
-      <div class="status-list">
-        <div class="status-item"><span class="status-lbl">ショートステイ</span><input type="text" id="f-short" placeholder="氏名・理由など"></div>
-        <div class="status-item"><span class="status-lbl">体調不良</span><input type="text" id="f-taichou" placeholder="氏名・内容など"></div>
-        <div class="status-item"><span class="status-lbl">拒否</span><input type="text" id="f-kyohi" placeholder="氏名など"></div>
-        <div class="status-item"><span class="status-lbl">入院</span><input type="text" id="f-nyuin" placeholder="氏名など"></div>
-        <div class="status-item"><span class="status-lbl">私事</span><input type="text" id="f-shiji" placeholder="氏名・内容など"></div>
-        <div class="status-item"><span class="status-lbl">病院受診</span><input type="text" id="f-jushin" placeholder="氏名・受診先など"></div>
-      </div>
-    </div>
-
-    <!-- 活動内容 -->
-    <div class="card">
-      <div class="card-title">活動内容</div>
-      <div class="chip-wrap" id="chip-wrap">
-        <span class="chip" onclick="toggleChip(this)">機能訓練</span>
-        <span class="chip" onclick="toggleChip(this)">レクリエーション</span>
-        <span class="chip" onclick="toggleChip(this)">カラオケ</span>
-        <span class="chip" onclick="toggleChip(this)">パズル</span>
-        <span class="chip" onclick="toggleChip(this)">ジェンガ</span>
-        <span class="chip" onclick="toggleChip(this)">すごろく</span>
-        <span class="chip" onclick="toggleChip(this)">オセロゲーム</span>
-        <span class="chip" onclick="toggleChip(this)">トランプ</span>
-        <span class="chip" onclick="toggleChip(this)">人生ゲーム</span>
-        <span class="chip" onclick="toggleChip(this)">クロスワード</span>
-        <span class="chip" onclick="toggleChip(this)">水彩画</span>
-        <span class="chip" onclick="toggleChip(this)">ぬり絵</span>
-        <span class="chip" onclick="toggleChip(this)">計算</span>
-        <span class="chip" onclick="toggleChip(this)">漢字</span>
-        <span class="chip" onclick="toggleChip(this)">間違い探し</span>
-        <span class="chip" onclick="toggleChip(this)">点つなぎ</span>
-        <span class="chip" onclick="toggleChip(this)">手工芸</span>
-        <span class="chip" onclick="toggleChip(this)">脳トレ</span>
-        <span class="chip" onclick="toggleChip(this)">おやつ作り</span>
+  <!-- 勤務者 -->
+  <div class="card">
+    <div class="card-title">勤務者人員数</div>
+    <div class="grid3">
+      <div class="field">
+        <label>相談員</label>
+        <div class="name-chip-area"><div class="lbl">選択</div><div class="name-chips" id="nc-sodan"></div></div>
+        <input type="text" id="f-sodan" placeholder="氏名">
       </div>
       <div class="field">
-        <label>その他の活動</label>
-        <input type="text" id="f-act-other" placeholder="上記以外があれば入力">
+        <label>看護師</label>
+        <div class="name-chip-area"><div class="lbl">選択</div><div class="name-chips" id="nc-kango"></div></div>
+        <input type="text" id="f-kango" placeholder="氏名">
       </div>
-    </div>
-
-    <!-- 特記事項 -->
-    <div class="card">
-      <div class="card-title">特記事項</div>
-      <div class="grid2" style="margin-bottom:0.75rem">
-        <div class="field"><label>計画時短</label><textarea id="f-keikaku" placeholder="例：屈松様 9:00〜16:00"></textarea></div>
-        <div class="field"><label>往診</label><textarea id="f-oushin" placeholder="内容を入力"></textarea></div>
-        <div class="field"><label>その他</label><textarea id="f-other" placeholder="例：谷木様 6/8(月) だいかく入院予定"></textarea></div>
-        <div class="field"><label>備考</label><textarea id="f-biko" placeholder="自由記入"></textarea></div>
+      <div class="field">
+        <label>介護職</label>
+        <div class="name-chip-area"><div class="lbl">選択（複数可）</div><div class="name-chips" id="nc-kaigo"></div></div>
+        <input type="text" id="f-kaigo" placeholder="氏名（複数可）">
       </div>
-
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--text-hint);margin-bottom:6px;padding-top:6px;border-top:1px solid var(--border-light)">計画時短者 — 急遽休み</div>
-      <div class="tbl-wrap">
-        <table class="transport">
-          <thead>
-            <tr>
-              <th style="width:30%">利用者名</th>
-              <th style="width:35%">予定時間帯</th>
-              <th>理由</th>
-            </tr>
-          </thead>
-          <tbody id="jitan-yasumi-body">
-            <tr><td><input type="text" placeholder="氏名"></td><td><input type="text" placeholder="例：9:00〜16:00"></td><td><input type="text" placeholder="例：体調不良"></td></tr>
-            <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <button class="add-row-btn" onclick="addRow3('jitan-yasumi-body')"><i class="ti ti-plus"></i> 行を追加</button>
-    </div>
-
-    <!-- 確認欄 -->
-    <div class="card">
-      <div class="card-title">確認</div>
-      <div class="kakunin-wrap">
-        <div class="hanko-box" id="box-kacho">
-          <span class="hanko-label">課長</span>
-          <div class="hanko-area" id="hanko-kacho" onclick="stampHanko('kacho')">
-            <div class="hanko-inner" id="hanko-kacho-inner"></div>
-            <div class="hanko-placeholder">タップで<br>押印</div>
-          </div>
-          <span class="hanko-date" id="hanko-kacho-date"></span>
-          <button class="hanko-clear" onclick="clearHanko('kacho')">取消</button>
-        </div>
-        <div class="hanko-box" id="box-kanrisha">
-          <span class="hanko-label">管理者</span>
-          <div class="hanko-area" id="hanko-kanrisha" onclick="stampHanko('kanrisha')">
-            <div class="hanko-inner" id="hanko-kanrisha-inner"></div>
-            <div class="hanko-placeholder">タップで<br>押印</div>
-          </div>
-          <span class="hanko-date" id="hanko-kanrisha-date"></span>
-          <button class="hanko-clear" onclick="clearHanko('kanrisha')">取消</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn danger" onclick="clearForm()"><i class="ti ti-trash"></i> クリア</button>
-      <button class="btn primary" onclick="saveEntry()"><i class="ti ti-device-floppy"></i> 保存</button>
-    </div>
-
-  </div>
-
-  <!-- ===== 履歴ペイン ===== -->
-  <div id="pane-history" style="display:none">
-    <div class="card">
-      <div class="card-title">保存済み日誌</div>
-      <div id="history-list"></div>
     </div>
   </div>
 
+  <!-- 送迎・迎え -->
+  <div class="card">
+    <div class="card-title">送迎 — 迎え</div>
+    <div class="tbl-wrap">
+      <table class="transport">
+        <thead><tr><th style="width:15%">車種</th><th style="width:17%">運転者</th><th style="width:17%">介護者</th><th>利用者</th></tr></thead>
+        <tbody id="mukae-body"></tbody>
+      </table>
+    </div>
+    <button class="add-row-btn" onclick="addTransportRow('mukae-body')"><i class="ti ti-plus"></i> 行を追加</button>
+  </div>
+
+  <!-- 送迎・送り -->
+  <div class="card">
+    <div class="card-title">送迎 — 送り</div>
+    <div class="tbl-wrap">
+      <table class="transport">
+        <thead><tr><th style="width:15%">車種</th><th style="width:17%">運転者</th><th style="width:17%">介護者</th><th>利用者</th></tr></thead>
+        <tbody id="okuri-body"></tbody>
+      </table>
+    </div>
+    <button class="add-row-btn" onclick="addTransportRow('okuri-body')"><i class="ti ti-plus"></i> 行を追加</button>
+  </div>
+
+  <!-- 利用者状況 -->
+  <div class="card">
+    <div class="card-title">利用者状況</div>
+    <div class="status-list">
+      <div class="status-item"><span class="status-lbl">ショートステイ</span><input type="text" id="f-short" placeholder="氏名・理由など" onfocus="showUserSuggest(this,'f-short')"></div>
+      <div class="status-item"><span class="status-lbl">体調不良</span><input type="text" id="f-taichou" placeholder="氏名・内容など" onfocus="showUserSuggest(this,'f-taichou')"></div>
+      <div class="status-item"><span class="status-lbl">拒否</span><input type="text" id="f-kyohi" placeholder="氏名など" onfocus="showUserSuggest(this,'f-kyohi')"></div>
+      <div class="status-item"><span class="status-lbl">入院</span><input type="text" id="f-nyuin" placeholder="氏名など" onfocus="showUserSuggest(this,'f-nyuin')"></div>
+      <div class="status-item"><span class="status-lbl">私事</span><input type="text" id="f-shiji" placeholder="氏名・内容など" onfocus="showUserSuggest(this,'f-shiji')"></div>
+      <div class="status-item"><span class="status-lbl">病院受診</span><input type="text" id="f-jushin" placeholder="氏名・受診先など" onfocus="showUserSuggest(this,'f-jushin')"></div>
+    </div>
+    <!-- 利用者名サジェスト -->
+    <div id="user-suggest-bar" style="display:none;margin-top:8px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius-sm);padding:6px 8px">
+      <div style="font-size:10px;color:var(--text-hint);margin-bottom:5px;font-weight:600">利用者を選択（タップで追記）</div>
+      <div id="user-suggest-chips" class="name-chips"></div>
+    </div>
+  </div>
+
+  <!-- 活動内容 -->
+  <div class="card">
+    <div class="card-title">活動内容</div>
+    <div class="chip-wrap" id="chip-wrap">
+      <span class="chip" onclick="toggleChip(this)">機能訓練</span>
+      <span class="chip" onclick="toggleChip(this)">レクリエーション</span>
+      <span class="chip" onclick="toggleChip(this)">カラオケ</span>
+      <span class="chip" onclick="toggleChip(this)">パズル</span>
+      <span class="chip" onclick="toggleChip(this)">ジェンガ</span>
+      <span class="chip" onclick="toggleChip(this)">すごろく</span>
+      <span class="chip" onclick="toggleChip(this)">オセロゲーム</span>
+      <span class="chip" onclick="toggleChip(this)">トランプ</span>
+      <span class="chip" onclick="toggleChip(this)">人生ゲーム</span>
+      <span class="chip" onclick="toggleChip(this)">クロスワード</span>
+      <span class="chip" onclick="toggleChip(this)">水彩画</span>
+      <span class="chip" onclick="toggleChip(this)">ぬり絵</span>
+      <span class="chip" onclick="toggleChip(this)">計算</span>
+      <span class="chip" onclick="toggleChip(this)">漢字</span>
+      <span class="chip" onclick="toggleChip(this)">間違い探し</span>
+      <span class="chip" onclick="toggleChip(this)">点つなぎ</span>
+      <span class="chip" onclick="toggleChip(this)">手工芸</span>
+      <span class="chip" onclick="toggleChip(this)">脳トレ</span>
+      <span class="chip" onclick="toggleChip(this)">おやつ作り</span>
+    </div>
+    <div class="field"><label>その他の活動</label><input type="text" id="f-act-other" placeholder="上記以外があれば入力"></div>
+  </div>
+
+  <!-- 特記事項 -->
+  <div class="card">
+    <div class="card-title">特記事項</div>
+    <div class="grid2" style="margin-bottom:.75rem">
+      <div class="field"><label>計画時短</label><textarea id="f-keikaku" placeholder="例：屈松様 9:00〜16:00"></textarea></div>
+      <div class="field"><label>往診</label><textarea id="f-oushin" placeholder="内容を入力"></textarea></div>
+      <div class="field"><label>その他</label><textarea id="f-other" placeholder="例：谷木様 6/8(月) だいかく入院予定"></textarea></div>
+      <div class="field"><label>備考</label><textarea id="f-biko" placeholder="自由記入"></textarea></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text-hint);margin-bottom:6px;padding-top:6px;border-top:1px solid var(--border-light)">計画時短者 — 急遽休み</div>
+    <div class="tbl-wrap">
+      <table class="transport">
+        <thead><tr><th style="width:30%">利用者名</th><th style="width:35%">予定時間帯</th><th>理由</th></tr></thead>
+        <tbody id="jitan-yasumi-body"></tbody>
+      </table>
+    </div>
+    <button class="add-row-btn" onclick="addJitanRow()"><i class="ti ti-plus"></i> 行を追加</button>
+  </div>
+
+  <!-- 確認欄 -->
+  <div class="card">
+    <div class="card-title">確認</div>
+    <div class="kakunin-wrap">
+      <div class="hanko-box" id="box-kacho">
+        <span class="hanko-label">課長</span>
+        <div class="hanko-area" id="hanko-kacho" onclick="stampHanko('kacho')">
+          <div class="hanko-inner" id="hanko-kacho-inner"></div>
+          <div class="hanko-placeholder">タップで<br>押印</div>
+        </div>
+        <span class="hanko-date" id="hanko-kacho-date"></span>
+        <button class="hanko-clear" onclick="clearHanko('kacho')">取消</button>
+      </div>
+      <div class="hanko-box" id="box-kanrisha">
+        <span class="hanko-label">管理者</span>
+        <div class="hanko-area" id="hanko-kanrisha" onclick="stampHanko('kanrisha')">
+          <div class="hanko-inner" id="hanko-kanrisha-inner"></div>
+          <div class="hanko-placeholder">タップで<br>押印</div>
+        </div>
+        <span class="hanko-date" id="hanko-kanrisha-date"></span>
+        <button class="hanko-clear" onclick="clearHanko('kanrisha')">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn danger" onclick="clearForm()"><i class="ti ti-trash"></i> クリア</button>
+    <button class="btn primary" onclick="saveEntry()"><i class="ti ti-device-floppy"></i> 保存</button>
+  </div>
 </div>
+
+<!-- ===== 履歴ペイン ===== -->
+<div id="pane-history" style="display:none">
+  <div class="card">
+    <div class="card-title">保存済み日誌</div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- ===== マスタペイン ===== -->
+<div id="pane-master" style="display:none">
+  <div class="card">
+    <div class="card-title">職員マスタ</div>
+    <div class="master-section">
+      <div class="master-section-title"><i class="ti ti-users"></i> 職員一覧</div>
+      <div class="master-list" id="staff-list"></div>
+      <button class="master-add-btn" onclick="addStaffItem()"><i class="ti ti-plus"></i> 職員を追加</button>
+    </div>
+    <div class="btn-row" style="margin-top:.5rem">
+      <button class="btn primary" onclick="saveMaster()"><i class="ti ti-device-floppy"></i> 保存</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">利用者マスタ</div>
+    <div class="master-section">
+      <div class="master-section-title"><i class="ti ti-heart"></i> 利用者一覧</div>
+      <div class="master-list" id="user-list"></div>
+      <button class="master-add-btn" onclick="addUserItem()"><i class="ti ti-plus"></i> 利用者を追加</button>
+    </div>
+    <div class="btn-row" style="margin-top:.5rem">
+      <button class="btn primary" onclick="saveMaster()"><i class="ti ti-device-floppy"></i> 保存</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
 
 <div class="toast" id="toast"></div>
 
 <script>
-const YOUBI_LABELS = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
-const YOUBI_COLORS = ['#c94040','#1a1917','#1a1917','#1a1917','#1a1917','#1a1917','#1d6fa4'];
-const STORAGE_KEY = 'gyomu_nisshi_v1';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbx8FtwUcM7BrYaMjBk_C_vZkub5C4RP6wgxsWrBCYCPRcGpyHQgN0NVuDkJ_7UeUqeG/exec';
+const YOUBI_LABELS=['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
+const YOUBI_COLORS=['#c94040','#1a1917','#1a1917','#1a1917','#1a1917','#1a1917','#1d6fa4'];
+const STORAGE_KEY='gyomu_nisshi_v1';
+const MASTER_KEY='gyomu_master_v1';
+const GAS_URL='https://script.google.com/macros/s/AKfycbx8FtwUcM7BrYaMjBk_C_vZkub5C4RP6wgxsWrBCYCPRcGpyHQgN0NVuDkJ_7UeUqeG/exec';
 
-// 初期化
+// ========== マスタデータ ==========
+let master = {staff:[], users:[]};
+
+function loadMaster(){
+  try{ master=JSON.parse(localStorage.getItem(MASTER_KEY)||'{"staff":[],"users":[]}'); }catch{ master={staff:[],users:[]}; }
+  if(!master.staff) master.staff=[];
+  if(!master.users) master.users=[];
+}
+
+function saveMaster(){
+  // staff-listから読み取り
+  const staffItems=document.querySelectorAll('#staff-list .master-item');
+  master.staff=[];
+  staffItems.forEach(item=>{
+    const name=item.querySelector('input[data-field="name"]').value.trim();
+    const role=item.querySelector('select[data-field="role"]').value;
+    if(name) master.staff.push({name,role});
+  });
+  // user-listから読み取り
+  const userItems=document.querySelectorAll('#user-list .master-item');
+  master.users=[];
+  userItems.forEach(item=>{
+    const name=item.querySelector('input[data-field="name"]').value.trim();
+    if(name) master.users.push({name});
+  });
+  localStorage.setItem(MASTER_KEY,JSON.stringify(master));
+  refreshNameChips();
+  showToast('マスタを保存しました','ok');
+}
+
+function renderMasterList(){
+  const sl=document.getElementById('staff-list');
+  sl.innerHTML='';
+  master.staff.forEach((s,i)=>{
+    sl.appendChild(makeStaffItem(s.name,s.role));
+  });
+  const ul=document.getElementById('user-list');
+  ul.innerHTML='';
+  master.users.forEach(u=>{
+    ul.appendChild(makeUserItem(u.name));
+  });
+}
+
+function makeStaffItem(name='',role='介護職'){
+  const div=document.createElement('div');
+  div.className='master-item';
+  div.innerHTML=`
+    <input type="text" data-field="name" value="${name}" placeholder="氏名">
+    <select data-field="role">
+      <option value="相談員"${role==='相談員'?' selected':''}>相談員</option>
+      <option value="看護師"${role==='看護師'?' selected':''}>看護師</option>
+      <option value="介護職"${role==='介護職'?' selected':''}>介護職</option>
+    </select>
+    <button class="master-del" onclick="this.closest('.master-item').remove()"><i class="ti ti-trash"></i></button>`;
+  return div;
+}
+
+function makeUserItem(name=''){
+  const div=document.createElement('div');
+  div.className='master-item';
+  div.innerHTML=`
+    <input type="text" data-field="name" value="${name}" placeholder="利用者名（様は不要）">
+    <button class="master-del" onclick="this.closest('.master-item').remove()"><i class="ti ti-trash"></i></button>`;
+  return div;
+}
+
+function addStaffItem(){ document.getElementById('staff-list').appendChild(makeStaffItem()); }
+function addUserItem(){ document.getElementById('user-list').appendChild(makeUserItem()); }
+
+// ========== 名前チップ描画 ==========
+function refreshNameChips(){
+  // 記入者・相談員・看護師・介護職チップ
+  renderStaffChips('nc-writer',null,'f-writer',false);
+  renderStaffChips('nc-sodan','相談員','f-sodan',false);
+  renderStaffChips('nc-kango','看護師','f-kango',false);
+  renderStaffChips('nc-kaigo','介護職','f-kaigo',true);
+  // 送迎テーブルのselectを再構築
+  rebuildTransportRows('mukae-body');
+  rebuildTransportRows('okuri-body');
+  // 利用者サジェスト
+  renderUserSuggestChips();
+}
+
+function renderStaffChips(containerId, filterRole, targetInputId, multi){
+  const wrap=document.getElementById(containerId);
+  if(!wrap) return;
+  wrap.innerHTML='';
+  let list=master.staff;
+  if(filterRole) list=list.filter(s=>s.role===filterRole);
+  list.forEach(s=>{
+    const el=document.createElement('span');
+    el.className='nc';
+    el.textContent=s.name;
+    el.onclick=()=>{
+      const inp=document.getElementById(targetInputId);
+      if(multi){
+        const cur=inp.value.split('、').map(v=>v.trim()).filter(Boolean);
+        if(el.classList.contains('on')){
+          el.classList.remove('on');
+          const idx=cur.indexOf(s.name);
+          if(idx>=0) cur.splice(idx,1);
+          inp.value=cur.join('、');
+        } else {
+          el.classList.add('on');
+          if(!cur.includes(s.name)) cur.push(s.name);
+          inp.value=cur.join('、');
+        }
+      } else {
+        wrap.querySelectorAll('.nc').forEach(c=>c.classList.remove('on'));
+        el.classList.add('on');
+        inp.value=s.name;
+      }
+    };
+    wrap.appendChild(el);
+  });
+}
+
+function renderUserSuggestChips(){
+  const wrap=document.getElementById('user-suggest-chips');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  master.users.forEach(u=>{
+    const el=document.createElement('span');
+    el.className='nc';
+    el.textContent=u.name+'様';
+    el.onclick=()=>{
+      const inp=document.getElementById(currentSuggestTarget);
+      if(!inp) return;
+      const cur=inp.value;
+      inp.value=cur ? cur+'、'+u.name+'様' : u.name+'様';
+    };
+    wrap.appendChild(el);
+  });
+}
+
+let currentSuggestTarget=null;
+function showUserSuggest(el,id){
+  currentSuggestTarget=id;
+  const bar=document.getElementById('user-suggest-bar');
+  if(master.users.length>0){ bar.style.display='block'; }
+}
+
+// ========== 送迎テーブル ==========
+function makeTransportRow(vals){
+  const tr=document.createElement('tr');
+  const v=vals||['','','',''];
+  // 車種
+  const tdCar=document.createElement('td');
+  const inpCar=document.createElement('input');
+  inpCar.type='text'; inpCar.value=v[0]||'';
+  tdCar.appendChild(inpCar);
+  // 運転者 (職員select)
+  const tdDrv=document.createElement('td');
+  tdDrv.appendChild(makeStaffSelect(v[1]||''));
+  // 介護者 (職員select)
+  const tdCare=document.createElement('td');
+  tdCare.appendChild(makeStaffSelect(v[2]||''));
+  // 利用者 (利用者select + 自由入力)
+  const tdUser=document.createElement('td');
+  tdUser.appendChild(makeUserMultiInput(v[3]||''));
+  tr.appendChild(tdCar); tr.appendChild(tdDrv); tr.appendChild(tdCare); tr.appendChild(tdUser);
+  return tr;
+}
+
+function makeStaffSelect(val){
+  const sel=document.createElement('select');
+  sel.style.cssText='font-size:13px;font-family:inherit;padding:4px 6px;border:none;background:transparent;width:100%;color:var(--text)';
+  sel.innerHTML='<option value="">—</option>';
+  master.staff.forEach(s=>{
+    const opt=document.createElement('option');
+    opt.value=s.name; opt.textContent=s.name;
+    if(s.name===val) opt.selected=true;
+    sel.appendChild(opt);
+  });
+  // 直接入力も可能にするため手入力オプション追加
+  const optOther=document.createElement('option');
+  optOther.value='__other__'; optOther.textContent='その他入力...';
+  sel.appendChild(optOther);
+  if(val && !master.staff.find(s=>s.name===val)){
+    const optVal=document.createElement('option');
+    optVal.value=val; optVal.textContent=val; optVal.selected=true;
+    sel.insertBefore(optVal, optOther);
+  }
+  sel.addEventListener('change',function(){
+    if(this.value==='__other__'){
+      const name=prompt('名前を入力してください');
+      if(name){
+        const opt=document.createElement('option');
+        opt.value=name; opt.textContent=name; opt.selected=true;
+        this.insertBefore(opt, optOther);
+        this.value=name;
+      } else { this.value=''; }
+    }
+  });
+  return sel;
+}
+
+function makeUserMultiInput(val){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;flex-direction:column;gap:2px;padding:2px';
+  const chips=document.createElement('div');
+  chips.style.cssText='display:flex;flex-wrap:wrap;gap:3px;margin-bottom:2px';
+  const inp=document.createElement('input');
+  inp.type='text'; inp.value=val||''; inp.style.cssText='font-size:12px;padding:3px 5px;border:none;background:transparent;width:100%';
+  inp.placeholder='氏名';
+  // 利用者チップ
+  master.users.forEach(u=>{
+    const c=document.createElement('span');
+    c.style.cssText='font-size:10px;padding:2px 7px;border:1px solid var(--border);border-radius:10px;cursor:pointer;background:var(--bg);color:var(--text-sub);user-select:none';
+    c.textContent=u.name+'様';
+    c.onclick=()=>{
+      const cur=inp.value.split('、').map(v=>v.trim()).filter(Boolean);
+      const nm=u.name+'様';
+      if(!cur.includes(nm)){ cur.push(nm); inp.value=cur.join('、'); }
+    };
+    chips.appendChild(c);
+  });
+  if(master.users.length>0) wrap.appendChild(chips);
+  wrap.appendChild(inp);
+  return wrap;
+}
+
+function addTransportRow(tbodyId){
+  document.getElementById(tbodyId).appendChild(makeTransportRow());
+}
+
+function rebuildTransportRows(tbodyId){
+  const tb=document.getElementById(tbodyId);
+  // 既存値を取得してから再描画
+  const existing=getTransportData(tbodyId);
+  tb.innerHTML='';
+  const count=Math.max(existing.length,2);
+  for(let i=0;i<count;i++){
+    tb.appendChild(makeTransportRow(existing[i]||null));
+  }
+}
+
+function getTransportData(tbodyId){
+  const rows=[];
+  document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{
+    const tds=tr.querySelectorAll('td');
+    if(tds.length<4) return;
+    const car=tds[0].querySelector('input')?.value||'';
+    const drv=tds[1].querySelector('select')?.value||tds[1].querySelector('input')?.value||'';
+    const care=tds[2].querySelector('select')?.value||tds[2].querySelector('input')?.value||'';
+    const user=tds[3].querySelector('input')?.value||'';
+    rows.push([car,drv,care,user]);
+  });
+  return rows;
+}
+
+function setTransportData(tbodyId,rows){
+  const tb=document.getElementById(tbodyId);
+  tb.innerHTML='';
+  const count=Math.max((rows||[]).length,2);
+  for(let i=0;i<count;i++){
+    tb.appendChild(makeTransportRow((rows||[])[i]||null));
+  }
+}
+
+// ========== 時短急遽休みテーブル ==========
+function makeJitanRow(vals){
+  const tr=document.createElement('tr');
+  const v=vals||['','',''];
+  const td0=document.createElement('td');
+  const userInp=document.createElement('input');
+  userInp.type='text'; userInp.value=v[0]||''; userInp.placeholder='氏名';
+  // 利用者候補リスト
+  if(master.users.length>0){
+    const dl=document.createElement('datalist');
+    dl.id='dl-users-'+Math.random().toString(36).slice(2);
+    master.users.forEach(u=>{ const opt=document.createElement('option'); opt.value=u.name+'様'; dl.appendChild(opt); });
+    document.body.appendChild(dl);
+    userInp.setAttribute('list',dl.id);
+  }
+  td0.appendChild(userInp);
+  const td1=document.createElement('td');
+  const timeInp=document.createElement('input'); timeInp.type='text'; timeInp.value=v[1]||''; timeInp.placeholder='例：9:00〜16:00';
+  td1.appendChild(timeInp);
+  const td2=document.createElement('td');
+  const rsnInp=document.createElement('input'); rsnInp.type='text'; rsnInp.value=v[2]||''; rsnInp.placeholder='例：体調不良';
+  td2.appendChild(rsnInp);
+  tr.appendChild(td0); tr.appendChild(td1); tr.appendChild(td2);
+  return tr;
+}
+
+function addJitanRow(){ document.getElementById('jitan-yasumi-body').appendChild(makeJitanRow()); }
+
+function getJitanData(){
+  const rows=[];
+  document.querySelectorAll('#jitan-yasumi-body tr').forEach(tr=>{
+    const inputs=tr.querySelectorAll('input');
+    rows.push([inputs[0]?.value||'',inputs[1]?.value||'',inputs[2]?.value||'']);
+  });
+  return rows;
+}
+
+function setJitanData(rows){
+  const tb=document.getElementById('jitan-yasumi-body');
+  tb.innerHTML='';
+  const count=Math.max((rows||[]).length,2);
+  for(let i=0;i<count;i++){ tb.appendChild(makeJitanRow((rows||[])[i]||null)); }
+}
+
+// ========== 初期化 ==========
 (function init(){
-  const today = new Date();
-  const s = today.toISOString().split('T')[0];
-  document.getElementById('f-date').value = s;
-  updateYoubi(s);
-  document.getElementById('f-date').addEventListener('change', function(){ updateYoubi(this.value); });
+  loadMaster();
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value=today;
+  updateYoubi(today);
+  document.getElementById('f-date').addEventListener('change',function(){ updateYoubi(this.value); });
+  refreshNameChips();
+  setTransportData('mukae-body',null);
+  setTransportData('okuri-body',null);
+  setJitanData(null);
 })();
 
 function updateYoubi(v){
   if(!v) return;
-  const d = new Date(v + 'T00:00:00');
-  const el = document.getElementById('f-youbi');
-  el.value = YOUBI_LABELS[d.getDay()];
-  el.style.color = YOUBI_COLORS[d.getDay()];
-}
-
-function addRow(tbodyId){
-  const tb = document.getElementById(tbodyId);
-  const tr = document.createElement('tr');
-  tr.innerHTML = '<td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>';
-  tb.appendChild(tr);
+  const d=new Date(v+'T00:00:00');
+  const el=document.getElementById('f-youbi');
+  el.value=YOUBI_LABELS[d.getDay()];
+  el.style.color=YOUBI_COLORS[d.getDay()];
 }
 
 function toggleChip(el){ el.classList.toggle('on'); }
 
-function addRow3(tbodyId){
-  const tb = document.getElementById(tbodyId);
-  const tr = document.createElement('tr');
-  tr.innerHTML = '<td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>';
-  tb.appendChild(tr);
-}
+function gv(id){ return document.getElementById(id)?.value||''; }
+function sv(id,v){ const el=document.getElementById(id); if(el) el.value=v||''; }
 
-function getTable3Data(tbodyId){
-  const rows = [];
-  document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{
-    const cells = [];
-    tr.querySelectorAll('input').forEach(inp => cells.push(inp.value));
-    rows.push(cells);
-  });
-  return rows;
-}
+function getSelectedChips(){ return Array.from(document.querySelectorAll('.chip.on')).map(el=>el.textContent); }
+function setSelectedChips(arr){ document.querySelectorAll('.chip').forEach(el=>{ el.classList.toggle('on',(arr||[]).includes(el.textContent)); }); }
 
-function setTable3Data(tbodyId, rows){
-  const tb = document.getElementById(tbodyId);
-  tb.innerHTML = '';
-  (rows||[]).forEach(cells=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>';
-    const inputs = tr.querySelectorAll('input');
-    (cells||[]).forEach((v,i)=>{ if(inputs[i]) inputs[i].value = v; });
-    tb.appendChild(tr);
-  });
-  if(!rows || rows.length === 0){ addRow3(tbodyId); addRow3(tbodyId); }
-}
+function loadAll(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }catch{ return []; } }
 
-function gv(id){ return document.getElementById(id).value; }
-function sv(id, v){ const el = document.getElementById(id); if(el) el.value = v || ''; }
-
-function getTableData(tbodyId){
-  const rows = [];
-  document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{
-    const cells = [];
-    tr.querySelectorAll('input').forEach(inp => cells.push(inp.value));
-    rows.push(cells);
-  });
-  return rows;
-}
-
-function setTableData(tbodyId, rows){
-  const tb = document.getElementById(tbodyId);
-  tb.innerHTML = '';
-  (rows||[]).forEach(cells=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>';
-    const inputs = tr.querySelectorAll('input');
-    (cells||[]).forEach((v,i)=>{ if(inputs[i]) inputs[i].value = v; });
-    tb.appendChild(tr);
-  });
-  if(!rows || rows.length === 0){
-    addRow(tbodyId); addRow(tbodyId);
-  }
-}
-
-function getSelectedChips(){
-  return Array.from(document.querySelectorAll('.chip.on')).map(el=>el.textContent);
-}
-
-function setSelectedChips(arr){
-  document.querySelectorAll('.chip').forEach(el=>{
-    el.classList.toggle('on', (arr||[]).includes(el.textContent));
-  });
-}
-
-function loadAll(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch{ return []; }
-}
-
-// 押印状態（メモリ上）
-const hankoState = { kacho: null, kanrisha: null };
+// ========== 押印 ==========
+const hankoState={kacho:null,kanrisha:null};
 
 function stampHanko(role){
-  if(hankoState[role]){ return; } // すでに押印済みなら無視
-  const name = role === 'kacho' ? '牧' : '三ツ股';
-  const now = new Date();
-  const dateStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  hankoState[role] = { name, date: dateStr };
+  if(hankoState[role]) return;
+  const name=role==='kacho'?'牧':'三ツ股';
+  const now=new Date();
+  hankoState[role]={name,date:`${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`};
   applyHanko(role);
 }
 
 function applyHanko(role){
-  const s = hankoState[role];
-  const area = document.getElementById('hanko-'+role);
-  const inner = document.getElementById('hanko-'+role+'-inner');
-  const dateEl = document.getElementById('hanko-'+role+'-date');
-  const box = document.getElementById('box-'+role);
+  const s=hankoState[role];
+  const area=document.getElementById('hanko-'+role);
+  const inner=document.getElementById('hanko-'+role+'-inner');
+  const dateEl=document.getElementById('hanko-'+role+'-date');
+  const box=document.getElementById('box-'+role);
   if(s){
-    // 名前を縦書き風に1〜2文字ずつ改行
-    const chars = s.name.replace(/\s/g,'');
-    inner.textContent = chars.length <= 2 ? chars : chars.slice(0,2)+'\n'+chars.slice(2,4);
-    inner.style.whiteSpace = 'pre';
-    area.classList.add('signed');
-    dateEl.textContent = s.date;
-    box.classList.add('signed-box');
+    const chars=s.name.replace(/\s/g,'');
+    inner.textContent=chars.length<=2?chars:chars.slice(0,2)+'\n'+chars.slice(2,4);
+    inner.style.whiteSpace='pre';
+    area.classList.add('signed'); dateEl.textContent=s.date; box.classList.add('signed-box');
   } else {
-    inner.textContent = '';
-    area.classList.remove('signed');
-    dateEl.textContent = '';
-    box.classList.remove('signed-box');
+    inner.textContent=''; area.classList.remove('signed'); dateEl.textContent=''; box.classList.remove('signed-box');
   }
 }
 
-function clearHanko(role){
-  hankoState[role] = null;
-  applyHanko(role);
-}
+function clearHanko(role){ hankoState[role]=null; applyHanko(role); }
 
+// ========== 保存 ==========
 function saveEntry(){
-  const date = gv('f-date');
+  const date=gv('f-date');
   if(!date){ showToast('日付を入力してください','err'); return; }
-  const data = {
-    date, writer: gv('f-writer'), youbi: gv('f-youbi'),
-    yotei: gv('f-yotei'), jissuu: gv('f-jissuu'), chushi: gv('f-chushi'),
-    sodan: gv('f-sodan'), kango: gv('f-kango'), kaigo: gv('f-kaigo'),
-    mukae: getTableData('mukae-body'), okuri: getTableData('okuri-body'),
-    short: gv('f-short'), taichou: gv('f-taichou'), kyohi: gv('f-kyohi'),
-    nyuin: gv('f-nyuin'), shiji: gv('f-shiji'), jushin: gv('f-jushin'),
-    activities: getSelectedChips(), actOther: gv('f-act-other'),
-    keikaku: gv('f-keikaku'), oushin: gv('f-oushin'), other: gv('f-other'), biko: gv('f-biko'),
-    jitanYasumi: getTable3Data('jitan-yasumi-body'),
-    hanko: { kacho: hankoState.kacho, kanrisha: hankoState.kanrisha },
-    savedAt: new Date().toISOString()
+  const data={
+    date, writer:gv('f-writer'), youbi:gv('f-youbi'),
+    yotei:gv('f-yotei'), jissuu:gv('f-jissuu'), chushi:gv('f-chushi'),
+    sodan:gv('f-sodan'), kango:gv('f-kango'), kaigo:gv('f-kaigo'),
+    mukae:getTransportData('mukae-body'), okuri:getTransportData('okuri-body'),
+    short:gv('f-short'), taichou:gv('f-taichou'), kyohi:gv('f-kyohi'),
+    nyuin:gv('f-nyuin'), shiji:gv('f-shiji'), jushin:gv('f-jushin'),
+    activities:getSelectedChips(), actOther:gv('f-act-other'),
+    keikaku:gv('f-keikaku'), oushin:gv('f-oushin'), other:gv('f-other'), biko:gv('f-biko'),
+    jitanYasumi:getJitanData(),
+    hanko:{kacho:hankoState.kacho, kanrisha:hankoState.kanrisha},
+    savedAt:new Date().toISOString()
   };
-  // ローカルにも保存
-  let all = loadAll();
-  const idx = all.findIndex(e=>e.date===date);
-  if(idx>=0) all[idx] = data; else all.unshift(data);
+  let all=loadAll();
+  const idx=all.findIndex(e=>e.date===date);
+  if(idx>=0) all[idx]=data; else all.unshift(data);
   all.sort((a,b)=>b.date.localeCompare(a.date));
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-
-  // スプレッドシートに保存
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(all));
   showToast('保存中...','');
-  fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify(data)
-  }).then(r=>r.json()).then(res=>{
-    if(res.status==='ok') showToast('保存しました ✓','ok');
-    else showToast('保存エラー: '+res.message,'err');
-  }).catch(()=>{
-    showToast('オフライン：ローカルのみ保存','');
-  });
+  fetch(GAS_URL,{method:'POST',body:JSON.stringify(data)})
+    .then(r=>r.json()).then(res=>{
+      if(res.status==='ok') showToast('保存しました ✓','ok');
+      else showToast('保存エラー: '+res.message,'err');
+    }).catch(()=>{ showToast('オフライン：ローカルのみ保存',''); });
 }
 
+// ========== 読み込み ==========
 function loadEntry(i){
-  const e = loadAll()[i];
+  const e=loadAll()[i];
   if(!e) return;
-  sv('f-date', e.date); sv('f-writer', e.writer);
-  updateYoubi(e.date);
-  sv('f-yotei', e.yotei); sv('f-jissuu', e.jissuu); sv('f-chushi', e.chushi);
-  sv('f-sodan', e.sodan); sv('f-kango', e.kango); sv('f-kaigo', e.kaigo);
-  setTableData('mukae-body', e.mukae); setTableData('okuri-body', e.okuri);
-  sv('f-short', e.short); sv('f-taichou', e.taichou); sv('f-kyohi', e.kyohi);
-  sv('f-nyuin', e.nyuin); sv('f-shiji', e.shiji); sv('f-jushin', e.jushin);
-  setSelectedChips(e.activities); sv('f-act-other', e.actOther);
-  sv('f-keikaku', e.keikaku); sv('f-oushin', e.oushin); sv('f-other', e.other); sv('f-biko', e.biko);
-  setTable3Data('jitan-yasumi-body', e.jitanYasumi);
-  hankoState.kacho = e.hanko ? e.hanko.kacho : null;
-  hankoState.kanrisha = e.hanko ? e.hanko.kanrisha : null;
+  sv('f-date',e.date); sv('f-writer',e.writer); updateYoubi(e.date);
+  sv('f-yotei',e.yotei); sv('f-jissuu',e.jissuu); sv('f-chushi',e.chushi);
+  sv('f-sodan',e.sodan); sv('f-kango',e.kango); sv('f-kaigo',e.kaigo);
+  setTransportData('mukae-body',e.mukae); setTransportData('okuri-body',e.okuri);
+  sv('f-short',e.short); sv('f-taichou',e.taichou); sv('f-kyohi',e.kyohi);
+  sv('f-nyuin',e.nyuin); sv('f-shiji',e.shiji); sv('f-jushin',e.jushin);
+  setSelectedChips(e.activities); sv('f-act-other',e.actOther);
+  sv('f-keikaku',e.keikaku); sv('f-oushin',e.oushin); sv('f-other',e.other); sv('f-biko',e.biko);
+  setJitanData(e.jitanYasumi);
+  hankoState.kacho=e.hanko?e.hanko.kacho:null;
+  hankoState.kanrisha=e.hanko?e.hanko.kanrisha:null;
   applyHanko('kacho'); applyHanko('kanrisha');
   switchTab('input');
-  showToast(e.date + ' の日誌を読み込みました','ok');
+  showToast(e.date+' の日誌を読み込みました','ok');
 }
 
 function deleteEntry(i){
   if(!confirm('この日誌を削除しますか？')) return;
-  let all = loadAll(); all.splice(i,1);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  let all=loadAll(); all.splice(i,1);
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(all));
   renderHistory(); showToast('削除しました');
 }
 
@@ -797,47 +827,46 @@ function clearForm(){
   ['f-writer','f-yotei','f-jissuu','f-chushi','f-sodan','f-kango','f-kaigo',
    'f-short','f-taichou','f-kyohi','f-nyuin','f-shiji','f-jushin','f-act-other',
    'f-keikaku','f-oushin','f-other','f-biko'].forEach(id=>sv(id,''));
-  setTableData('mukae-body', null); setTableData('okuri-body', null);
-  setTable3Data('jitan-yasumi-body', null);
+  setTransportData('mukae-body',null); setTransportData('okuri-body',null);
+  setJitanData(null);
   document.querySelectorAll('.chip').forEach(el=>el.classList.remove('on'));
-  hankoState.kacho = null; hankoState.kanrisha = null;
+  document.querySelectorAll('.nc').forEach(el=>el.classList.remove('on'));
+  hankoState.kacho=null; hankoState.kanrisha=null;
   applyHanko('kacho'); applyHanko('kanrisha');
-  const today = new Date().toISOString().split('T')[0];
-  sv('f-date', today); updateYoubi(today);
+  document.getElementById('user-suggest-bar').style.display='none';
+  const today=new Date().toISOString().split('T')[0];
+  sv('f-date',today); updateYoubi(today);
 }
 
 function renderHistory(){
-  const all = loadAll();
-  const el = document.getElementById('history-list');
-  if(!all.length){
-    el.innerHTML = '<div class="empty-msg">保存された日誌はありません</div>';
-    return;
-  }
-  el.innerHTML = all.map((e,i)=>`
+  const all=loadAll();
+  const el=document.getElementById('history-list');
+  if(!all.length){ el.innerHTML='<div class="empty-msg">保存された日誌はありません</div>'; return; }
+  el.innerHTML=all.map((e,i)=>`
     <div class="hist-item" onclick="loadEntry(${i})">
       <div>
         <div class="hist-date">${e.date}（${e.youbi||''}）</div>
         <div class="hist-meta">記入者：${e.writer||'—'} ／ 実数：${e.jissuu||'—'}名 ／ 予定：${e.yotei||'—'}名</div>
       </div>
       <button class="hist-del" onclick="event.stopPropagation();deleteEntry(${i})"><i class="ti ti-trash"></i> 削除</button>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function switchTab(t){
-  document.getElementById('pane-input').style.display = t==='input' ? 'block' : 'none';
-  document.getElementById('pane-history').style.display = t==='history' ? 'block' : 'none';
-  document.getElementById('tab-input').className = 'tab' + (t==='input' ? ' active' : '');
-  document.getElementById('tab-history').className = 'tab' + (t==='history' ? ' active' : '');
+  ['input','history','master'].forEach(tab=>{
+    document.getElementById('pane-'+tab).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+tab).className='tab'+(t===tab?' active':'');
+  });
   if(t==='history') renderHistory();
+  if(t==='master') renderMasterList();
 }
 
-function showToast(msg, type=''){
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show' + (type ? ' '+type : '');
+function showToast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='toast show'+(type?' '+type:'');
   clearTimeout(el._t);
-  el._t = setTimeout(()=>el.className='toast', 2600);
+  el._t=setTimeout(()=>el.className='toast',2600);
 }
 </script>
 </body>
