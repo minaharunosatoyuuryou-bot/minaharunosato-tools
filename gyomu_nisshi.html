@@ -295,7 +295,7 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
     <div class="card-title">利用者状況 — 急遽休み・変更</div>
     <div class="tbl-wrap">
       <table class="transport">
-        <thead><tr><th style="width:28%">利用者名</th><th style="width:28%">予定時間帯</th><th>理由</th></tr></thead>
+        <thead><tr><th style="width:25%">利用者名</th><th style="width:22%">予定時間帯</th><th style="width:22%">実績時間帯</th><th>理由</th></tr></thead>
         <tbody id="jitan-body"></tbody>
       </table>
     </div>
@@ -857,25 +857,25 @@ function setVitalData(data){
 
 // ===== 急遽休みテーブル =====
 function makeJitanRow(vals){
-  const v=vals||['','',''];
+  const v=vals||['','','',''];
   const tr=document.createElement('tr');
-  // datalist for users
   const dlId='dl-jitan-'+Math.random().toString(36).slice(2,7);
   const dl=document.createElement('datalist'); dl.id=dlId;
   master.users.forEach(u=>{ const o=document.createElement('option'); o.value=u.name+'様'; dl.appendChild(o); });
   document.body.appendChild(dl);
-  const reasonVal=v[2]||'';
+  const reasonVal=v[3]||v[2]||'';
   const presets=['ショートステイ','体調不良','往診','入院','拒否','私事','病院受診','計画時短','その他'];
   const opts=presets.map(p=>`<option value="${p}"${p===reasonVal?' selected':''}>${p}</option>`).join('');
   tr.innerHTML=`
     <td><input type="text" value="${v[0]||''}" placeholder="氏名" list="${dlId}"></td>
-    <td><input type="text" value="${v[1]||''}" placeholder="9:00〜16:00"></td>
+    <td><input type="text" value="${v[1]||''}" placeholder="9:00〜16:30"></td>
+    <td><input type="text" value="${v[2]||''}" placeholder="9:00〜12:00"></td>
     <td>
       <div style="display:flex;gap:3px;align-items:center">
         <select style="font-size:12px;font-family:inherit;padding:3px 4px;border:1px solid var(--border);border-radius:4px;background:#fafaf8;color:var(--text)" onchange="this.nextElementSibling.value=this.value;this.value=''">
           <option value="">選択</option>${opts}
         </select>
-        <input type="text" value="${reasonVal}" placeholder="詳細入力" style="font-size:12px;flex:1;padding:3px 5px;border:1px solid var(--border);border-radius:4px;background:#fafaf8">
+        <input type="text" value="${reasonVal}" placeholder="詳細" style="font-size:12px;flex:1;padding:3px 5px;border:1px solid var(--border);border-radius:4px;background:#fafaf8">
       </div>
     </td>`;
   return tr;
@@ -885,7 +885,7 @@ function getJitanData(){
   const rows=[];
   document.querySelectorAll('#jitan-body tr').forEach(tr=>{
     const inp=tr.querySelectorAll('input');
-    rows.push([inp[0]?.value||'',inp[1]?.value||'',inp[2]?.value||'']);
+    rows.push([inp[0]?.value||'',inp[1]?.value||'',inp[2]?.value||'',inp[3]?.value||'']);
   });
   return rows;
 }
