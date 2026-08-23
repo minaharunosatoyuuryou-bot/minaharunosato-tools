@@ -166,20 +166,25 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
 
 @media print{
   @page{size:A4 landscape;margin:8mm 10mm}
-  .topbar,.btn-row,.add-card-btn,.add-row-btn,.vital-add-btn,#pane-history,#pane-master,#pane-vital .name-chip-area,#user-suggest-bar{display:none!important}
+  .topbar,.btn-row,.add-card-btn,.add-row-btn,.vital-add-btn,#pane-history,#pane-master,#user-suggest-bar,#vital-user-chips,.name-chip-area{display:none!important}
   body{background:#fff;font-size:10px}
   .main{padding:0;max-width:100%}
   .card{border:.5px solid #bbb;border-radius:3px;padding:4px 6px;margin-bottom:3px;break-inside:avoid}
   .card-title{font-size:8px;margin-bottom:3px;padding-bottom:2px}
   .field label{font-size:8px}
   .field input,.field textarea,.status-item input{font-size:10px;padding:2px 3px;border:.5px solid #ccc;background:#fff}
-  .field textarea{min-height:28px}
+  /* 一日の様子を全文表示 */
+  #f-day-note{min-height:unset!important;height:auto!important;overflow:visible!important;white-space:pre-wrap}
   .grid3,.grid2,.row{gap:4px}
   .status-list{gap:3px}
   .status-item{grid-template-columns:60px 1fr;gap:3px}
   .status-lbl{font-size:9px}
-  .chip{font-size:9px;padding:1px 5px}
-  .chip.on{border:.5px solid #999;background:#eee;color:#000}
+  /* 選択済みチップのみ表示 */
+  .chip{display:none}
+  .chip.on{display:inline-block;font-size:9px;padding:1px 5px;border:.5px solid #999;background:#eee;color:#000}
+  /* 勤務者：選択された名前のみ */
+  .nc{display:none}
+  .nc.on{display:inline-block;font-size:9px;padding:1px 7px;border:.5px solid #999;background:#eee;color:#000}
   .hanko-area{width:38px;height:38px}
   .hanko-inner{width:30px;height:30px;font-size:9px}
   .hanko-placeholder,.hanko-clear{display:none}
@@ -187,10 +192,12 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
   table.vital th{font-size:8px;padding:2px 3px}
   table.vital td{padding:1px 2px}
   table.vital td input,table.vital td select{font-size:9px;padding:1px 2px}
+  /* バイタル未追加行（名前なし）は非表示 */
+  #vital-body tr:not([data-name]){display:none}
   .transport-card{padding:4px 6px;margin-bottom:3px}
   .transport-fields{gap:4px}
   .transport-fields .field input,.transport-fields .field select{font-size:9px;padding:2px 4px}
-  .name-chip-area{display:none!important}
+  .vc{display:none}
 }
 @media(max-width:540px){
   .grid3{grid-template-columns:1fr 1fr}
