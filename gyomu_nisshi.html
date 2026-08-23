@@ -283,24 +283,17 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
     <button class="add-card-btn" onclick="addTransportCard('okuri-cards')"><i class="ti ti-plus"></i> 車を追加</button>
   </div>
 
-  <!-- 利用者状況 -->
+  <!-- 急遽休み・利用者状況 -->
   <div class="card">
-    <div class="card-title">利用者状況</div>
-    <div class="status-list">
-      <div class="status-item"><span class="status-lbl">ショートステイ</span><input type="text" id="f-short" placeholder="氏名・理由など" onfocus="showUserSuggest(this,'f-short')"></div>
-      <div class="status-item"><span class="status-lbl">体調不良</span><input type="text" id="f-taichou" placeholder="氏名・内容など" onfocus="showUserSuggest(this,'f-taichou')"></div>
-      <div class="status-item"><span class="status-lbl">拒否</span><input type="text" id="f-kyohi" placeholder="氏名など" onfocus="showUserSuggest(this,'f-kyohi')"></div>
-      <div class="status-item"><span class="status-lbl">入院</span><input type="text" id="f-nyuin" placeholder="氏名など" onfocus="showUserSuggest(this,'f-nyuin')"></div>
-      <div class="status-item"><span class="status-lbl">私事</span><input type="text" id="f-shiji" placeholder="氏名・内容など" onfocus="showUserSuggest(this,'f-shiji')"></div>
-      <div class="status-item"><span class="status-lbl">病院受診</span><input type="text" id="f-jushin" placeholder="氏名・受診先など" onfocus="showUserSuggest(this,'f-jushin')"></div>
+    <div class="card-title">利用者状況 — 急遽休み・変更</div>
+    <div class="tbl-wrap">
+      <table class="transport">
+        <thead><tr><th style="width:28%">利用者名</th><th style="width:28%">予定時間帯</th><th>理由</th></tr></thead>
+        <tbody id="jitan-body"></tbody>
+      </table>
     </div>
-    <div id="user-suggest-bar">
-      <div style="font-size:10px;color:var(--text-hint);margin-bottom:5px;font-weight:600">利用者を選択（タップで追記）</div>
-      <div id="user-suggest-chips" class="name-chips"></div>
-    </div>
+    <button class="add-row-btn" onclick="addJitanRow()"><i class="ti ti-plus"></i> 行を追加</button>
   </div>
-
-  <!-- 活動内容 -->
   <div class="card">
     <div class="card-title">活動内容</div>
     <div class="chip-wrap" id="chip-wrap">
@@ -325,25 +318,6 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
       <span class="chip" onclick="toggleChip(this)">おやつ作り</span>
     </div>
     <div class="field"><label>その他の活動</label><input type="text" id="f-act-other" placeholder="上記以外があれば入力"></div>
-  </div>
-
-  <!-- 特記事項 -->
-  <div class="card">
-    <div class="card-title">特記事項</div>
-    <div class="grid2" style="margin-bottom:.75rem">
-      <div class="field"><label>計画時短</label><textarea id="f-keikaku" placeholder="例：屈松様 9:00〜16:00"></textarea></div>
-      <div class="field"><label>往診</label><textarea id="f-oushin" placeholder="内容を入力"></textarea></div>
-      <div class="field"><label>その他</label><textarea id="f-other" placeholder="例：谷木様 6/8(月) だいかく入院予定"></textarea></div>
-      <div class="field"><label>備考</label><textarea id="f-biko" placeholder="自由記入"></textarea></div>
-    </div>
-    <div class="sub-label" style="margin-top:.5rem">計画時短者 — 急遽休み</div>
-    <div class="tbl-wrap">
-      <table class="transport">
-        <thead><tr><th style="width:30%">利用者名</th><th style="width:35%">予定時間帯</th><th>理由</th></tr></thead>
-        <tbody id="jitan-body"></tbody>
-      </table>
-    </div>
-    <button class="add-row-btn" onclick="addJitanRow()"><i class="ti ti-plus"></i> 行を追加</button>
   </div>
 
   <!-- 確認欄 -->
@@ -884,7 +858,7 @@ function makeJitanRow(vals){
   master.users.forEach(u=>{ const o=document.createElement('option'); o.value=u.name+'様'; dl.appendChild(o); });
   document.body.appendChild(dl);
   const reasonVal=v[2]||'';
-  const presets=['体調不良','往診','入院','拒否','私事','病院受診','その他'];
+  const presets=['ショートステイ','体調不良','往診','入院','拒否','私事','病院受診','計画時短','その他'];
   const opts=presets.map(p=>`<option value="${p}"${p===reasonVal?' selected':''}>${p}</option>`).join('');
   tr.innerHTML=`
     <td><input type="text" value="${v[0]||''}" placeholder="氏名" list="${dlId}"></td>
