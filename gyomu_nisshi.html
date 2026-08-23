@@ -206,6 +206,7 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
   <span class="topbar-title">業務日誌</span>
   <div style="display:flex;gap:6px;align-items:center">
     <button class="btn sm" onclick="window.print()"><i class="ti ti-printer"></i></button>
+    <button class="btn sm" onclick="showQR()"><i class="ti ti-qrcode"></i> QR</button>
     <div class="tab-row">
       <button class="tab active" id="tab-input" onclick="switchTab('input')">記入</button>
       <button class="tab" id="tab-vital" onclick="switchTab('vital')">様子・記録</button>
@@ -456,6 +457,16 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
 
 </div>
 <div class="toast" id="toast"></div>
+
+<!-- QRモーダル -->
+<div id="qr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:1.5rem;text-align:center;max-width:280px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:1rem;color:var(--text)">業務日誌 QRコード</div>
+    <div id="qr-img" style="margin-bottom:1rem"></div>
+    <div style="font-size:10px;color:var(--text-hint);word-break:break-all;margin-bottom:1rem" id="qr-url"></div>
+    <button class="btn" onclick="document.getElementById('qr-modal').style.display='none'" style="width:100%;justify-content:center">閉じる</button>
+  </div>
+</div>
 
 <script>
 const YOUBI_LABELS=['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
@@ -856,7 +867,20 @@ function makeJitanRow(vals){
   const dl=document.createElement('datalist'); dl.id=dlId;
   master.users.forEach(u=>{ const o=document.createElement('option'); o.value=u.name+'様'; dl.appendChild(o); });
   document.body.appendChild(dl);
-  tr.innerHTML=`<td><input type="text" value="${v[0]||''}" placeholder="氏名" list="${dlId}"></td><td><input type="text" value="${v[1]||''}" placeholder="9:00〜16:00"></td><td><input type="text" value="${v[2]||''}" placeholder="体調不良"></td>`;
+  const reasonVal=v[2]||'';
+  const presets=['体調不良','往診','入院','拒否','私事','病院受診','その他'];
+  const opts=presets.map(p=>`<option value="${p}"${p===reasonVal?' selected':''}>${p}</option>`).join('');
+  tr.innerHTML=`
+    <td><input type="text" value="${v[0]||''}" placeholder="氏名" list="${dlId}"></td>
+    <td><input type="text" value="${v[1]||''}" placeholder="9:00〜16:00"></td>
+    <td>
+      <div style="display:flex;gap:3px;align-items:center">
+        <select style="font-size:12px;font-family:inherit;padding:3px 4px;border:1px solid var(--border);border-radius:4px;background:#fafaf8;color:var(--text)" onchange="this.nextElementSibling.value=this.value;this.value=''">
+          <option value="">選択</option>${opts}
+        </select>
+        <input type="text" value="${reasonVal}" placeholder="詳細入力" style="font-size:12px;flex:1;padding:3px 5px;border:1px solid var(--border);border-radius:4px;background:#fafaf8">
+      </div>
+    </td>`;
   return tr;
 }
 function addJitanRow(){ document.getElementById('jitan-body').appendChild(makeJitanRow()); }
@@ -1036,6 +1060,16 @@ function showToast(msg,type=''){
   el.className='toast show'+(type?' '+type:'');
   clearTimeout(el._t);
   el._t=setTimeout(()=>el.className='toast',2600);
+}
+
+function showQR(){
+  const url='https://minaharunosatoyuuryou-bot.github.io/minaharunosato-tools/gyomu_nisshi.html';
+  document.getElementById('qr-url').textContent=url;
+  const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(url);
+  document.getElementById('qr-img').innerHTML=`<img src="${qrUrl}" style="width:200px;height:200px;border-radius:8px">`;
+  const modal=document.getElementById('qr-modal');
+  modal.style.display='flex';
+  modal.onclick=e=>{ if(e.target===modal) modal.style.display='none'; };
 }
 </script>
 </body>
