@@ -673,8 +673,8 @@ function updateMonth(){
   applyMonthlyConcOverrides();
   const reiwa=curY-2018;
   document.getElementById('mtitle').textContent=`令和${reiwa}年 ${curM}月`;
-  initData();buildSchTable();buildPatSimpleTable();
   const tlEl=document.getElementById('mtl-tl');if(tlEl)tlEl.innerHTML='';
+  loadAll(); // 月を切り替えたら、その月の保存データを必ず読み込み直す（前の月のデータが残らないように）
 }
 
 function initData(){
@@ -2728,6 +2728,11 @@ async function loadAll(){
   const schKey=`sch_${curY}_${curM}`;
   const monthKey=`month_${curY}_${curM}`;
   const settingsKey=`settings_${curY}_${curM}`;
+
+  // まず今の月のデータを空にリセットする（保存データが無い月に切り替えた時、前の月のデータが
+  // そのまま残って表示されてしまうのを防ぐため）
+  schData={};
+  tlData={};
 
   // まずローカルストレージから読み込む（即時表示）
   const ls1=localStorage.getItem(schKey);if(ls1){try{const d=JSON.parse(ls1);if(d&&Object.keys(d).length>0)schData=d;}catch(e){}}
