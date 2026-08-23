@@ -250,17 +250,20 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
       <div class="field">
         <label>相談員</label>
         <div class="name-chip-area"><div class="lbl">選択</div><div class="name-chips" id="nc-sodan"></div></div>
-        <input type="text" id="f-sodan" placeholder="氏名">
+        <input type="text" id="f-sodan" style="display:none">
+        <div id="disp-sodan" style="font-size:13px;min-height:24px;color:var(--text);padding:2px 0"></div>
       </div>
       <div class="field">
         <label>看護師</label>
         <div class="name-chip-area"><div class="lbl">選択</div><div class="name-chips" id="nc-kango"></div></div>
-        <input type="text" id="f-kango" placeholder="氏名">
+        <input type="text" id="f-kango" style="display:none">
+        <div id="disp-kango" style="font-size:13px;min-height:24px;color:var(--text);padding:2px 0"></div>
       </div>
       <div class="field">
         <label>介護職</label>
         <div class="name-chip-area"><div class="lbl">選択（複数可）</div><div class="name-chips" id="nc-kaigo"></div></div>
-        <input type="text" id="f-kaigo" placeholder="氏名（複数可）">
+        <input type="text" id="f-kaigo" style="display:none">
+        <div id="disp-kaigo" style="font-size:13px;min-height:24px;color:var(--text);padding:2px 0"></div>
       </div>
     </div>
   </div>
@@ -475,7 +478,8 @@ function saveMaster(){
   document.querySelectorAll('#staff-list .master-item').forEach(item=>{
     const name=item.querySelector('input[data-field="name"]').value.trim();
     const role=item.querySelector('select[data-field="role"]').value;
-    if(name) master.staff.push({name,role});
+    const role2=item.querySelector('select[data-field="role2"]').value||'';
+    if(name) master.staff.push({name,role,role2});
   });
   master.users=[];
   document.querySelectorAll('#user-list .master-item').forEach(item=>{
@@ -490,20 +494,27 @@ function saveMaster(){
 function renderMasterList(){
   const sl=document.getElementById('staff-list');
   sl.innerHTML='';
-  master.staff.forEach(s=>sl.appendChild(makeStaffItem(s.name,s.role)));
+  master.staff.forEach(s=>sl.appendChild(makeStaffItem(s.name,s.role,s.role2||'')));
   const ul=document.getElementById('user-list');
   ul.innerHTML='';
   master.users.forEach(u=>ul.appendChild(makeUserItem(u.name)));
 }
 
-function makeStaffItem(name='',role='介護職'){
+function makeStaffItem(name='',role='介護職',role2=''){
   const div=document.createElement('div');
   div.className='master-item';
-  div.innerHTML=`<input type="text" data-field="name" value="${name}" placeholder="氏名">
-    <select data-field="role">
+  div.style.cssText='flex-wrap:wrap;gap:4px';
+  div.innerHTML=`<input type="text" data-field="name" value="${name}" placeholder="氏名" style="flex:1;min-width:100px">
+    <select data-field="role" style="flex:.9">
       <option value="相談員"${role==='相談員'?' selected':''}>相談員</option>
       <option value="看護師"${role==='看護師'?' selected':''}>看護師</option>
       <option value="介護職"${role==='介護職'?' selected':''}>介護職</option>
+    </select>
+    <select data-field="role2" style="flex:.9">
+      <option value=""${!role2?' selected':''}>兼任なし</option>
+      <option value="相談員"${role2==='相談員'?' selected':''}>兼：相談員</option>
+      <option value="看護師"${role2==='看護師'?' selected':''}>兼：看護師</option>
+      <option value="介護職"${role2==='介護職'?' selected':''}>兼：介護職</option>
     </select>
     <button class="master-del" onclick="this.closest('.master-item').remove()"><i class="ti ti-trash"></i></button>`;
   return div;
@@ -528,12 +539,23 @@ function refreshNameChips(){
   renderVitalUserChips();
 }
 
+// 役職でフィルター（兼任も含む）
+function staffByRole(role){
+  if(!role) return master.staff;
+  return master.staff.filter(s=>s.role===role||(s.role2&&s.role2===role));
+}
+
+function updateDispLabel(targetInputId){
+  const dispId='disp-'+targetInputId.replace('f-','');
+  const dispEl=document.getElementById(dispId);
+  if(dispEl) dispEl.textContent=document.getElementById(targetInputId)?.value||'';
+}
+
 function renderStaffChips(containerId,filterRole,targetInputId,multi){
   const wrap=document.getElementById(containerId);
   if(!wrap) return;
   wrap.innerHTML='';
-  let list=master.staff;
-  if(filterRole) list=list.filter(s=>s.role===filterRole);
+  const list=staffByRole(filterRole);
   list.forEach(s=>{
     const el=document.createElement('span');
     el.className='nc';
@@ -548,8 +570,44 @@ function renderStaffChips(containerId,filterRole,targetInputId,multi){
         wrap.querySelectorAll('.nc').forEach(c=>c.classList.remove('on'));
         el.classList.add('on'); inp.value=s.name;
       }
+      updateDispLabel(targetInputId);
     };
     wrap.appendChild(el);
+  });
+}
+
+// ===== バイタル自動反映 =====
+function addToVital(name){
+  if(!name) return;
+  const cleanName=name.replace(/様$/,'').trim();
+  if(!cleanName) return;
+  // すでにある場合はスキップ
+  if(document.querySelector(`#vital-body tr[data-name="${cleanName}"]`)) return;
+  document.getElementById('vital-body').appendChild(makeVitalRow(cleanName,null));
+  // チップをonに
+  const chip=document.querySelector(`#vital-user-chips .vc[data-name="${cleanName}"]`);
+  if(chip){
+    chip.classList.add('on');
+    chip.style.background='var(--chip-sel-bg)'; chip.style.borderColor='var(--chip-sel-border)'; chip.style.color='var(--chip-sel-text)';
+  }
+}
+
+// 利用者状況の入力からバイタルに反映
+function syncStatusToVital(val){
+  if(!val) return;
+  // 「氏名様」「氏名 様」の形を抽出
+  val.split(/[、,，\s]+/).forEach(part=>{
+    const m=part.match(/^(.+?)様?$/);
+    if(m && m[1]) addToVital(m[1].trim());
+  });
+}
+
+// 送迎の乗車利用者からバイタルに反映
+function syncTransportToVital(){
+  ['mukae-cards','okuri-cards'].forEach(containerId=>{
+    document.querySelectorAll('#'+containerId+' .user-inp').forEach(inp=>{
+      if(inp.value) syncStatusToVital(inp.value);
+    });
   });
 }
 
@@ -571,6 +629,7 @@ function renderUserSuggestChips(){
       if(!inp) return;
       const cur=inp.value;
       inp.value=cur?cur+'、'+u.name+'様':u.name+'様';
+      addToVital(u.name);
     };
     wrap.appendChild(el);
   });
@@ -606,7 +665,7 @@ function makeTransportCard(data){
     <div class="users-field">
       <label>乗車利用者</label>
       ${userChipsHtml}
-      <input type="text" class="user-inp" value="${d.users||''}" placeholder="氏名（タップまたは直接入力）">
+      <input type="text" class="user-inp" value="${d.users||''}" placeholder="氏名（タップまたは直接入力）" onchange="syncStatusToVital(this.value)">
     </div>`;
 
   // その他選択時
@@ -913,6 +972,7 @@ function loadEntry(i){
   sv('f-date',e.date); sv('f-writer',e.writer); updateYoubi(e.date);
   sv('f-yotei',e.yotei); sv('f-jissuu',e.jissuu); sv('f-chushi',e.chushi);
   sv('f-sodan',e.sodan); sv('f-kango',e.kango); sv('f-kaigo',e.kaigo);
+  ['sodan','kango','kaigo'].forEach(k=>{ const el=document.getElementById('disp-'+k); if(el) el.textContent=e[k]||''; });
   setTransportCards('mukae-cards',e.mukae); setTransportCards('okuri-cards',e.okuri);
   sv('f-short',e.short); sv('f-taichou',e.taichou); sv('f-kyohi',e.kyohi);
   sv('f-nyuin',e.nyuin); sv('f-shiji',e.shiji); sv('f-jushin',e.jushin);
@@ -940,6 +1000,7 @@ function clearForm(){
   ['f-writer','f-yotei','f-jissuu','f-chushi','f-sodan','f-kango','f-kaigo',
    'f-short','f-taichou','f-kyohi','f-nyuin','f-shiji','f-jushin','f-act-other',
    'f-keikaku','f-oushin','f-other','f-biko','f-day-note'].forEach(id=>sv(id,''));
+  ['sodan','kango','kaigo'].forEach(k=>{ const el=document.getElementById('disp-'+k); if(el) el.textContent=''; });
   document.getElementById('mukae-cards').innerHTML='';
   document.getElementById('okuri-cards').innerHTML='';
   setJitanData(null);
