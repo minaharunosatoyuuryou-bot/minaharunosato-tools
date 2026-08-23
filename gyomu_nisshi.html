@@ -985,11 +985,14 @@ function saveEntry(){
   all.sort((a,b)=>b.date.localeCompare(a.date));
   localStorage.setItem(STORAGE_KEY,JSON.stringify(all));
   showToast('保存中...','');
-  fetch(GAS_URL,{method:'POST',body:JSON.stringify(data)})
-    .then(r=>r.json()).then(res=>{
-      if(res.status==='ok') showToast('保存しました ✓','ok');
-      else showToast('保存エラー','err');
-    }).catch(()=>showToast('オフライン：ローカルのみ保存',''));
+  fetch(GAS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify(data)
+  }).then(()=>{
+    showToast('保存しました ✓','ok');
+  }).catch(()=>showToast('オフライン：ローカルのみ保存',''));
 }
 
 // ===== 読み込み =====
