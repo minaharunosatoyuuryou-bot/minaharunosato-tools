@@ -440,6 +440,13 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
 
 <!-- ===== マスタタブ ===== -->
 <div id="pane-master" style="display:none">
+  <div class="card" style="background:var(--accent-bg);border-color:var(--accent-border)">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn sm primary" onclick="saveMasterToCloud()"><i class="ti ti-cloud-upload"></i> クラウドに保存</button>
+      <button class="btn sm" onclick="loadMasterFromCloud()"><i class="ti ti-cloud-download"></i> クラウドから読み込む</button>
+      <span style="font-size:11px;color:var(--text-hint)">他の端末と共有できます</span>
+    </div>
+  </div>
   <div class="card">
     <div class="card-title">職員マスタ</div>
     <div class="master-section">
@@ -448,7 +455,7 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
       <button class="master-add-btn" onclick="addStaffItem()"><i class="ti ti-plus"></i> 職員を追加</button>
     </div>
     <div class="btn-row" style="margin-top:.5rem">
-      <button class="btn primary" onclick="saveMaster()"><i class="ti ti-device-floppy"></i> 保存</button>
+      <button class="btn primary" onclick="saveMaster()"><i class="ti ti-device-floppy"></i> このデバイスに保存</button>
     </div>
   </div>
   <div class="card">
@@ -459,7 +466,7 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
       <button class="master-add-btn" onclick="addUserItem()"><i class="ti ti-plus"></i> 利用者を追加</button>
     </div>
     <div class="btn-row" style="margin-top:.5rem">
-      <button class="btn primary" onclick="saveMaster()"><i class="ti ti-device-floppy"></i> 保存</button>
+      <button class="btn primary" onclick="saveMaster()"><i class="ti ti-device-floppy"></i> このデバイスに保存</button>
     </div>
   </div>
 </div>
@@ -1131,6 +1138,37 @@ function showToast(msg,type=''){
   el.className='toast show'+(type?' '+type:'');
   clearTimeout(el._t);
   el._t=setTimeout(()=>el.className='toast',2600);
+}
+
+// ===== マスタ クラウド同期 =====
+function saveMasterToCloud(){
+  // まず現在の画面内容をローカルに保存
+  saveMaster();
+  showToast('クラウドに保存中...','');
+  fetch(GAS_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({type:'master', master:master})
+  }).then(()=>showToast('マスタをクラウドに保存しました ✓','ok'))
+    .catch(()=>showToast('通信エラー','err'));
+}
+
+function loadMasterFromCloud(){
+  showToast('クラウドから読み込み中...','');
+  fetch(GAS_URL+'?type=master')
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data||(!data.staff&&!data.users)){
+        showToast('クラウドにマスタデータがありません','err'); return;
+      }
+      master=data;
+      localStorage.setItem(MASTER_KEY,JSON.stringify(master));
+      refreshNameChips();
+      renderMasterList();
+      showToast('マスタを読み込みました ✓','ok');
+    })
+    .catch(()=>showToast('通信エラー。ネット接続を確認してください','err'));
 }
 
 function showQR(){
