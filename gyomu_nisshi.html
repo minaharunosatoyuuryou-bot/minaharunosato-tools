@@ -400,13 +400,13 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
             <th style="width:52px">体温<br>℃</th>
             <th style="width:70px">血圧<br>上/下</th>
             <th style="width:48px">脈拍<br>回/分</th>
-            <th style="width:48px">SpO2<br>%</th>
-            <th style="width:52px">食事量<br>昼</th>
+            <th style="width:52px">主食<br>0〜10</th>
+            <th style="width:52px">副食<br>0〜10</th>
             <th style="width:52px">水分量<br>ml</th>
             <th style="width:52px">入浴<br>有無</th>
             <th style="width:52px">排便<br>有無</th>
             <th style="width:28px"></th>
-            <th>特記・様子</th>
+            <th>一日の様子</th>
           </tr>
         </thead>
         <tbody id="vital-body"></tbody>
@@ -729,15 +729,8 @@ function makeVitalRow(name,data){
     <td><input type="text" value="${d.temp||''}" placeholder="36.5"></td>
     <td><input type="text" value="${d.bp||''}" placeholder="120/80"></td>
     <td><input type="text" value="${d.pulse||''}" placeholder="70"></td>
-    <td><input type="text" value="${d.spo2||''}" placeholder="98"></td>
-    <td><select>
-      <option value="">—</option>
-      <option value="全量"${d.meal==='全量'?' selected':''}>全量</option>
-      <option value="3/4"${d.meal==='3/4'?' selected':''}>3/4</option>
-      <option value="1/2"${d.meal==='1/2'?' selected':''}>1/2</option>
-      <option value="1/4"${d.meal==='1/4'?' selected':''}>1/4</option>
-      <option value="不食"${d.meal==='不食'?' selected':''}>不食</option>
-    </select></td>
+    <td><input type="number" min="0" max="10" value="${d.mealS||''}" placeholder="10" style="text-align:center"></td>
+    <td><input type="number" min="0" max="10" value="${d.mealF||''}" placeholder="10" style="text-align:center"></td>
     <td><input type="text" value="${d.water||''}" placeholder="800"></td>
     <td><select>
       <option value="">—</option>
@@ -753,7 +746,7 @@ function makeVitalRow(name,data){
     <td style="text-align:center;padding:2px">
       <button onclick="removeVitalRow(this)" style="font-size:12px;color:var(--danger);background:none;border:none;cursor:pointer;padding:2px 4px">✕</button>
     </td>
-    <td class="note-cell"><input type="text" value="${d.note||''}" placeholder="特記事項など"></td>`;
+    <td class="note-cell"><input type="text" value="${d.note||''}" placeholder="様子を記入"></td>`;
   return tr;
 }
 
@@ -839,12 +832,12 @@ function getVitalData(){
       temp:inputs[0]?.value||'',
       bp:inputs[1]?.value||'',
       pulse:inputs[2]?.value||'',
-      spo2:inputs[3]?.value||'',
-      meal:sels[0]?.value||'',
-      water:inputs[4]?.value||'',
-      bath:sels[1]?.value||'',
-      toilet:sels[2]?.value||'',
-      note:inputs[5]?.value||''
+      mealS:inputs[3]?.value||'',
+      mealF:inputs[4]?.value||'',
+      water:inputs[5]?.value||'',
+      bath:sels[0]?.value||'',
+      toilet:sels[1]?.value||'',
+      note:inputs[6]?.value||''
     });
   });
   return rows;
