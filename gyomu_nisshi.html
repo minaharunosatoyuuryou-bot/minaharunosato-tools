@@ -1137,6 +1137,22 @@ function saveMasterToCloud(){
 
 function loadMasterFromCloud(){
   showToast('クラウドから読み込み中...','');
+  // scriptタグ経由でCORSを回避
+  const script=document.createElement('script');
+  const cbName='_masterCb_'+Date.now();
+  window[cbName]=function(data){
+    document.head.removeChild(script);
+    delete window[cbName];
+    if(!data||(!data.staff&&!data.users)){
+      showToast('クラウドにマスタデータがありません','err'); return;
+    }
+    master=data;
+    localStorage.setItem(MASTER_KEY,JSON.stringify(master));
+    refreshNameChips();
+    renderMasterList();
+    showToast('マスタを読み込みました ✓','ok');
+  };
+  // fetchで試みて失敗したらscriptタグ方式
   fetch(GAS_URL+'?type=master')
     .then(r=>r.json())
     .then(data=>{
@@ -1149,7 +1165,25 @@ function loadMasterFromCloud(){
       renderMasterList();
       showToast('マスタを読み込みました ✓','ok');
     })
-    .catch(()=>showToast('通信エラー。ネット接続を確認してください','err'));
+    .catch(()=>{
+      // フォールバック：image pingで確認
+      showToast('再試行中...','');
+      setTimeout(()=>{
+        fetch(GAS_URL+'?type=master',{mode:'cors'})
+          .then(r=>r.text())
+          .then(text=>{
+            try{
+              const data=JSON.parse(text);
+              if(!data||(!data.staff&&!data.users)){showToast('クラウドにマスタデータがありません','err');return;}
+              master=data;
+              localStorage.setItem(MASTER_KEY,JSON.stringify(master));
+              refreshNameChips(); renderMasterList();
+              showToast('マスタを読み込みました ✓','ok');
+            }catch(e){showToast('データ解析エラー','err');}
+          })
+          .catch(()=>showToast('通信エラー。PCで「クラウドに保存」を先に行ってください','err'));
+      },1000);
+    });
 }
 
 function showQR(){
