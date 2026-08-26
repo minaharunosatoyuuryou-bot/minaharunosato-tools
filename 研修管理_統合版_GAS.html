@@ -1288,7 +1288,7 @@ function renderReports(list) {
       <div class="report-icon" style="background:${meta.color}">${meta.icon}</div>
       <div class="report-body">
         <div class="report-title"><span class="office-badge ob-${oc}">${r.office || '－'}</span> ${r.theme}</div>
-        <div class="report-sub">${toReiwa(r.month)}${r.date ? ' / ' + toReiwa(r.date) : ''}${r.duration ? ' ・ ' + r.duration + '分' : ''}${r.attendees && r.attendees.length ? ' ・ ' + r.attendees.length + '名' : ''}</div>
+        <div class="report-sub">${toReiwa(r.month)}${r.date ? ' / ' + toReiwa(r.date) : ''}${r.duration ? ' ・ ' + r.duration + '分' : ''}${r.attendees && r.attendees.length ? ' ・ ' + r.attendees.length + '名' : ''}${r.reporter ? ' ・ 報告者：' + r.reporter : ''}</div>
       </div>
       <span class="badge ${r.approver ? 'badge-done' : 'badge-pending'}">${r.approver ? '承認済' : '未承認'}</span>
       <span class="chevron">›</span>
