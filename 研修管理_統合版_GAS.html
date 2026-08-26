@@ -968,6 +968,12 @@ const PLAN = [
 
 const OFFICES = ['有料','デイサービス','定期巡回'];
 const OFFICE_CLASS = { '有料':'yuryo', 'デイサービス':'day', '定期巡回':'teiki', '合同':'godo' };
+const OFFICE_FULLNAME = {
+  '有料': '有料老人ホームみなはるの里',
+  'デイサービス': 'デイサービスセンターみなはるの里',
+  '定期巡回': '定期巡回サービス悠巡',
+  '合同': '有料老人ホームみなはるの里・デイサービスセンターみなはるの里・定期巡回サービス悠巡'
+};
 const FISCAL_MONTHS = [4,5,6,7,8,9,10,11,12,1,2,3];
 
 let reports = [];
@@ -1950,11 +1956,12 @@ function printReportDetail() {
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+  const orgLine = `社会福祉法人 悠久福祉会　${OFFICE_FULLNAME[r.office] || 'みなはるの里'}`;
 
   document.getElementById('staff-print-area').innerHTML = `
     <div style="font-family:'Noto Sans JP',sans-serif;color:#1A1917;padding:0 4px">
       <h1 style="font-size:20px;font-weight:700;margin-bottom:4px">研修実施報告書</h1>
-      <div style="font-size:12px;color:#555;margin-bottom:16px">社会福祉法人 悠久福祉会　みなはるの里　／　出力日：${todayStr}</div>
+      <div style="font-size:12px;color:#555;margin-bottom:16px">${orgLine}　／　出力日：${todayStr}</div>
       <div style="font-size:16px;font-weight:700;margin-bottom:10px">${r.theme}</div>
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px">${rows}</table>
       ${sections}
@@ -2004,11 +2011,12 @@ function printStaffReport() {
   const today = new Date();
   const todayStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
   const officesStr = (s.offices || [s.office]).join('・');
+  const orgLine = `社会福祉法人 悠久福祉会　${(s.offices || [s.office]).map(o => OFFICE_FULLNAME[o] || o).join('・')}`;
 
   document.getElementById('staff-print-area').innerHTML = `
     <div style="font-family:'Noto Sans JP',sans-serif;color:#1A1917;padding:0 4px">
       <h1 style="font-size:20px;font-weight:700;margin-bottom:4px">研修受講報告書</h1>
-      <div style="font-size:12px;color:#555;margin-bottom:18px">社会福祉法人 悠久福祉会　みなはるの里　／　出力日：${todayStr}</div>
+      <div style="font-size:12px;color:#555;margin-bottom:18px">${orgLine}　／　出力日：${todayStr}</div>
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px">
         <tr>
           <td style="padding:4px 8px 4px 0;color:#555;width:90px">氏名</td>
