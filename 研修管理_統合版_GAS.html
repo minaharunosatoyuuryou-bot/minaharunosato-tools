@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -591,6 +590,20 @@
   .filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
   .filter-reset { font-size: 12px; color: var(--accent); background: none; border: none; cursor: pointer; font-family: inherit; }
   .filter-reset:hover { text-decoration: underline; }
+
+  /* ===== 印刷（職員別研修報告） ===== */
+  #staff-print-area { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #staff-print-area, #staff-print-area * { visibility: visible; }
+    #staff-print-area {
+      display: block !important;
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%;
+    }
+    @page { size: A4; margin: 15mm; }
+  }
 </style>
 </head>
 <body>
@@ -869,6 +882,19 @@
       </div>
     </div>
 
+    <!-- 職員別研修報告の印刷 -->
+    <div class="card">
+      <div class="card-title">🖨️ 職員別研修報告の印刷</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">選択した職員の受講記録一覧を印刷できます（承認印は含まれません）。</p>
+      <div class="field">
+        <label>職員を選択</label>
+        <select id="print-staff-sel">
+          <option value="">職員を選択</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="printStaffReport()">この職員の研修報告を印刷</button>
+    </div>
+
   </div>
 
   <!-- ===== 職員ページ ===== -->
@@ -911,6 +937,9 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 印刷専用エリア（画面には表示されず、印刷時のみ表示） -->
+<div id="staff-print-area"></div>
 
 <script>
 /* ===================================================================
@@ -1668,6 +1697,15 @@ function renderPersonalSelects() {
       return t ? `<option value="${m}">${m}（${t.theme}）</option>` : `<option value="${m}">${m}（未設定）</option>`;
     }).reverse().join(''); // 新しい月を上に
   if (prevM) mEl.value = prevM;
+
+  // 印刷用：職員セレクト
+  const pEl = document.getElementById('print-staff-sel');
+  if (pEl) {
+    const prevP = pEl.value;
+    pEl.innerHTML = '<option value="">職員を選択</option>' +
+      staff.map(s => `<option value="${s.id}">${s.name}（${(s.offices||[s.office]).join('/')}）</option>`).join('');
+    if (prevP) pEl.value = prevP;
+  }
 }
 
 /* --- 受講月選択時にテーマ・理解度チェック問題を表示 --- */
@@ -1875,6 +1913,74 @@ function exportPersonalCSV() {
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
   a.download = `個人受講記録_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
+}
+
+/* ===================================================================
+   職員別 研修報告の印刷（承認印なし）
+=================================================================== */
+function printStaffReport() {
+  const staffId = document.getElementById('print-staff-sel').value;
+  if (!staffId) { toast('職員を選択してください'); return; }
+  const s = staff.find(x => String(x.id) === String(staffId));
+  if (!s) return;
+
+  const records = personalRecords
+    .filter(r => String(r.staffId) === String(staffId))
+    .slice()
+    .sort((a, b) => (a.month || '').localeCompare(b.month || ''));
+
+  const rows = records.map(r => {
+    const quiz = r.totalCount
+      ? `${r.correctCount}/${r.totalCount}問正解（正答率${r.correctRate}%）`
+      : '－';
+    const memo = r.memo ? String(r.memo).replace(/\n/g, '<br>') : '－';
+    return `<tr>
+      <td style="border:1px solid #999;padding:6px 8px;text-align:center;white-space:nowrap">${r.month || '－'}</td>
+      <td style="border:1px solid #999;padding:6px 8px">${r.theme || '－'}</td>
+      <td style="border:1px solid #999;padding:6px 8px;text-align:center;white-space:nowrap">${r.date || '－'}</td>
+      <td style="border:1px solid #999;padding:6px 8px;text-align:center;white-space:nowrap">${quiz}</td>
+      <td style="border:1px solid #999;padding:6px 8px;text-align:left">${memo}</td>
+    </tr>`;
+  }).join('');
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+  const officesStr = (s.offices || [s.office]).join('・');
+
+  document.getElementById('staff-print-area').innerHTML = `
+    <div style="font-family:'Noto Sans JP',sans-serif;color:#1A1917;padding:0 4px">
+      <h1 style="font-size:20px;font-weight:700;margin-bottom:4px">研修受講報告書</h1>
+      <div style="font-size:12px;color:#555;margin-bottom:18px">社会福祉法人 悠久福祉会　みなはるの里　／　出力日：${todayStr}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px">
+        <tr>
+          <td style="padding:4px 8px 4px 0;color:#555;width:90px">氏名</td>
+          <td style="padding:4px 8px;font-weight:700;font-size:15px">${s.name}</td>
+          <td style="padding:4px 8px 4px 24px;color:#555;width:70px">職種</td>
+          <td style="padding:4px 8px">${s.role || '－'}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px 4px 0;color:#555">所属事業所</td>
+          <td style="padding:4px 8px" colspan="3">${officesStr}</td>
+        </tr>
+      </table>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#eee">
+            <th style="border:1px solid #999;padding:6px 8px;width:80px">年月</th>
+            <th style="border:1px solid #999;padding:6px 8px">研修テーマ</th>
+            <th style="border:1px solid #999;padding:6px 8px;width:100px">受講日</th>
+            <th style="border:1px solid #999;padding:6px 8px;width:150px">理解度チェック</th>
+            <th style="border:1px solid #999;padding:6px 8px">感想・学んだこと</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows || '<tr><td colspan="5" style="border:1px solid #999;text-align:center;padding:20px;color:#888">受講記録がありません</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  setTimeout(() => window.print(), 50);
 }
 
 /* ---- INIT ---- */
