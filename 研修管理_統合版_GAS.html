@@ -1047,6 +1047,22 @@ function monthKey(fy, m) {
   return `${y}-${String(m).padStart(2,'0')}`;
 }
 
+/* ---- 令和表記フォーマット ---- */
+// 'YYYY-MM' → '令和X年M月'、'YYYY-MM-DD' → '令和X年M月D日'
+function toReiwa(str) {
+  if (!str) return '';
+  const m = String(str).match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
+  if (!m) return str;
+  const y = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  const d = m[3] ? parseInt(m[3], 10) : null;
+  const reiwa = y - 2018;
+  const yLabel = reiwa === 1 ? '元' : reiwa;
+  return d
+    ? `令和${yLabel}年${mo}月${d}日`
+    : `令和${yLabel}年${mo}月`;
+}
+
 /* ---- TABS ---- */
 function switchTab(name) {
   const names = ['input','list','plan','personal','staff'];
@@ -1272,7 +1288,7 @@ function renderReports(list) {
       <div class="report-icon" style="background:${meta.color}">${meta.icon}</div>
       <div class="report-body">
         <div class="report-title"><span class="office-badge ob-${oc}">${r.office || '－'}</span> ${r.theme}</div>
-        <div class="report-sub">${r.month}${r.date ? ' / ' + r.date : ''}${r.duration ? ' ・ ' + r.duration + '分' : ''}${r.attendees && r.attendees.length ? ' ・ ' + r.attendees.length + '名' : ''}</div>
+        <div class="report-sub">${toReiwa(r.month)}${r.date ? ' / ' + toReiwa(r.date) : ''}${r.duration ? ' ・ ' + r.duration + '分' : ''}${r.attendees && r.attendees.length ? ' ・ ' + r.attendees.length + '名' : ''}</div>
       </div>
       <span class="badge ${r.approver ? 'badge-done' : 'badge-pending'}">${r.approver ? '承認済' : '未承認'}</span>
       <span class="chevron">›</span>
@@ -1339,7 +1355,7 @@ function showDetail(id) {
   document.getElementById('detail-card').innerHTML = `
     <div class="detail-header">
       <div class="detail-theme">${meta.icon} ${r.theme}</div>
-      <div class="detail-meta"><span class="office-badge ob-${oc}">${r.office || '－'}</span> &nbsp;${r.month}${r.date ? ' / ' + r.date : ''} &nbsp; <span class="badge ${r.approver ? 'badge-done' : 'badge-pending'}">${r.approver ? '承認済' : '未承認'}</span></div>
+      <div class="detail-meta"><span class="office-badge ob-${oc}">${r.office || '－'}</span> &nbsp;${toReiwa(r.month)}${r.date ? ' / ' + toReiwa(r.date) : ''} &nbsp; <span class="badge ${r.approver ? 'badge-done' : 'badge-pending'}">${r.approver ? '承認済' : '未承認'}</span></div>
     </div>
     ${rows ? `<table class="info-table">${rows}</table>` : ''}
     ${sections}
@@ -1908,8 +1924,8 @@ function printReportDetail() {
 
   const rows = [
     ['事業所', r.office],
-    ['実施年月', r.month],
-    ['実施日', r.date],
+    ['実施年月', toReiwa(r.month)],
+    ['実施日', toReiwa(r.date)],
     ['研修時間', r.duration ? r.duration + '分' : ''],
     ['研修場所', r.place],
     ['担当講師', r.lecturer],
@@ -1977,9 +1993,9 @@ function printStaffReport() {
       : '－';
     const memo = r.memo ? String(r.memo).replace(/\n/g, '<br>') : '－';
     return `<tr>
-      <td style="border:1px solid #999;padding:6px 8px;text-align:center;white-space:nowrap">${r.month || '－'}</td>
+      <td style="border:1px solid #999;padding:6px 8px;text-align:center;white-space:nowrap">${toReiwa(r.month) || '－'}</td>
       <td style="border:1px solid #999;padding:6px 8px">${r.theme || '－'}</td>
-      <td style="border:1px solid #999;padding:6px 8px;text-align:center;white-space:nowrap">${r.date || '－'}</td>
+      <td style="border:1px solid #999;padding:6px 8px;text-align:center;white-space:nowrap">${toReiwa(r.date) || '－'}</td>
       <td style="border:1px solid #999;padding:6px 8px;text-align:center;white-space:nowrap">${quiz}</td>
       <td style="border:1px solid #999;padding:6px 8px;text-align:left">${memo}</td>
     </tr>`;
