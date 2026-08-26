@@ -725,19 +725,23 @@
         </div>
       </div>
       <div style="margin-top:14px">
-        <label style="margin-bottom:8px">押印（タップして押印）</label>
-        <div style="display:flex;gap:20px;align-items:flex-start">
-          <div style="text-align:center">
-            <div class="stamp-btn" id="stamp-shicho" onclick="tapStamp('shicho')">
-              <span id="stamp-shicho-label">施設長印</span>
-            </div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">施設長</div>
+        <label style="margin-bottom:8px">押印</label>
+        <div class="grid2">
+          <div class="field" style="margin-bottom:0">
+            <label>課長印</label>
+            <select id="stamp-kacho-select" onchange="setStamp('kacho', this.value)">
+              <option value="">未押印</option>
+              <option value="牧">牧</option>
+            </select>
           </div>
-          <div style="text-align:center">
-            <div class="stamp-btn" id="stamp-kacho" onclick="tapStamp('kacho')">
-              <span id="stamp-kacho-label">課長印</span>
-            </div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">課長</div>
+          <div class="field" style="margin-bottom:0">
+            <label>管理者印</label>
+            <select id="stamp-shicho-select" onchange="setStamp('shicho', this.value)">
+              <option value="">未押印</option>
+              <option value="上野">上野</option>
+              <option value="平岡">平岡</option>
+              <option value="三ツ股">三ツ股</option>
+            </select>
           </div>
         </div>
       </div>
@@ -788,7 +792,10 @@
     </div>
 
     <div id="list-detail" style="display:none">
-      <button class="back-btn" onclick="showListMain()">← 一覧に戻る</button>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <button class="back-btn" onclick="showListMain()">← 一覧に戻る</button>
+        <button class="btn-outline" onclick="printReportDetail()" style="font-size:12px">🖨️ 印刷</button>
+      </div>
       <div class="card" id="detail-card"></div>
     </div>
   </div>
@@ -901,21 +908,19 @@
   <div class="page" id="page-staff">
     <div class="card">
       <div class="card-title">職員を追加</div>
-      <div class="grid2" style="margin-bottom:14px">
-        <div class="field" style="margin-bottom:0">
-          <label>氏名</label>
-          <input type="text" id="staff-name" placeholder="山田 太郎">
-        </div>
-        <div class="field" style="margin-bottom:0">
-          <label>職種</label>
-          <select id="staff-role">
-            <option>介護士</option>
-            <option>看護師</option>
-            <option>管理者</option>
-            <option>主任</option>
-            <option>相談員</option>
-            <option>その他</option>
-          </select>
+      <div class="field" style="margin-bottom:14px">
+        <label>氏名</label>
+        <input type="text" id="staff-name" placeholder="山田 太郎">
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label>職種（兼任の場合は複数選択可）</label>
+        <div class="office-seg" id="staff-role-seg" style="grid-template-columns:repeat(3,1fr)">
+          <button type="button" class="office-btn" data-role="介護士" onclick="toggleStaffRole('介護士')">介護士</button>
+          <button type="button" class="office-btn" data-role="看護師" onclick="toggleStaffRole('看護師')">看護師</button>
+          <button type="button" class="office-btn" data-role="管理者" onclick="toggleStaffRole('管理者')">管理者</button>
+          <button type="button" class="office-btn" data-role="主任" onclick="toggleStaffRole('主任')">主任</button>
+          <button type="button" class="office-btn" data-role="相談員" onclick="toggleStaffRole('相談員')">相談員</button>
+          <button type="button" class="office-btn" data-role="その他" onclick="toggleStaffRole('その他')">その他</button>
         </div>
       </div>
       <div class="field" style="margin-bottom:14px">
@@ -1289,9 +1294,12 @@ function resetFilter() {
   renderReports(filteredByOffice());
 }
 
+let currentDetailId = null;
+
 function showDetail(id) {
   const r = reports.find(x => x.id === id);
   if (!r) return;
+  currentDetailId = id;
   document.getElementById('list-main').style.display = 'none';
   document.getElementById('list-detail').style.display = 'block';
 
@@ -1318,16 +1326,13 @@ function showDetail(id) {
   const oc = OFFICE_CLASS[r.office] || 'godo';
 
   // 押印エリアHTML生成
-  function stampHtml(type, val, label) {
-    const chars = val ? [...val] : [];
-    const mid = Math.ceil(chars.length / 2);
-    const inner = val
-      ? (chars.length > 2 ? chars.slice(0,mid).join('') + '<br>' + chars.slice(mid).join('') : val)
-      : `<span style="font-size:10px">${label}印<br>未押印</span>`;
-    const cls = val ? 'stamp-display' : 'stamp-display empty';
-    return `<div class="stamp-col">
-      <div class="${cls}" onclick="tapDetailStamp(${r.id},'${type}')" title="${val ? val + '（タップで取消）' : 'タップして押印'}">${inner}</div>
-      <div class="stamp-col-label">${label}</div>
+  function stampHtml(type, val, label, options) {
+    const opts = ['<option value="">未押印</option>'].concat(
+      options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`)
+    ).join('');
+    return `<div class="stamp-col" style="text-align:left">
+      <label style="margin-bottom:4px">${label}</label>
+      <select onchange="tapDetailStamp(${r.id},'${type}',this.value)">${opts}</select>
     </div>`;
   }
 
@@ -1339,10 +1344,10 @@ function showDetail(id) {
     ${rows ? `<table class="info-table">${rows}</table>` : ''}
     ${sections}
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px">押印（タップして押印・取消）</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px">押印</div>
       <div class="stamp-area">
-        ${stampHtml('shicho', r.stampShicho || '', '施設長')}
-        ${stampHtml('kacho', r.stampKacho || '', '課長')}
+        ${stampHtml('kacho', r.stampKacho || '', '課長印', ['牧'])}
+        ${stampHtml('shicho', r.stampShicho || '', '管理者印', ['上野','平岡','三ツ股'])}
       </div>
     </div>
     <button class="btn-danger" onclick="deleteReport(${r.id})">この記録を削除する</button>
@@ -1425,18 +1430,32 @@ function toggleStaffOffice(o) {
   });
 }
 
+let staffRolesSel = [];
+function toggleStaffRole(r) {
+  const idx = staffRolesSel.indexOf(r);
+  if (idx >= 0) staffRolesSel.splice(idx, 1);
+  else staffRolesSel.push(r);
+  document.querySelectorAll('#staff-role-seg .office-btn').forEach(b => {
+    b.className = 'office-btn';
+    if (staffRolesSel.includes(b.dataset.role)) b.classList.add('sel-yuryo');
+  });
+}
+
 function addStaff() {
   const name = document.getElementById('staff-name').value.trim();
   const offices = [...staffOfficesSel];
-  const role = document.getElementById('staff-role').value;
+  const role = staffRolesSel.join('・');
   if (!name) { toast('氏名を入力してください'); return; }
+  if (!staffRolesSel.length) { toast('職種を1つ以上選択してください'); return; }
   if (!offices.length) { toast('所属事業所を1つ以上選択してください'); return; }
   if (staff.find(s => s.name === name)) { toast('すでに登録されています'); return; }
   staff.push({ id: Date.now(), name, offices, role });
   _syncStaff('職員を追加しました');
   document.getElementById('staff-name').value = '';
   staffOfficesSel = [];
+  staffRolesSel = [];
   document.querySelectorAll('#staff-office-seg .office-btn').forEach(b => b.className = 'office-btn');
+  document.querySelectorAll('#staff-role-seg .office-btn').forEach(b => b.className = 'office-btn');
   renderStaff();
 }
 
@@ -1487,67 +1506,29 @@ function renderStaff() {
 /* ===================================================================
    押印機能
 =================================================================== */
-let stampKacho  = '';  // 課長印の氏名
-let stampShicho = '';  // 施設長印の氏名
+let stampKacho  = '';  // 課長印の氏名（牧のみ）
+let stampShicho = '';  // 管理者印の氏名（上野・平岡・三ツ股のいずれか）
 
-function tapStamp(type) {
-  const current = type === 'kacho' ? stampKacho : stampShicho;
-  const label   = type === 'kacho' ? '課長' : '施設長';
-  if (current) {
-    // 押印済み→確認してクリア
-    if (confirm(`${label}印を取り消しますか？`)) {
-      if (type === 'kacho') stampKacho = '';
-      else stampShicho = '';
-      updateStampUI(type, '');
-    }
-    return;
-  }
-  const name = prompt(`${label}の氏名を入力してください（または「済」でOK）`);
-  if (!name && name !== '') return; // キャンセル
-  const val = name.trim() || label;
+function setStamp(type, val) {
   if (type === 'kacho') stampKacho = val;
   else stampShicho = val;
-  updateStampUI(type, val);
-}
-
-function updateStampUI(type, val) {
-  const el  = document.getElementById(`stamp-${type}`);
-  const lbl = document.getElementById(`stamp-${type}-label`);
-  if (val) {
-    el.classList.add('stamped');
-    // 氏名を縦組み風に改行して表示（3文字以上なら前半/後半）
-    const chars = [...val];
-    const mid = Math.ceil(chars.length / 2);
-    lbl.innerHTML = chars.length > 2
-      ? chars.slice(0,mid).join('') + '<br>' + chars.slice(mid).join('')
-      : val;
-  } else {
-    el.classList.remove('stamped');
-    lbl.innerHTML = type === 'kacho' ? '課長印' : '施設長印';
-  }
 }
 
 function resetStamps() {
   stampKacho = ''; stampShicho = '';
-  updateStampUI('kacho', '');
-  updateStampUI('shicho', '');
+  const ks = document.getElementById('stamp-kacho-select');
+  const ss = document.getElementById('stamp-shicho-select');
+  if (ks) ks.value = '';
+  if (ss) ss.value = '';
 }
 
 /* 詳細ページ内で押印（後から押すケース） */
-async function tapDetailStamp(reportId, type) {
+async function tapDetailStamp(reportId, type, val) {
   const r = reports.find(x => x.id === reportId);
   if (!r) return;
-  const label = type === 'kacho' ? '課長' : '施設長';
+  const label = type === 'kacho' ? '課長' : '管理者';
   const field = type === 'kacho' ? 'stampKacho' : 'stampShicho';
-  if (r[field]) {
-    if (confirm(`${label}印を取り消しますか？`)) {
-      r[field] = '';
-    } else return;
-  } else {
-    const name = prompt(`${label}の氏名を入力してください`);
-    if (name === null) return;
-    r[field] = name.trim() || label;
-  }
+  r[field] = val;
   setLoading(true);
   try {
     const res = await gasGet({ action: 'kennshu_save_report', data: r });
@@ -1555,7 +1536,7 @@ async function tapDetailStamp(reportId, type) {
     // reports配列も更新
     const idx = reports.findIndex(x => x.id === reportId);
     if (idx >= 0) reports[idx] = r;
-    toast(r[field] ? `✓ ${label}印を押しました` : `${label}印を取り消しました`);
+    toast(val ? `✓ ${label}印を押しました` : `${label}印を取り消しました`);
     showDetail(reportId); // 再描画
   } catch(e) {
     toast('⚠️ 保存に失敗しました');
@@ -1918,6 +1899,67 @@ function exportPersonalCSV() {
 /* ===================================================================
    職員別 研修報告の印刷（承認印なし）
 =================================================================== */
+/* ===================================================================
+   研修記録詳細の印刷
+=================================================================== */
+function printReportDetail() {
+  const r = reports.find(x => x.id === currentDetailId);
+  if (!r) { toast('印刷対象が見つかりません'); return; }
+
+  const rows = [
+    ['事業所', r.office],
+    ['実施年月', r.month],
+    ['実施日', r.date],
+    ['研修時間', r.duration ? r.duration + '分' : ''],
+    ['研修場所', r.place],
+    ['担当講師', r.lecturer],
+    ['研修形式', r.format],
+    ['受講者', r.attendees && r.attendees.length ? r.attendees.join('、') : ''],
+    ['報告者', r.reporter],
+    ['管理者確認', r.approver]
+  ].filter(([, v]) => v).map(([l, v]) => `
+    <tr><td style="padding:4px 8px;color:#555;width:110px;vertical-align:top">${l}</td><td style="padding:4px 8px">${v}</td></tr>
+  `).join('');
+
+  const sections = [
+    ['研修内容・概要', r.content],
+    ['学んだこと・まとめ', r.summary],
+    ['課題・今後の取り組み', r.issue]
+  ].filter(([, v]) => v).map(([l, v]) => `
+    <div style="margin-top:14px">
+      <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:4px">${l}</div>
+      <div style="font-size:13px;line-height:1.7;white-space:pre-wrap">${v}</div>
+    </div>
+  `).join('');
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+
+  document.getElementById('staff-print-area').innerHTML = `
+    <div style="font-family:'Noto Sans JP',sans-serif;color:#1A1917;padding:0 4px">
+      <h1 style="font-size:20px;font-weight:700;margin-bottom:4px">研修実施報告書</h1>
+      <div style="font-size:12px;color:#555;margin-bottom:16px">社会福祉法人 悠久福祉会　みなはるの里　／　出力日：${todayStr}</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:10px">${r.theme}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px">${rows}</table>
+      ${sections}
+      <table style="margin-top:24px">
+        <tr>
+          <td style="padding:6px 24px 6px 0">
+            <div style="font-size:12px;color:#555;margin-bottom:4px">課長印</div>
+            <div style="font-size:14px;font-weight:700;border-bottom:1px solid #999;min-width:100px;padding-bottom:4px">${r.stampKacho || '（未押印）'}</div>
+          </td>
+          <td style="padding:6px 0">
+            <div style="font-size:12px;color:#555;margin-bottom:4px">管理者印</div>
+            <div style="font-size:14px;font-weight:700;border-bottom:1px solid #999;min-width:100px;padding-bottom:4px">${r.stampShicho || '（未押印）'}</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+
+  setTimeout(() => window.print(), 50);
+}
+
 function printStaffReport() {
   const staffId = document.getElementById('print-staff-sel').value;
   if (!staffId) { toast('職員を選択してください'); return; }
