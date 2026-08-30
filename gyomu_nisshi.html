@@ -468,11 +468,19 @@ const GAS_URL='https://script.google.com/macros/s/AKfycbx8FtwUcM7BrYaMjBk_C_vZku
 
 let master={staff:[],users:[]};
 
+// 名前を50音（読み）順に並べ替える
+const nameCollator=new Intl.Collator('ja');
+function sortMasterByName(){
+  master.staff.sort((a,b)=>nameCollator.compare(a.name,b.name));
+  master.users.sort((a,b)=>nameCollator.compare(a.name,b.name));
+}
+
 // ===== マスタ =====
 function loadMaster(){
   try{ master=JSON.parse(localStorage.getItem(MASTER_KEY)||'{"staff":[],"users":[]}'); }catch{}
   if(!master.staff) master.staff=[];
   if(!master.users) master.users=[];
+  sortMasterByName();
 }
 
 function saveMaster(){
@@ -488,6 +496,7 @@ function saveMaster(){
     const name=item.querySelector('input[data-field="name"]').value.trim();
     if(name) master.users.push({name});
   });
+  sortMasterByName();
   localStorage.setItem(MASTER_KEY,JSON.stringify(master));
   refreshNameChips();
   showToast('保存中...','');
@@ -1135,6 +1144,9 @@ function loadMasterFromCloud(){
       showToast('クラウドにマスタデータがありません','err'); return;
     }
     master=data;
+    if(!master.staff) master.staff=[];
+    if(!master.users) master.users=[];
+    sortMasterByName();
     localStorage.setItem(MASTER_KEY,JSON.stringify(master));
     refreshNameChips();
     renderMasterList();
@@ -1148,6 +1160,9 @@ function loadMasterFromCloud(){
         showToast('クラウドにマスタデータがありません','err'); return;
       }
       master=data;
+      if(!master.staff) master.staff=[];
+      if(!master.users) master.users=[];
+      sortMasterByName();
       localStorage.setItem(MASTER_KEY,JSON.stringify(master));
       refreshNameChips();
       renderMasterList();
@@ -1164,6 +1179,9 @@ function loadMasterFromCloud(){
               const data=JSON.parse(text);
               if(!data||(!data.staff&&!data.users)){showToast('クラウドにマスタデータがありません','err');return;}
               master=data;
+              if(!master.staff) master.staff=[];
+              if(!master.users) master.users=[];
+              sortMasterByName();
               localStorage.setItem(MASTER_KEY,JSON.stringify(master));
               refreshNameChips(); renderMasterList();
               showToast('マスタを読み込みました ✓','ok');
