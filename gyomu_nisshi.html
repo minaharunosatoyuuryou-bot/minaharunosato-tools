@@ -427,9 +427,8 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
 <div id="pane-master" style="display:none">
   <div class="card" style="background:var(--accent-bg);border-color:var(--accent-border)">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn sm primary" onclick="saveMasterToCloud()"><i class="ti ti-cloud-upload"></i> クラウドに保存</button>
       <button class="btn sm" onclick="loadMasterFromCloud()"><i class="ti ti-cloud-download"></i> クラウドから読み込む</button>
-      <span style="font-size:11px;color:var(--text-hint)">他の端末と共有できます</span>
+      <span style="font-size:11px;color:var(--text-hint)">下の「このデバイスに保存」で自動的にクラウドにも保存されます</span>
     </div>
   </div>
   <div class="card">
@@ -500,7 +499,14 @@ function saveMaster(){
   });
   localStorage.setItem(MASTER_KEY,JSON.stringify(master));
   refreshNameChips();
-  showToast('マスタを保存しました','ok');
+  showToast('保存中...','');
+  fetch(GAS_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({type:'master', master:master})
+  }).then(()=>showToast('保存しました（クラウドにも反映）✓','ok'))
+    .catch(()=>showToast('保存しました（このデバイスのみ・通信エラー）',''));
 }
 
 function renderMasterList(){
@@ -1142,19 +1148,6 @@ function showToast(msg,type=''){
 }
 
 // ===== マスタ クラウド同期 =====
-function saveMasterToCloud(){
-  // まず現在の画面内容をローカルに保存
-  saveMaster();
-  showToast('クラウドに保存中...','');
-  fetch(GAS_URL,{
-    method:'POST',
-    mode:'no-cors',
-    headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({type:'master', master:master})
-  }).then(()=>showToast('マスタをクラウドに保存しました ✓','ok'))
-    .catch(()=>showToast('通信エラー','err'));
-}
-
 function loadMasterFromCloud(){
   showToast('クラウドから読み込み中...','');
   // scriptタグ経由でCORSを回避
