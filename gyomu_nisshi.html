@@ -250,6 +250,10 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
       <div class="field"><label>利用実数（名）</label><input type="number" id="f-jissuu" min="0" placeholder="0"></div>
       <div class="field"><label>利用中止者（名）</label><input type="number" id="f-chushi" min="0" placeholder="0"></div>
     </div>
+    <div class="grid2" style="margin-top:.5rem">
+      <div class="field"><label>入浴人数（名）</label><input type="number" id="f-nyuyoku" min="0" placeholder="0"></div>
+      <div class="field"><label>拒否の方</label><input type="text" id="f-nyuyoku-kyohi" placeholder="お名前を入力"></div>
+    </div>
   </div>
 
   <!-- 勤務者 -->
@@ -965,6 +969,7 @@ function saveEntry(){
   const data={
     date, writer:gv('f-writer'), youbi:gv('f-youbi'),
     yotei:gv('f-yotei'), jissuu:gv('f-jissuu'), chushi:gv('f-chushi'),
+    nyuyoku:gv('f-nyuyoku'), nyuyokuKyohi:gv('f-nyuyoku-kyohi'),
     sodan:gv('f-sodan'), kango:gv('f-kango'), kaigo:gv('f-kaigo'),
     mukae:getTransportCards('mukae-cards'), okuri:getTransportCards('okuri-cards'),
     short:gv('f-short'), taichou:gv('f-taichou'), kyohi:gv('f-kyohi'),
@@ -998,6 +1003,7 @@ function loadEntry(i){
   const e=loadAll()[i]; if(!e) return;
   sv('f-date',e.date); sv('f-writer',e.writer); updateYoubi(e.date);
   sv('f-yotei',e.yotei); sv('f-jissuu',e.jissuu); sv('f-chushi',e.chushi);
+  sv('f-nyuyoku',e.nyuyoku); sv('f-nyuyoku-kyohi',e.nyuyokuKyohi);
   sv('f-sodan',e.sodan); sv('f-kango',e.kango); sv('f-kaigo',e.kaigo);
   ['sodan','kango','kaigo'].forEach(k=>{ const el=document.getElementById('disp-'+k); if(el) el.textContent=e[k]||''; });
   setTransportCards('mukae-cards',e.mukae); setTransportCards('okuri-cards',e.okuri);
@@ -1024,7 +1030,7 @@ function deleteEntry(i){
 
 function clearForm(){
   if(!confirm('入力内容をクリアしますか？')) return;
-  ['f-writer','f-yotei','f-jissuu','f-chushi','f-sodan','f-kango','f-kaigo',
+  ['f-writer','f-yotei','f-jissuu','f-chushi','f-nyuyoku','f-nyuyoku-kyohi','f-sodan','f-kango','f-kaigo',
    'f-short','f-taichou','f-kyohi','f-nyuin','f-shiji','f-jushin','f-act-other',
    'f-keikaku','f-oushin','f-other','f-biko','f-day-note'].forEach(id=>sv(id,''));
   ['sodan','kango','kaigo'].forEach(k=>{ const el=document.getElementById('disp-'+k); if(el) el.textContent=''; });
@@ -1095,6 +1101,7 @@ function loadEntryFromSheet(date){
       // フォームに展開
       sv('f-date',e.date); sv('f-writer',e.writer); updateYoubi(e.date);
       sv('f-yotei',e.yotei); sv('f-jissuu',e.jissuu); sv('f-chushi',e.chushi);
+  sv('f-nyuyoku',e.nyuyoku); sv('f-nyuyoku-kyohi',e.nyuyokuKyohi);
       sv('f-sodan',e.sodan); sv('f-kango',e.kango); sv('f-kaigo',e.kaigo);
       ['sodan','kango','kaigo'].forEach(k=>{ const el=document.getElementById('disp-'+k); if(el) el.textContent=e[k]||''; });
       setTransportCards('mukae-cards',e.mukae); setTransportCards('okuri-cards',e.okuri);
