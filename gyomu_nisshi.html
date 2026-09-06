@@ -485,9 +485,8 @@ let master={staff:[],users:[]};
 // 名前を50音（読み）順に並べ替える
 const nameCollator=new Intl.Collator('ja');
 function sortMasterByName(){
-  const cmp=(a,b)=>nameCollator.compare((a.kana||a.name||''),(b.kana||b.name||''));
-  master.staff.sort(cmp);
-  master.users.sort(cmp);
+  master.staff.sort((a,b)=>nameCollator.compare(a.name,b.name));
+  master.users.sort((a,b)=>nameCollator.compare((a.kana||a.name||''),(b.kana||b.name||'')));
 }
 
 // ===== マスタ =====
@@ -502,10 +501,9 @@ function saveMaster(){
   master.staff=[];
   document.querySelectorAll('#staff-list .master-item').forEach(item=>{
     const name=item.querySelector('input[data-field="name"]').value.trim();
-    const kana=item.querySelector('input[data-field="kana"]').value.trim();
     const role=item.querySelector('select[data-field="role"]').value;
     const role2=item.querySelector('select[data-field="role2"]').value||'';
-    if(name) master.staff.push({name,kana,role,role2});
+    if(name) master.staff.push({name,role,role2});
   });
   master.users=[];
   document.querySelectorAll('#user-list .master-item').forEach(item=>{
@@ -529,18 +527,17 @@ function saveMaster(){
 function renderMasterList(){
   const sl=document.getElementById('staff-list');
   sl.innerHTML='';
-  master.staff.forEach(s=>sl.appendChild(makeStaffItem(s.name,s.role,s.role2||'',s.kana||'')));
+  master.staff.forEach(s=>sl.appendChild(makeStaffItem(s.name,s.role,s.role2||'')));
   const ul=document.getElementById('user-list');
   ul.innerHTML='';
   master.users.forEach(u=>ul.appendChild(makeUserItem(u.name,u.kana||'')));
 }
 
-function makeStaffItem(name='',role='介護職',role2='',kana=''){
+function makeStaffItem(name='',role='介護職',role2=''){
   const div=document.createElement('div');
   div.className='master-item';
   div.style.cssText='flex-wrap:wrap;gap:4px';
-  div.innerHTML=`<input type="text" data-field="name" value="${name}" placeholder="氏名" style="flex:1;min-width:90px">
-    <input type="text" data-field="kana" value="${kana}" placeholder="ふりがな" style="flex:1;min-width:80px">
+  div.innerHTML=`<input type="text" data-field="name" value="${name}" placeholder="氏名" style="flex:1;min-width:100px">
     <select data-field="role" style="flex:.9">
       <option value="相談員"${role==='相談員'?' selected':''}>相談員</option>
       <option value="看護師"${role==='看護師'?' selected':''}>看護師</option>
