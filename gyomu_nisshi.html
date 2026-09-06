@@ -170,6 +170,9 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
 @media print{
   @page{size:A4 landscape;margin:8mm 10mm}
   .topbar,.btn-row,.add-card-btn,.add-row-btn,.vital-add-btn,#pane-history,#pane-master,#user-suggest-bar,#vital-user-chips,.name-chip-area{display:none!important}
+  /* 記入タブと様子・記録タブを両方まとめて印刷する */
+  #pane-input,#pane-vital{display:block!important}
+  #pane-vital{break-before:page;page-break-before:always}
   body{background:#fff;font-size:10px}
   .main{padding:0;max-width:100%}
   .card{border:.5px solid #bbb;border-radius:3px;padding:4px 6px;margin-bottom:3px;break-inside:avoid}
