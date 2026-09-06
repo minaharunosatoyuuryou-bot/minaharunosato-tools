@@ -618,6 +618,7 @@ function addToVital(name){
   // すでにある場合はスキップ
   if(document.querySelector(`#vital-body tr[data-name="${cleanName}"]`)) return;
   document.getElementById('vital-body').appendChild(makeVitalRow(cleanName,null));
+  sortVitalBodyRows();
   // チップをonに
   const chip=document.querySelector(`#vital-user-chips .vc[data-name="${cleanName}"]`);
   if(chip){
@@ -817,6 +818,7 @@ function renderVitalUserChips(){
         // 追加
         const saved=_lastVitalData?((_lastVitalData).find(r=>r.name===u.name)||{}):{}; 
         document.getElementById('vital-body').appendChild(makeVitalRow(u.name,saved));
+        sortVitalBodyRows();
         el.classList.add('on');
         el.style.background='var(--chip-sel-bg)'; el.style.borderColor='var(--chip-sel-border)'; el.style.color='var(--chip-sel-text)';
       }
@@ -826,6 +828,22 @@ function renderVitalUserChips(){
 }
 
 let _lastVitalData=null;
+
+// vital-body の行を、利用者マスタの50音順（ふりがな）に合わせて並び替える
+function sortVitalBodyRows(){
+  const tb=document.getElementById('vital-body');
+  if(!tb) return;
+  const order=master.users.map(u=>u.name);
+  const rows=Array.from(tb.children);
+  rows.sort((a,b)=>{
+    const ai=order.indexOf(a.dataset.name), bi=order.indexOf(b.dataset.name);
+    if(ai!==-1 && bi!==-1) return ai-bi;
+    if(ai!==-1) return -1;
+    if(bi!==-1) return 1;
+    return nameCollator.compare(a.dataset.name||'',b.dataset.name||'');
+  });
+  rows.forEach(r=>tb.appendChild(r));
+}
 
 function rebuildVitalTable(savedData){
   _lastVitalData=savedData||null;
@@ -848,6 +866,7 @@ function rebuildVitalTable(savedData){
         chip.style.background='var(--chip-sel-bg)'; chip.style.borderColor='var(--chip-sel-border)'; chip.style.color='var(--chip-sel-text)';
       }
     });
+    sortVitalBodyRows();
   }
 }
 
@@ -855,6 +874,7 @@ function addVitalRowManual(){
   const name=prompt('利用者名を入力してください（「様」は不要）');
   if(!name) return;
   document.getElementById('vital-body').appendChild(makeVitalRow(name,null));
+  sortVitalBodyRows();
 }
 
 function getVitalData(){
