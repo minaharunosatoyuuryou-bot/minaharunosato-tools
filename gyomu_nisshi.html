@@ -395,7 +395,6 @@ table.transport td input:focus{outline:none;background:var(--accent-bg);border-r
             <th style="width:52px">副食<br>0〜10</th>
             <th style="width:52px">入浴<br>有無</th>
             <th style="width:52px">排便<br>有無</th>
-            <th style="width:28px"></th>
             <th>一日の様子</th>
           </tr>
         </thead>
@@ -778,9 +777,6 @@ function makeVitalRow(name,data){
       <option value="あり"${d.toilet==='あり'?' selected':''}>あり</option>
       <option value="なし"${d.toilet==='なし'?' selected':''}>なし</option>
     </select></td>
-    <td style="text-align:center;padding:2px">
-      <button onclick="removeVitalRow(this)" style="font-size:12px;color:var(--danger);background:none;border:none;cursor:pointer;padding:2px 4px">✕</button>
-    </td>
     <td class="note-cell"><input type="text" value="${escAttr(d.note||'')}" placeholder="様子を記入"><span class="note-print">${escHtml(d.note||'')}</span></td>`;
   return tr;
 }
