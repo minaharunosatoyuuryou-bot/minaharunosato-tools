@@ -594,15 +594,14 @@ function esc(v){
 }
 function noLabel(r){ return (r&&r.id!=null&&r.id!=='')?'No.'+r.id:''; }
 
-// 利用者リストを1人ずつ保存（URLの長さ制限を回避）
+// 利用者リストを1回の通信でまとめて保存する（途中で失敗して一覧が消える事故を防ぐ）
 async function saveResidentsSplit(sheetName, data){
-  // まずシートをクリア
-  await gasReq({action:'clearResidents', sheet:sheetName});
-  // 1人ずつ保存
-  for(const r of data){
-    await gasReq({action:'saveOneResident', sheet:sheetName, data:r});
+  const res=await gasReq({action:'saveResidents', sheet:sheetName, data:data});
+  if(!res||res.status!=='ok'){
+    alert('利用者一覧を保存できませんでした。\n'+((res&&res.message)||'通信エラー'));
+    throw new Error('saveResidents failed');
   }
-  return {status:'ok'};
+  return res;
 }
 
 let residents=[], discharged=[], currentId=null, editingId=null, currentSideTab='active', currentDocTab='assess';
