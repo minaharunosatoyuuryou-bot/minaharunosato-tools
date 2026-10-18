@@ -5,6 +5,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>ケア管理システム - みなはるの里</title>
 <style>
 :root {
@@ -37,6 +39,11 @@ body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;backgroun
 .ri-info{flex:1;min-width:0;}
 .ri-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ri-sub{font-size:10px;opacity:0.6;margin-top:1px;}
+.ri-no{display:inline-block;min-width:34px;margin-right:5px;padding:0 4px;border-radius:3px;background:rgba(255,255,255,0.18);font-size:10px;font-weight:700;text-align:center;}
+.sort-row{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;color:rgba(255,255,255,0.6);}
+.sort-row select{flex:1;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:4px;padding:2px 4px;font-size:11px;}
+.sort-row select option{color:#1a2535;}
+.banner-no{display:inline-block;margin-right:8px;padding:1px 8px;border-radius:4px;background:var(--navy);color:white;font-size:13px;vertical-align:2px;}
 .ri-edit{background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:3px;flex-shrink:0;}
 .ri-edit:hover{color:white;}
 .sidebar-footer{padding:8px 12px;border-top:1px solid rgba(255,255,255,0.1);font-size:10px;opacity:0.45;text-align:center;}
@@ -165,29 +172,13 @@ textarea{resize:vertical;min-height:52px;line-height:1.7;}
     <div style="font-size:18px;font-weight:700;color:#1a3050;margin-bottom:6px;">みなはるの里</div>
     <div style="font-size:12px;color:#888;margin-bottom:24px;">社会福祉法人 悠久福祉会</div>
     <div style="font-size:13px;color:#555;margin-bottom:10px;font-weight:600;">パスワードを入力してください</div>
-    <input type="password" id="pw-input" placeholder="パスワード"
+    <input type="password" id="pw-input" placeholder="パスワード" autocomplete="current-password"
       style="width:100%;padding:10px 14px;border:1px solid #ccc;border-radius:6px;font-size:16px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:8px;"
       onkeydown="if(event.key==='Enter')checkPW()">
-    <div id="pw-error" style="color:#e74c3c;font-size:12px;height:16px;margin-bottom:8px;"></div>
-    <button onclick="checkPW()" style="width:100%;padding:11px;background:#2c5f8a;color:white;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;">ログイン</button>
+    <div id="pw-error" style="white-space:pre-line;color:#e74c3c;font-size:12px;min-height:16px;margin-bottom:8px;line-height:1.5;"></div>
+    <button id="pw-btn" onclick="checkPW()" style="width:100%;padding:11px;background:#2c5f8a;color:white;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;">ログイン</button>
   </div>
 </div>
-<script>
-(function(){
-  if(sessionStorage.getItem('minaharu_auth')==='ok'){document.getElementById('pw-screen').style.display='none';return;}
-  setTimeout(()=>document.getElementById('pw-input').focus(),100);
-})();
-function checkPW(){
-  if(document.getElementById('pw-input').value==='2408'){
-    sessionStorage.setItem('minaharu_auth','ok');
-    document.getElementById('pw-screen').style.display='none';
-  } else {
-    document.getElementById('pw-error').textContent='パスワードが違います';
-    document.getElementById('pw-input').value='';
-    setTimeout(()=>document.getElementById('pw-error').textContent='',2000);
-  }
-}
-</script>
 
 <div class="layout">
 <div class="sidebar">
@@ -200,7 +191,10 @@ function checkPW(){
     <button class="tab-btn" onclick="switchSideTab('discharged',this)">退所者</button>
   </div>
   <div class="sidebar-search">
-    <input type="text" id="search-input" placeholder="氏名で検索…" oninput="filterList()">
+    <input type="text" id="search-input" placeholder="氏名・番号で検索…" oninput="filterList()">
+    <div class="sort-row">並び順
+      <select id="sort-select" onchange="renderList()"><option value="kana">あいうえお順</option><option value="no">番号順</option></select>
+    </div>
   </div>
   <div class="sidebar-actions">
     <button class="btn-add" onclick="openAddModal()">＋ 利用者を追加</button>
@@ -220,6 +214,7 @@ function checkPW(){
     <div class="header-btns">
       <button class="btn btn-save" onclick="saveData()">💾 保存</button>
       <button class="btn btn-print" onclick="window.print()">🖨️ 印刷・PDF</button>
+      <button class="btn btn-sec" onclick="manualLock()" title="保存してから画面をロックします">🔒 ロック</button>
     </div>
   </div>
 
@@ -458,6 +453,7 @@ function checkPW(){
 <div class="modal-bg hidden" id="modal-bg">
   <div class="modal">
     <h3 id="modal-title">利用者を追加</h3>
+    <div class="mrow" id="m-no-row"><label>利用者番号</label><input type="text" id="m-no" readonly style="background:#f5f5f5;color:#555;"></div>
     <div class="mrow"><label>氏名 *</label><input type="text" id="m-name" placeholder="例：山田　花子"></div>
     <div class="mrow"><label>フリガナ</label><input type="text" id="m-kana" placeholder="例：ヤマダ　ハナコ"></div>
     <div class="mrow"><label>要介護度</label><select id="m-care"><option>要支援１</option><option>要支援２</option><option>要介護１</option><option>要介護２</option><option>要介護３</option><option selected>要介護４</option><option>要介護５</option></select></div>
@@ -491,23 +487,104 @@ function checkPW(){
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyoA64aMwOkQ57RPNdwhH27dWw3ue45PzQhpvvyeGlt7OjKTEIF7xHAnwICbIe1MIPr9Q/exec';
 
+// ===== セキュリティ：ログイン・トークン管理 =====
+// パスワードはこのページには書かず、GAS側（スクリプトプロパティ）で確認する。
+// ログインに成功するとGASから「通行証（トークン）」が発行され、以後の通信には必ずそれを付ける。
+// 通行証がない・期限切れの通信はGAS側で拒否されるため、URLを知っているだけではデータを見られない。
+let authToken=null;
+try{ authToken=sessionStorage.getItem('cm_token'); }catch(e){}
+try{ sessionStorage.removeItem('minaharu_auth'); }catch(e){}
+let listLoaded=false;          // 利用者一覧を正常に読み込めたか（失敗時に一覧を上書き保存しないため）
+const IDLE_LIMIT_MS=30*60*1000;   // 30分操作がなければ自動ロック
+let lastActivity=Date.now();
+
+function authError(){ const e=new Error('unauthorized'); e.authError=true; return e; }
+
+function showLogin(msg){
+  authToken=null;
+  try{ sessionStorage.removeItem('cm_token'); }catch(e){}
+  const scr=document.getElementById('pw-screen');
+  scr.style.display='flex';
+  document.getElementById('pw-error').textContent=msg||'';
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+}
+
+async function checkPW(){
+  const inp=document.getElementById('pw-input');
+  const btn=document.getElementById('pw-btn');
+  const err=document.getElementById('pw-error');
+  const pw=inp.value;
+  if(!pw){ err.textContent='パスワードを入力してください'; return; }
+  btn.disabled=true; btn.textContent='確認中…'; err.textContent='';
+  try{
+    const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'login',password:pw})}).then(r=>r.json());
+    if(res&&res.token){
+      authToken=res.token;
+      try{ sessionStorage.setItem('cm_token',res.token); }catch(e){}
+      document.getElementById('pw-screen').style.display='none';
+      lastActivity=Date.now();
+      await loadResidents();
+    }else if(res&&res.error==='locked'){
+      err.textContent='パスワードの間違いが続いたため、10分間ロックしています。しばらく待ってから入力してください。';
+    }else if(res&&res.error==='not_configured'){
+      err.textContent='サーバー側のパスワードが未設定です。管理者に連絡してください。';
+    }else{
+      err.textContent='パスワードが違います';
+    }
+  }catch(e){
+    err.textContent='通信できませんでした。ネット接続を確認してください。';
+  }finally{
+    inp.value=''; btn.disabled=false; btn.textContent='ログイン';
+  }
+}
+
+async function manualLock(){
+  if(currentId&&formLoaded&&!switching){ try{ await saveData(true); }catch(e){} }
+  const tok=authToken;
+  showLogin('ロックしました');
+  if(tok){ try{ fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logout',token:tok})}); }catch(e){} }
+}
+
+// 操作がない状態が続いたら、保存してから自動ロック
+['mousedown','keydown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev,()=>{lastActivity=Date.now();},{passive:true,capture:true}));
+setInterval(async()=>{
+  if(!authToken||Date.now()-lastActivity<IDLE_LIMIT_MS) return;
+  let saved=false;
+  if(currentId&&formLoaded&&!switching){ try{ await saveData(true); saved=true; }catch(e){} }
+  showLogin('30分操作がなかったため自動でロックしました'+(saved?'（入力内容は保存済み）':''));
+},60*1000);
+
 async function gasReq(payload){
+  if(!authToken){ showLogin(); throw authError(); }
+  payload=Object.assign({},payload,{token:authToken});
+  let res;
   // saveRecord・saveResidentsはデータが大きくなりURLの文字数制限を超えるため、
   // POST（Content-Type: text/plain でCORSのpreflightを回避）で送信する
   if(payload.action==='saveRecord' || payload.action==='saveResidents' || payload.action==='saveResidentAll' || payload.action==='saveOneResident' || payload.action==='clearResidents'){
-    const res = await fetch(GAS_URL, {
+    res = await fetch(GAS_URL, {
       method: 'POST',
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
       body: JSON.stringify(payload)
     });
-    return res.json();
+  }else{
+    const url = GAS_URL + '?' + new URLSearchParams(
+      Object.fromEntries(Object.entries(payload).map(([k,v])=>[k,typeof v==='object'?JSON.stringify(v):v]))
+    ).toString();
+    res = await fetch(url);
   }
-  const url = GAS_URL + '?' + new URLSearchParams(
-    Object.fromEntries(Object.entries(payload).map(([k,v])=>[k,typeof v==='object'?JSON.stringify(v):v]))
-  ).toString();
-  const res = await fetch(url);
-  return res.json();
+  const json = await res.json();
+  if(json && json.error==='unauthorized'){
+    showLogin('ログインの有効期限が切れました。もう一度ログインしてください。\n（入力中の内容は画面に残っています。ログイン後に「保存」を押してください）');
+    throw authError();
+  }
+  return json;
 }
+
+// 画面に文字を表示する前に、HTMLとして解釈されないように変換する（不正なスクリプト埋め込み対策）
+function esc(v){
+  return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function noLabel(r){ return (r&&r.id!=null&&r.id!=='')?'No.'+r.id:''; }
 
 // 利用者リストを1人ずつ保存（URLの長さ制限を回避）
 async function saveResidentsSplit(sheetName, data){
@@ -551,7 +628,12 @@ window.onload=()=>{
   document.getElementById('report_month').value=ym;
   document.getElementById('teiki_report_month').value=ym;
   setupFieldSync();
-  loadResidents();
+  if(authToken){
+    document.getElementById('pw-screen').style.display='none';
+    loadResidents();
+  }else{
+    showLogin();
+  }
 };
 
 function buildADL(tbodyId,items,isAssess){
@@ -635,9 +717,14 @@ async function switchDocTab(tab,btn){
 async function loadResidents(){
   try{
     const res=await gasReq({action:'getResidentsBoth',sheetActive:'ケア管理_利用者',sheetDischarged:'ケア管理_退所者'});
+    if(!res || (!res.residents && !res.discharged)) throw new Error('bad response');
     residents=(res.residents||[]).filter(r=>r&&r.name);
     discharged=(res.discharged||[]).filter(r=>r&&r.name);
-  }catch(e){residents=[];discharged=[];}
+    listLoaded=true;
+  }catch(e){
+    listLoaded=false;
+    if(!e.authError) showToast('⚠ 利用者一覧を読み込めませんでした');
+  }
   renderList();
 }
 
@@ -647,13 +734,20 @@ function renderList(filter){
   ul.querySelectorAll('.resident-item').forEach(el=>el.remove());
   const em=document.getElementById('empty-msg');
   const list=currentSideTab==='active'?residents:discharged;
-  const filtered=list.filter(r=>!filter||r.name.includes(filter)||(r.kana&&r.kana.includes(filter))).sort((a,b)=>(a.kana||a.name).localeCompare((b.kana||b.name),'ja'));
+  const q=(filter||'').trim().replace(/^no\.?/i,'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+  const sortMode=document.getElementById('sort-select').value;
+  const filtered=list.filter(r=>!q||r.name.includes(q)||(r.kana&&r.kana.includes(q))||(/^\d+$/.test(q)&&String(r.id)===q))
+    .sort(sortMode==='no'
+      ? (a,b)=>(Number(a.id)||0)-(Number(b.id)||0)
+      : (a,b)=>(a.kana||a.name).localeCompare((b.kana||b.name),'ja'));
+  if(!listLoaded) em.textContent='利用者一覧を読み込めていません'; else em.textContent='利用者が登録されていません';
   em.style.display=filtered.length===0?'block':'none';
   filtered.forEach(r=>{
     const div=document.createElement('div');
     div.className='resident-item'+(r.id===currentId?' active':'');
     const badges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')+(r.svcDay?'<span class="svc-badge badge-day">デイ</span>':'')+(r.svcTeiki?'<span class="svc-badge badge-teiki">定巡</span>':'');
-    div.innerHTML=`<div class="ri-info"><div class="ri-name">${r.name}</div><div class="ri-sub">${r.care||''}${r.room?'　'+r.room+'号室':''}</div><div style="margin-top:2px;">${badges}</div></div><button class="ri-edit" onclick="event.stopPropagation();openEditModal(${r.id})">✎</button>`;
+    div.innerHTML=`<div class="ri-info"><div class="ri-name"><span class="ri-no">${esc(noLabel(r))}</span>${esc(r.name)}</div><div class="ri-sub">${esc(r.care||'')}${r.room?'　'+esc(r.room)+'号室':''}</div><div style="margin-top:2px;">${badges}</div></div><button class="ri-edit">✎</button>`;
+    div.querySelector('.ri-edit').onclick=e=>{e.stopPropagation();openEditModal(r.id);};
     div.onclick=()=>selectResident(r.id);
     ul.appendChild(div);
   });
@@ -696,9 +790,9 @@ async function selectResident(id){
     const r=[...residents,...discharged].find(x=>x.id===id);
     document.getElementById('no-select').style.display='none';
     document.getElementById('form-area').style.display='block';
-    document.getElementById('banner-name').textContent=r.name+(r.kana?'　'+r.kana:'');
+    document.getElementById('banner-name').innerHTML=(noLabel(r)?'<span class="banner-no">'+esc(noLabel(r))+'</span>':'')+esc(r.name+(r.kana?'　'+r.kana:''));
     const badges=(r.svcStay!==false?'<span class="svc-badge badge-stay">入所</span>':'')+(r.svcDay?'<span class="svc-badge badge-day">デイサービス</span>':'')+(r.svcTeiki?'<span class="svc-badge badge-teiki">定期巡回</span>':'');
-    document.getElementById('banner-meta').innerHTML=(r.care||'')+(r.room?'　'+r.room+'号室':'')+' '+badges;
+    document.getElementById('banner-meta').innerHTML=esc(r.care||'')+(r.room?'　'+esc(r.room)+'号室':'')+' '+badges;
     document.getElementById('mn-sec-day').style.display=r.svcDay?'block':'none';
     document.getElementById('as_address').value=r.address||'';
     document.getElementById('as_doctor').value=r.doctor||'';
@@ -752,7 +846,7 @@ async function loadAllData(id){
     if(res.mn) applyMonthlyData(res.mn);
     if(res.tk) applyTeikiData(res.tk);
     syncCrossTabInfo();
-  }catch(e){}
+  }catch(e){ if(e&&e.authError) throw e; }
 }
 
 function applyMonthlyData(data){
@@ -778,7 +872,7 @@ async function loadMonthlyData(){
   try{
     const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(currentId)+'_mn_'+month});
     if(res.data) applyMonthlyData(res.data);
-  }catch(e){}
+  }catch(e){ if(e&&e.authError) throw e; }
 }
 
 async function loadTeikiData(){
@@ -788,12 +882,13 @@ async function loadTeikiData(){
   try{
     const res=await gasReq({action:'getRecord',sheet:'ケア管理_記録',id:String(currentId)+'_tk_'+month});
     if(res.data) applyTeikiData(res.data);
-  }catch(e){}
+  }catch(e){ if(e&&e.authError) throw e; }
 }
 
 // ↓ 高速化版：アセスメント・月次報告・定期巡回報告を1回の通信でまとめて保存する
 async function saveData(silent=false){
   if(!currentId) return;
+  if(!formLoaded){ if(!silent) alert('まだデータを読み込み中です。読み込みが終わってから保存してください。'); return; }
   const d=collectData();
   const mnMonth=document.getElementById('report_month').value;
   const tkMonth=document.getElementById('teiki_report_month').value;
@@ -805,7 +900,8 @@ async function saveData(silent=false){
   mnData.mn_adl=d.mn_adl;
   const tkData={};
   [...TK_TEXT,...TK_CHECK].forEach(id=>{tkData[id]=d[id];});
-  await gasReq({action:'saveResidentAll',sheet:'ケア管理_記録',id:String(currentId),mnMonth:mnMonth,tkMonth:tkMonth,baseData:baseData,mnData:mnData,tkData:tkData});
+  const res=await gasReq({action:'saveResidentAll',sheet:'ケア管理_記録',id:String(currentId),mnMonth:mnMonth,tkMonth:tkMonth,baseData:baseData,mnData:mnData,tkData:tkData});
+  if(res&&res.status==='error'){ if(!silent) alert('保存できませんでした：'+(res.message||res.error||'')); throw new Error('save failed'); }
   if(!silent) showToast('✓ 保存しました');
   renderList();
 }
@@ -843,6 +939,7 @@ async function nextId(){
 function openAddModal(){
   editingId=null;
   document.getElementById('modal-title').textContent='利用者を追加';
+  document.getElementById('m-no').value='保存すると自動で番号がつきます';
   ['m-name','m-kana','m-room','m-cm','m-address','m-doctor'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('m-care').value='要介護４';
   document.getElementById('m-dob').value='';
@@ -863,6 +960,7 @@ function openEditModal(id){
   if(!r) return;
   editingId=id;
   document.getElementById('modal-title').textContent='利用者情報を編集';
+  document.getElementById('m-no').value=noLabel(r);
   document.getElementById('m-name').value=r.name||'';
   document.getElementById('m-kana').value=r.kana||'';
   document.getElementById('m-care').value=r.care||'要介護４';
@@ -885,6 +983,7 @@ function closeModal(){document.getElementById('modal-bg').classList.add('hidden'
 document.getElementById('modal-bg').addEventListener('click',function(e){if(e.target===this)closeModal();});
 
 async function saveResident(){
+  if(!listLoaded){alert('利用者一覧が正しく読み込めていないため、変更できません（一覧が消えるのを防ぐため）。\n画面を再読み込みしてからもう一度お試しください。');return;}
   const name=document.getElementById('m-name').value.trim();
   if(!name){alert('氏名を入力してください');return;}
   const r={
@@ -906,6 +1005,7 @@ async function saveResident(){
   try{
     await saveResidentsSplit('ケア管理_利用者', residents);
   }catch(e){
+    if(e&&e.authError) return;
     console.warn('GAS通信エラー（保存は完了）:', e);
   }
   closeModal();renderList();
@@ -914,17 +1014,18 @@ async function saveResident(){
 
 async function deleteResident(){
   if(!editingId) return;
+  if(!listLoaded){alert('利用者一覧が正しく読み込めていないため、変更できません（一覧が消えるのを防ぐため）。\n画面を再読み込みしてからもう一度お試しください。');return;}
   const isDischarged=discharged.some(x=>x.id===editingId);
   const r=[...residents,...discharged].find(x=>x.id===editingId);
   if(!confirm(`「${r?.name}」を削除しますか？`)) return;
   if(isDischarged){
     discharged=discharged.filter(x=>x.id!==editingId);
     try{ await saveResidentsSplit('ケア管理_退所者', discharged); }
-    catch(e){ console.warn('GAS通信エラー（削除は完了）:', e); }
+    catch(e){ if(e&&e.authError) return; console.warn('GAS通信エラー（削除は完了）:', e); }
   }else{
     residents=residents.filter(x=>x.id!==editingId);
     try{ await saveResidentsSplit('ケア管理_利用者', residents); }
-    catch(e){ console.warn('GAS通信エラー（削除は完了）:', e); }
+    catch(e){ if(e&&e.authError) return; console.warn('GAS通信エラー（削除は完了）:', e); }
   }
   closeModal();
   if(currentId===editingId){currentId=null;document.getElementById('no-select').style.display='flex';document.getElementById('form-area').style.display='none';}
@@ -933,6 +1034,7 @@ async function deleteResident(){
 
 async function dischargeResident(){
   if(!editingId) return;
+  if(!listLoaded){alert('利用者一覧が正しく読み込めていないため、変更できません（一覧が消えるのを防ぐため）。\n画面を再読み込みしてからもう一度お試しください。');return;}
   const idx=residents.findIndex(x=>x.id===editingId);
   if(idx<0) return;
   const r=residents[idx];
@@ -943,6 +1045,7 @@ async function dischargeResident(){
     await saveResidentsSplit('ケア管理_利用者', residents);
     await saveResidentsSplit('ケア管理_退所者', discharged);
   }catch(e){
+    if(e&&e.authError) return;
     console.warn('GAS通信エラー（移動は完了）:', e);
   }
   closeModal();
@@ -952,6 +1055,7 @@ async function dischargeResident(){
 
 async function restoreResident(){
   if(!editingId) return;
+  if(!listLoaded){alert('利用者一覧が正しく読み込めていないため、変更できません（一覧が消えるのを防ぐため）。\n画面を再読み込みしてからもう一度お試しください。');return;}
   const idx=discharged.findIndex(x=>x.id===editingId);
   if(idx<0) return;
   const r=discharged[idx];
@@ -962,6 +1066,7 @@ async function restoreResident(){
     await saveResidentsSplit('ケア管理_退所者', discharged);
     await saveResidentsSplit('ケア管理_利用者', residents);
   }catch(e){
+    if(e&&e.authError) return;
     console.warn('GAS通信エラー（移動は完了）:', e);
   }
   closeModal();
@@ -997,9 +1102,9 @@ function updateBannerInfo(){
   const fam=document.getElementById('as_family').value.trim();
   const emg=document.getElementById('as_emergency').value.trim();
   const parts=[];
-  if(addr) parts.push('🏠 住所：'+addr);
-  if(fam) parts.push('👪 家族構成：'+fam);
-  if(emg) parts.push('📞 緊急連絡先：'+emg);
+  if(addr) parts.push('🏠 住所：'+esc(addr));
+  if(fam) parts.push('👪 家族構成：'+esc(fam).replace(/\n/g,'　'));
+  if(emg) parts.push('📞 緊急連絡先：'+esc(emg).replace(/\n/g,'　'));
   const el=document.getElementById('banner-info');
   if(parts.length){
     el.innerHTML=parts.join('<br>');
