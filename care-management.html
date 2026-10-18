@@ -517,22 +517,30 @@ async function checkPW(){
   if(!pw){ err.textContent='パスワードを入力してください'; return; }
   btn.disabled=true; btn.textContent='確認中…'; err.textContent='';
   try{
-    const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'login',password:pw})}).then(r=>r.json());
-    if(res&&res.token){
+    const raw=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'login',password:pw})}).then(r=>r.text());
+    let res=null;
+    try{ res=JSON.parse(raw); }catch(e){}
+    if(!res){
+      err.textContent='【エラーA】GASでエラーが起きています。\n（doGet / doPost の名前変更や、security.gs の貼り付けを確認してください）';
+      console.log('GAS応答:',raw.slice(0,500));
+    }else if(res.token){
       authToken=res.token;
       try{ sessionStorage.setItem('cm_token',res.token); }catch(e){}
       document.getElementById('pw-screen').style.display='none';
       lastActivity=Date.now();
       await loadResidents();
-    }else if(res&&res.error==='locked'){
-      err.textContent='パスワードの間違いが続いたため、10分間ロックしています。しばらく待ってから入力してください。';
-    }else if(res&&res.error==='not_configured'){
-      err.textContent='サーバー側のパスワードが未設定です。管理者に連絡してください。';
+    }else if(res.error==='locked'){
+      err.textContent='【エラーB】パスワードの間違いが続いたため、10分間ロックしています。しばらく待ってから入力してください。';
+    }else if(res.error==='not_configured'){
+      err.textContent='【エラーC】GASのスクリプトプロパティに APP_PASSWORD が設定されていません。';
+    }else if(res.error==='wrong_password'){
+      err.textContent='【エラーD】パスワードが違います。\n（スクリプトプロパティ APP_PASSWORD に入れた値を入力してください）';
     }else{
-      err.textContent='パスワードが違います';
+      err.textContent='【エラーE】GASが古いままです。\n「デプロイを管理」→ 鉛筆 →「新しいバージョン」でデプロイし直してください。';
+      console.log('GAS応答:',raw.slice(0,500));
     }
   }catch(e){
-    err.textContent='通信できませんでした。ネット接続を確認してください。';
+    err.textContent='【エラーF】GASにつながりませんでした。\n（デプロイの「アクセスできるユーザー」が「全員」になっているか確認してください）';
   }finally{
     inp.value=''; btn.disabled=false; btn.textContent='ログイン';
   }
